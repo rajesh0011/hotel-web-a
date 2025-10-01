@@ -1,6 +1,6 @@
 import ClientOverviewPage from "./ClientOverviewPage";
 
-export default function Page({ params, searchParams }) {
+export default function OverviewPage({ params, searchParams }) {
   const { propertySlug } = params;
   const { id, name } = searchParams || {};
 

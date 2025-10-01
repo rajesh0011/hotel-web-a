@@ -13,7 +13,7 @@ const NearbyPlaces = ({ propertyId }) => {
         const fetchNearbyPlaces = async () => {
             try {
                 const res = await fetch(
-                    `http://loyaltypulsedemo.ownyourcustomers.in/cmsapi/property/GetNearbyPlaces?propertyId=${propertyId}`,
+                    `${process.env.NEXT_PUBLIC_CMS_API_Base_URL}/property/GetNearbyPlaces?propertyId=${propertyId}`,
                     { cache: "no-store" }
                 );
                 const json = await res.json();

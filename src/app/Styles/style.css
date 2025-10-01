@@ -198,7 +198,7 @@ box2 {
 }
 
 .accordion-title {
-    background-color: #ffffff;
+    background-color: #f6eeeb;
     padding: 10px;
     cursor: pointer;
     display: flex;
@@ -498,3 +498,5 @@ text-transform:capitalize;
     font-size: 18px!important;
 
 }
+
+

@@ -23,7 +23,7 @@ const UntoldStories = () => {
   const fetchCategories = async () => {
     try {
       const res = await fetch(
-        "http://loyaltypulsedemo.ownyourcustomers.in/cmsapi/property/GetDisplayCategoryList"
+        `${process.env.NEXT_PUBLIC_CMS_API_Base_URL}/property/GetDisplayCategoryList`
       );
       const data = await res.json();
       setCategories(data?.data || []);
@@ -39,7 +39,7 @@ const UntoldStories = () => {
   const fetchHotels = async () => {
     try {
       const res = await fetch(
-        "http://loyaltypulsedemo.ownyourcustomers.in/cmsapi/property/GetPropertyList"
+        `${process.env.NEXT_PUBLIC_CMS_API_Base_URL}/property/GetPropertyList`
       );
       const data = await res.json();
       setHotels(data?.data || []);
@@ -69,6 +69,15 @@ const UntoldStories = () => {
     console.log("Booking hotel:", staahPropertyId, cityName, cityId);
     // integrate your booking flow here
   };
+
+  const getOverviewSlug = (p) => {
+  const t = (p?.propertyType ?? "").toString().toLowerCase();
+
+  // if your API sends names:
+  if (t.includes("resort")) return "resort-overview";
+  if (t.includes("hotel")) return "hotel-overview";
+  return "property-overview"; // safe fallback
+};
 
   return (
     <section className={`${styles.UntoldStoriesSec} global-padding bg-lred`}>
@@ -122,7 +131,7 @@ const UntoldStories = () => {
       </div>
 
       {/* Hotels slider */}
-      <div className="container-fluid">
+      <div className="container-fluid p-sm-0 padding-mob-0" >
         {filteredHotels.length === 0 ? (
           <p className="text-center py-5">No hotels found in this category.</p>
         ) : (
@@ -147,7 +156,7 @@ const UntoldStories = () => {
 
               return (
                 <SwiperSlide key={index}>
-                  <div className="winter-box shadow hotel-box">
+                  <div className="winter-box shadow hotel-box untold-stories-hotel-image">
                     <div className="no-image-bg mb-3">
                       <Image
                         src={imageUrl}
@@ -161,11 +170,16 @@ const UntoldStories = () => {
 
                     {/* Hotel Title */}
                     <Link
-                      href={`/${hotel.propertySlug}/hotel-overview`}
+                       href={{
+    pathname: `/${hotel.propertySlug}/${getOverviewSlug(hotel)}`,
+    // query: { id: hotel.propertyId, name: hotel.propertyName },
+  }}
                       className="text-decoration-none text-dark winter-box-heading"
                     >
                       <h6 className="ps-3 pb-2">{hotel.propertyName}</h6>
                     </Link>
+
+                     
                     <div className="winter-box-content main-new-hotel-box">
                       <div className="hotel-box-content hotel-left-side-box">
                         <div className="winter-box-btn">
@@ -177,7 +191,10 @@ const UntoldStories = () => {
                                 )}> Book Now
                             </button>
 
-                          <Link href={`/${hotel.propertySlug}/hotel-overview`} className="box-btn know-more">
+                          <Link  href={{
+    pathname: `/${hotel.propertySlug}/${getOverviewSlug(hotel)}`,
+    // query: { id: hotel.propertyId, name: hotel.propertyName },
+  }} className="box-btn know-more">
                             Visit Hotel
                           </Link>
                         </div>

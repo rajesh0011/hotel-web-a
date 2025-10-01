@@ -25,10 +25,15 @@ export default function OverExp() {
         loop={true}
         centeredSlides={false}
         spaceBetween={20}
-        slidesPerView={3}
-        onSlideChange={(swiper) => setActiveIndex(swiper.realIndex)}
+        slidesPerView={1}
+        
         autoplay={{ delay: 3000, disableOnInteraction: false }}
         speed={600}
+        breakpoints={{
+              500: { slidesPerView: 1 },
+              767: { slidesPerView: 2 },
+              1000: { slidesPerView: 3 },
+            }}
       >
         {slides.map((slide, index) => (
           <SwiperSlide key={index}>
@@ -52,6 +57,7 @@ export default function OverExp() {
                   <Link href="#" className="box-btn know-more">Enquire Now</Link>
                   <Link href="#" target="_blank" className="box-btn book-now">Explore More</Link>
                 </div> */}
+
                 </div>
               </div>
             </div>
