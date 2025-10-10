@@ -152,7 +152,17 @@ font-size:14px!important;
 }
 
 .inner-no-banner-sec {
-	margin-top: 12rem;
+	margin-top: 9rem;
+}
+.pswp__img {
+  opacity: 1 !important;
+  visibility: visible !important;
+  mix-blend-mode: normal !important;
+  filter: none !important;
+  max-width: none !important;
+  max-height: none !important;
+  object-fit: contain !important;
+  background: none !important;
 }
 
 .property-book-now-header {

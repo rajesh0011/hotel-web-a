@@ -50,7 +50,7 @@ const PropertyGalleryOverview = ({ propertyId }) => {
         <div className="global-heading-sec text-center">
           <div className="row justify-content-center mb-4">
             <div className="col-md-9 md-offset-1">
-              <h2 className="global-heading pt-4">Gallery</h2>
+              <h2 className="global-heading pt-5">Gallery</h2>
             </div>
           </div>
         </div>

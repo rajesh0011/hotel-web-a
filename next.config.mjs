@@ -12,40 +12,16 @@ const nextConfig = {
         pathname: '/admin/**',
       },
       {
-        protocol: "https",
-        hostname: "clarkscms.cinuniverse.com",
-        pathname: "/images/**",
-      },
-      {
-        protocol: "https",
-        hostname: "clarkscms.cinuniverse.com",
-        pathname: "/images/clarks/**",
-      },
-      {
-        protocol: "https",
-        hostname: "clarkscms.cinuniverse.com",
-        pathname: "/images/media/**",
-      },
-      {
-        protocol: "https",
-        hostname: "clarkscms.cinuniverse.com",
-        pathname: "/images/brand/**",
-      },
-      {
-        protocol: "https",
-        hostname: "clarkscms.cinuniverse.com",
-        pathname: "/images/discover/**",
+        protocol: 'https',
+        hostname: 'amritara.cinuniverse.com',
+        pathname: '/blog/admin/**',
       },
       {
         protocol: "https",
         hostname: "homesweb.staah.net",
         pathname: "/imagelibrary/**",
       },
-      {
-        protocol: "https",
-        hostname: "clarkscms.cinuniverse.com",
-        pathname: "/images/offers/**",
-      },
+    
       {
         protocol: "http",
         hostname: "loyaltypulsedemo.ownyourcustomers.in",

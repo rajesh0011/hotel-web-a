@@ -119,7 +119,7 @@ const AtithyamClient = () => {
               <br />
               ensures your journey is enriched at every step.
             </h4>
-            <button className="reward-join-now-btn">Join Now</button>
+            <Link href="/signin" className="reward-join-now-btn">Join Now</Link>
         </div>
       </div>
 
@@ -148,18 +148,7 @@ const AtithyamClient = () => {
         .about-text-rewards i {
           font-style: italic;
         }
-        .reward-join-now-btn {
-          background-color: var(--red);
-          color: #fff;
-          border: none;
-          padding: 8px 20px;
-          border-radius: 0px;
-          font-size: 14px;
-          text-transform: uppercase;
-          cursor: pointer;
-          transition: background-color 0.3s ease;
-          letter-spacing: 1px;
-        }
+        
       `}</style>
     </>
   );

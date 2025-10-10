@@ -126,7 +126,7 @@ const handleBookNowClick2 = async () => {
       <NestedSwiper></NestedSwiper>
       <UntoldStories></UntoldStories>
       <ZonesList></ZonesList>
-      <NewOfferSlider></NewOfferSlider>
+      {/* <NewOfferSlider></NewOfferSlider> */}
       <CorporateOffers></CorporateOffers>
 
         {/* {showFilterBar && ReactDOM.createPortal (

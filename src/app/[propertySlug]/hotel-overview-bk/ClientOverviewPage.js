@@ -7,6 +7,8 @@ import "swiper/css";
 import "swiper/css/navigation";
 import Image from "next/image";
 import "swiper/css/pagination";
+import Link from "next/link";
+
 import { Navigation, Pagination, Autoplay } from "swiper/modules";
 import PropertyMainHeader from "@/app/Common/PropertyMainHeader";
 import AccommodationSlider from "@/app/Components/AccommodationSlider";
@@ -14,12 +16,15 @@ import GalleryModal from "@/app/Components/GalleryModal";
 import DiningSlider from "@/app/Components/DiningSlider";
 import LatestOffers from "@/app/Components/LatestOffers";
 import OverExp from "@/app/Components/OverExp";
+import Nearbycity from "@/app/Components/Nearbycity";
+import PropertyFaq from "./PropertyFaq";
 import PropertyGalleryOverview from "@/app/Components/PropertyGalleryOverview";
 import PropertyTestimonials from "@/app/Components/PropertyTestimonials";
-import PropertyFaq from "../PropertyFaq";
 
 export default function ClientOverviewPage({
-  propertySlug: slugFromProps, propertyId: idFromProps, propertyName: nameFromProps,
+  propertySlug: slugFromProps,
+  propertyId: idFromProps,
+  propertyName: nameFromProps,
 }) {
   const { propertySlug: slugFromRoute } = useParams();
 
@@ -33,7 +38,7 @@ export default function ClientOverviewPage({
   const [loading, setLoading] = useState(true);
   const [isOpen, setOpen] = useState(false);
   const [showFullText, setShowFullText] = useState(false);
- 
+  // ...other state
 
   // If we don't yet have propertyId (or name), look it up by slug
   useEffect(() => {
@@ -96,25 +101,16 @@ export default function ClientOverviewPage({
         // propertySlug={propertySlug}
         id={propertyData.propertyId}
       />
-      <section className="hero-section inner-gumlet-video position-relative overflow-hidden h-full flex items-center justify-center">
+      <section className="hero-section position-relative overflow-hidden h-full flex items-center justify-center">
 
-
-        <div style={{ position: "relative", aspectRatio: "16/9" }}>
-          <iframe
-            loading="lazy" title="Gumlet video player"
-            src="https://play.gumlet.io/embed/68e7a50001fefe1a9aadc00d?background=true&autoplay=true&loop=true&disableControls=true"
-            style={{
-              border: "none",
-              position: "absolute",
-              top: 0,
-              left: 0,
-              width: "100%",
-              height: "100%",
-            }}
-            allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; fullscreen;">
-          </iframe>
-        </div>
-
+        <video className="w-100 object-cover for-desktop-video-main"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto">
+          <source src="/amritara-new-banner-video.mp4" type="video/mp4" />
+        </video>
         {/* <video src="/amritara-new-banner-video.mp4" autoPlay loop ></video> */}
         {/* <div className="hero-bottom-part-ab">
         <Link href="#" className="search-icon-banner">
@@ -149,6 +145,22 @@ export default function ClientOverviewPage({
         ) : (
           <div>No images available</div>
         )}
+
+
+        {/* <div
+          className={`absolute left-1/2 transform -translate-x-1/2 home-page-class`}
+          style={{ zIndex: 10 }}
+        >
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              handleBookNowClick();
+            }}
+            className="p-2 bg-white flex items-center justify-center rounded-full"
+          >
+            {isOpen ? <X size={18} color="black" /> : "Book Now"}
+          </button>
+        </div> */}
 
       </section>
 
@@ -189,23 +201,72 @@ export default function ClientOverviewPage({
       </section>
 
 
-      <AccommodationSlider propertyId={propertyData.propertyId} setShowModal={setShowModal} setSelectedRoom={setSelectedRoom}
+      <AccommodationSlider
+        propertyId={propertyData.propertyId}
+        setShowModal={setShowModal}
+        setSelectedRoom={setSelectedRoom}
       // onSubmit={handleRoomBookNow}
       />
 
-      <GalleryModal showModal={showModal} setShowModal={setShowModal} roomData={selectedRoom} />
+      <GalleryModal
+        showModal={showModal}
+        setShowModal={setShowModal}
+        roomData={selectedRoom}
+      />
+
+
 
       <DiningSlider propertyId={propertyData.propertyId} />
 
       {/* <EventWedding propertyId={propertyData.propertyId} /> */}
 
-      <LatestOffers propertyId={propertyData.propertyId} />
 
-      <OverExp propertyId={propertyData.propertyId} />
+      <section className="sec-padding" data-aos="fade-up">
+        <div className="container">
+          <div className="global-heading-sec text-center">
+            <div className="row justify-content-center mb-4">
+              <div className="col-md-9 md-offset-1">
+                <h2 className="global-heading pt-4">Offers</h2>
+              </div>
+            </div>
+          </div>
+          <div className="winter-sec">
+            <div className="row">
+              <LatestOffers propertyId={propertyData.propertyId} />
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+
+
+
+      <section className="sec-padding bg-lred" data-aos="fade-up">
+        <div className="container">
+          <div className="global-heading-sec text-center">
+            <div className="row justify-content-center mb-0">
+              <div className="col-md-9 md-offset-1">
+                <h2 className="global-heading pt-0">Experiences</h2>
+              </div>
+            </div>
+          </div>
+          <div className="winter-sec">
+            <div className="row">
+              <OverExp propertyId={propertyData.propertyId} />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* <Nearbycity /> */}
+
 
       <PropertyGalleryOverview propertyId={propertyData.propertyId}></PropertyGalleryOverview>
 
+
       <PropertyTestimonials propertyId={propertyData.propertyId}></PropertyTestimonials>
+
 
       <PropertyFaq propertyId={propertyData.propertyId} />
 

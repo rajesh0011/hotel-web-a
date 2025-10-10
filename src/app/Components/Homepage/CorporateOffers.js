@@ -40,12 +40,12 @@ export default function CorporateOffers() {
 
   return (
     <>
-    <section className="corporate-offers-section mt-5 pb-3">
+
+    <section className="corporate-offers-section section-padding bg-lred">
       <div className="container">
-        <h2 className="offers-heading">Offers curated just for you</h2>
-        <p className="offers-subheading">
-          Your Next Escape Awaits at Our Handpicked Locations
-        </p>
+        <div className="global-heading-sec text-center">
+          <h2 className="global-heading">Offers</h2>
+        </div>
 
         <Swiper
           modules={[Navigation, Pagination]}

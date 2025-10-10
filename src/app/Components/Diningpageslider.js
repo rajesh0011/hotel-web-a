@@ -72,8 +72,9 @@ export default function Diningpageslider({ dineData = [] }) {
                   <div
                     className="pushed-image col-md-6"
                     style={{
-                      backgroundImage: `url(${hotel.img || "/amritara-dummy-room.jpeg"
-                        })`,
+                      // backgroundImage: `url(${hotel.img || "/amritara-dummy-room.jpeg"
+                      //   })`,
+                        backgroundImage: `url("${encodeURI(hotel.img || "/amritara-dummy-room.jpeg")}")`,
                       backgroundSize: "cover",
                       backgroundPosition: "center",
                       minHeight: "250px",
