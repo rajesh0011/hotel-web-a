@@ -34,8 +34,6 @@ export default function ClientOverviewPage({
   const [isOpen, setOpen] = useState(false);
   const [showFullText, setShowFullText] = useState(false);
  
-
-  // If we don't yet have propertyId (or name), look it up by slug
   useEffect(() => {
     if (!slug || propertyId) return;
 
@@ -97,31 +95,36 @@ export default function ClientOverviewPage({
         id={propertyData.propertyId}
       />
       <section className="hero-section inner-gumlet-video position-relative overflow-hidden h-full flex items-center justify-center">
+  <div style={{ position: "relative", aspectRatio: "16/9" }}>
+    {(() => {
+      const fallbackVideoId = "68e7a50001fefe1a9aadc00d";
+      const videoId =
+        propertyData?.videoId && propertyData.videoId !== "0"
+          ? propertyData.videoId
+          : fallbackVideoId;
 
+      return (
+        <iframe
+          loading="lazy"
+          title="Gumlet video player"
+          src={`https://play.gumlet.io/embed/${videoId}?background=true&autoplay=true&loop=true&disableControls=true`}
+          style={{
+            border: "none",
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+          }}
+          allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; fullscreen;"
+        ></iframe>
+      );
+    })()}
+  </div>
+</section>
 
-        <div style={{ position: "relative", aspectRatio: "16/9" }}>
-          <iframe
-            loading="lazy" title="Gumlet video player"
-            src="https://play.gumlet.io/embed/68e7a50001fefe1a9aadc00d?background=true&autoplay=true&loop=true&disableControls=true"
-            style={{
-              border: "none",
-              position: "absolute",
-              top: 0,
-              left: 0,
-              width: "100%",
-              height: "100%",
-            }}
-            allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; fullscreen;">
-          </iframe>
-        </div>
+{/* <h1>video id: {propertyData?.videoId || "fallback (68e7a50001fefe1a9aadc00d)"} </h1> */}
 
-        {/* <video src="/amritara-new-banner-video.mp4" autoPlay loop ></video> */}
-        {/* <div className="hero-bottom-part-ab">
-        <Link href="#" className="search-icon-banner">
-          <Search />
-        </Link>
-      </div> */}
-      </section>
 
       <section className="position-relative banner-section d-none">
         {propertyData.images && propertyData.images.length > 0 ? (
@@ -158,7 +161,7 @@ export default function ClientOverviewPage({
             <div className="row justify-content-center mb-0">
               <div className="col-md-9 md-offset-1">
                 <h1 className="global-heading">
-                  {propertyData?.propertyTitle || "Clarks Hotel"}
+                  {propertyData?.propertyTitle || "Amritara Hotels & Resorts"}
                 </h1>
                 {/* <p className="mb-0">{propertyData?.description}</p> */}
                 <p className="mb-0">
@@ -195,7 +198,7 @@ export default function ClientOverviewPage({
 
       <GalleryModal showModal={showModal} setShowModal={setShowModal} roomData={selectedRoom} />
 
-      <DiningSlider propertyId={propertyData.propertyId} />
+      <DiningSlider propertyId={propertyData.propertyId} propertyData={propertyData} />
 
       {/* <EventWedding propertyId={propertyData.propertyId} /> */}
 

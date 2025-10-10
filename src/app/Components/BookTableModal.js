@@ -1,10 +1,39 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
-export default function BookTableModal({ show, onClose, hotelName, cityId, propertyId }) {
+export default function BookTableModal({
+  show,
+  onClose,
+  hotelName,
+  cityId: cityIdProp,
+  propertyId: propertyIdProp,
+  propertyData, // <-- contains cityId & propertyId (CMS IDs)
+}) {
+  const [ids, setIds] = useState({
+    cityId: cityIdProp ? String(cityIdProp) : "",
+    propertyId: propertyIdProp ? String(propertyIdProp) : "",
+  });
+
+  // Whenever propertyData or props change, refresh IDs
+  useEffect(() => {
+    const nextCityId =
+      propertyData?.cityId != null
+        ? String(propertyData.cityId)
+        : cityIdProp != null
+        ? String(cityIdProp)
+        : "";
+
+    const nextPropertyId =
+      propertyData?.propertyId != null
+        ? String(propertyData.propertyId)
+        : propertyIdProp != null
+        ? String(propertyIdProp)
+        : "";
+
+    setIds({ cityId: nextCityId, propertyId: nextPropertyId });
+  }, [propertyData, cityIdProp, propertyIdProp]);
+
   const [form, setForm] = useState({
-    cityId: cityId ? String(cityId) : "",
-    propertyId: propertyId ? String(propertyId) : "",
     fname: "",
     lname: "",
     phone: "",
@@ -22,7 +51,8 @@ export default function BookTableModal({ show, onClose, hotelName, cityId, prope
   const [notice, setNotice] = useState("");
 
   const handleFormChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setForm((p) => ({ ...p, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
@@ -30,63 +60,80 @@ export default function BookTableModal({ show, onClose, hotelName, cityId, prope
     setLoading(true);
     setNotice("");
 
+    // Always take IDs from 'ids' (synced from propertyData/props), not from the form
     const payload = {
-      cityId: String(form.cityId),
-      propertyId: String(form.propertyId),
-      firstName: String(form.fname),
-      lastName: String(form.lname),
-      mobileNo: String(form.phone),
-      email: String(form.email),
-      eventDate: String(form.date),
-      eventType: "Dine",
-      roomsRequired: Boolean(form.roomsRequired), // "true" or "false"
-      noOfRooms: String(form.noOfRooms),
-      noOfGuests: String(form.guests),
-      checkIn: String(form.checkIn || form.date),
-      checkOut: String(form.checkOut || form.date),
-      requestFrom: "Dine",
-      remarks: String(form.message),
-      remarks1: "",
+      cityId: String(ids.cityId || ""),
+      propertyId: String(ids.propertyId || ""),
+      firstName: String(form.fname || ""),
+      lastName: String(form.lname || ""),
+      mobileNo: String(form.phone || ""),
+      email: String(form.email || ""),
+      eventDate: String(form.date || ""),
+      eventType: "Dining",
+      roomsRequired: Boolean(form.roomsRequired),
+      noOfRooms: String(form.noOfRooms || "0"),
+      noOfGuests: String(form.guests || "0"),
+      checkIn: String(form.checkIn || form.date || ""),
+      checkOut: String(form.checkOut || form.date || ""),
+      requestFrom: "Dining",
+      remarks: String(form.message || "Dining"),
+      remarks1: hotelName || "", // helpful context
       remarks2: "",
     };
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_CMS_API_Base_URL}/common/EnquireNow`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_CMS_API_Base_URL}/common/EnquireNow`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      // Try to parse JSON, but handle non-JSON as well
+      let data = null;
+      try {
+        data = await res.clone().json();
+      } catch {}
+
+      if (!res.ok) {
+        const msg = data?.message || data?.error || `HTTP ${res.status}`;
+        setNotice(`Failed to submit: ${msg}`);
+        setLoading(false);
+        return;
+      }
+
+      // If API follows errorCode convention
+      if (data && typeof data === "object" && "errorCode" in data && String(data.errorCode) !== "0") {
+        setNotice(data.errorMessage || "Something went wrong.");
+        setLoading(false);
+        return;
+      }
+
+      setNotice("Your booking enquiry has been submitted successfully.");
+
+      // Reset only the form fields; IDs come from propertyData/props
+      setForm({
+        fname: "",
+        lname: "",
+        phone: "",
+        email: "",
+        date: "",
+        guests: "",
+        message: "",
+        noOfRooms: "0",
+        roomsRequired: false,
+        checkIn: "",
+        checkOut: "",
       });
 
-      const data = await res.json();
-
-      if (data.errorCode === "0") {
-        setNotice("Your booking enquiry has been submitted successfully.");
-        setForm({
-          cityId: String(cityId || ""),
-          propertyId: String(propertyId || ""),
-          fname: "",
-          lname: "",
-          phone: "",
-          email: "",
-          date: "",
-          guests: "",
-          message: "",
-          noOfRooms: "0",
-          roomsRequired: "false",
-          checkIn: "",
-          checkOut: "",
-        });
-        setTimeout(onClose, 1500);
-      } else {
-        setNotice(data.errorMessage || "Something went wrong.");
-      }
+      setTimeout(onClose, 1500);
     } catch (err) {
       setNotice("Failed to send enquiry. Please try again later.");
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   if (!show) return null;
@@ -101,6 +148,8 @@ export default function BookTableModal({ show, onClose, hotelName, cityId, prope
         <div className="modal-dialog">
           <div className="modal-content p-1">
             <div className="modal-header">
+              {/* For quick debugging, you can temporarily show IDs:
+              <small>cityId: {ids.cityId} | propertyId: {ids.propertyId}</small> */}
               <h5 className="modal-title">Enquiry for {hotelName}</h5>
               <button
                 type="button"
@@ -111,8 +160,9 @@ export default function BookTableModal({ show, onClose, hotelName, cityId, prope
                 ×
               </button>
             </div>
+
             <form onSubmit={handleSubmit}>
-              <div className="modal-body p-2">
+              <div className="p-3">
                 <div className="row">
                   {[
                     { label: "First Name", name: "fname", type: "text" },
@@ -154,6 +204,7 @@ export default function BookTableModal({ show, onClose, hotelName, cityId, prope
 
                 {notice && <p className="mt-2 text-success">{notice}</p>}
               </div>
+
               <div className="text-center mb-3">
                 <button type="submit" className="btn btn-primary submit-btn" disabled={loading}>
                   {loading ? "Submitting..." : "Submit"}
@@ -167,32 +218,15 @@ export default function BookTableModal({ show, onClose, hotelName, cityId, prope
       <div className="modal-backdrop fade show"></div>
 
       <style jsx>{`
-        .modal-content {
-          border-bottom: 5px solid #000;
-        }
+        .modal-content { border-bottom: 5px solid #000; }
         .close-popup {
-          position: absolute;
-          right: 10px;
-          top: 10px;
-          border: none;
-          background: none;
-          font-size: 1.7rem;
-          cursor: pointer;
-          color: #fff;
-          line-height: 1rem;
-          padding: 0;
-          opacity: 1;
-          background-color: #000;
+          position: absolute; right: 10px; top: 10px; border: none; background: none;
+          font-size: 1.7rem; cursor: pointer; color: #fff; line-height: 1rem; padding: 0;
+          opacity: 1; background-color: #000;
         }
         .submit-btn {
-          font-size: 14px;
-          border-radius: 0;
-          background: var(--primary-color);
-          padding: 7px 10px;
-          border: none;
-          color: #fff;
-          cursor: pointer;
-          text-transform: uppercase;
+          font-size: 14px; border-radius: 0; background: var(--primary-color);
+          padding: 7px 10px; border: none; color: #fff; cursor: pointer; text-transform: uppercase;
         }
       `}</style>
     </>

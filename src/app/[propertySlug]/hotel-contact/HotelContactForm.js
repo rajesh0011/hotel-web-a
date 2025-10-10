@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-
 export default function HotelContactForm({ cityId, propertyId, longitude, latitude,googleMap }) {
   const [form, setForm] = useState({
     firstName: "",

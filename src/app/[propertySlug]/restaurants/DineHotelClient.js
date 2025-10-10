@@ -5,7 +5,7 @@ import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
 import React, { useEffect, useState } from "react";
-import Diningpageslider from "../../Components/Diningpageslider"
+import Diningpageslider from "../../Components/Diningpageslider";
 import Image from "next/image";
 import { BookingEngineProvider } from "../../cin_context/BookingEngineContext";
 import FilterBar from "../../cin_booking_engine/Filterbar";
@@ -19,21 +19,28 @@ export default function DineHotelClient({ propertySlug }) {
   const [loading, setLoading] = useState(true);
   const [bannerImages, setBannerImages] = useState([]);
 
-  const [propertyId, setPropertyId] = useState(null);
+  // Keep these 3 distinct:
+  const [staahPropertyId, setStaahPropertyId] = useState(null); // for booking engine
+  const [cmsPropertyId, setCmsPropertyId] = useState(null);     // for EnquireNow API
+  const [cityId, setCityId] = useState(null);                    // for EnquireNow API
+
   const [showFilterBar, setShowFilterBar] = useState(false);
   const [cityDetails, setCityDetails] = useState(null);
   const [roomDetails, setRoomDetails] = useState(null);
   const [isOpenFilterBar, openFilterBar] = useState(false);
   const [isOpen, setOpen] = useState(false);
+
   const handleBookNowClick = async () => {
     setOpen(!isOpen);
     openFilterBar(!isOpenFilterBar);
     setShowFilterBar(!showFilterBar);
   };
+
   const handleRoomBookNow = async (room) => {
     setRoomDetails(room);
     setShowFilterBar(true);
   };
+
   useEffect(() => {
     if (!propertySlug) return;
 
@@ -48,14 +55,23 @@ export default function DineHotelClient({ propertySlug }) {
           return null;
         }
         const found = json.data.find(
-          (p) => p.propertySlug.toLowerCase() === slug.toLowerCase()
+          (p) => p.propertySlug?.toLowerCase() === slug.toLowerCase()
         );
-        const label = found?.cityName;
-        const value = found?.cityId;
-        const property_Id = found?.staahPropertyId;
-        setCityDetails({ label, value, property_Id });
-        setPropertyId(found?.staahPropertyId);
-        return found?.propertyId || null;
+        if (!found) return null;
+
+        // Set all IDs
+        setCityId(found.cityId ?? null);              // ✅ for EnquireNow
+        setCmsPropertyId(found.propertyId ?? null);   // ✅ for EnquireNow
+        setStaahPropertyId(found.staahPropertyId ?? null); // ✅ for booking engine
+
+        // Ancillary city details for the booking bar
+        setCityDetails({
+          label: found.cityName,
+          value: found.cityId,
+          property_Id: found.staahPropertyId,
+        });
+
+        return found.propertyId || null; // this is the CMS property id used by Dine API below
       } catch (error) {
         console.error("Error fetching property list:", error);
         return null;
@@ -63,52 +79,50 @@ export default function DineHotelClient({ propertySlug }) {
     };
 
     const fetchData = async () => {
-  setLoading(true);
-  try {
-    const propertyId = await fetchPropertyIdFromSlug(propertySlug);
-    if (!propertyId) {
-      setDineData([]);
-      setBanner(null);
-      setLoading(false);
-      return;
-    }
+      setLoading(true);
+      try {
+        const cmsId = await fetchPropertyIdFromSlug(propertySlug);
+        if (!cmsId) {
+          setDineData([]);
+          setBanner(null);
+          setLoading(false);
+          return;
+        }
 
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_CMS_API_Base_URL}/dine/GetDineByProperty?propertyId=${propertyId}`
-    );
-    const result = await res.json();
+        // Dine details use CMS propertyId
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_CMS_API_Base_URL}/dine/GetDineByProperty?propertyId=${cmsId}`
+        );
+        const result = await res.json();
 
-    const banners = result?.data || [];
-    const firstBanner = banners[0] || null;
+        const banners = result?.data || [];
+        const firstBanner = banners[0] || null;
+        setBanner(firstBanner);
 
+        // Property images (also with CMS propertyId)
+        const imageRes = await fetch(
+          `${process.env.NEXT_PUBLIC_CMS_API_Base_URL}/property/GetPropertyByFilter?PropertyId=${cmsId}`
+        );
+        const dataJson = await imageRes.json();
+        const propertyObj = dataJson?.data?.[0] || null;
 
-   const imageRes = await fetch(
-     `${process.env.NEXT_PUBLIC_CMS_API_Base_URL}/property/GetPropertyByFilter?PropertyId=${propertyId}`
-   );
-   const dataJson = await imageRes.json();
-   const propertyObj = dataJson?.data?.[0] || null;
+        if (propertyObj) {
+          setPropertyData(propertyObj);
+          const imagesFromApi = propertyObj.images || [];
+          const imageUrls = imagesFromApi.map((img) => img.propertyImage).filter(Boolean);
+          setBannerImages(imageUrls);
+        }
 
-   if (propertyObj) {
-     setPropertyData(propertyObj); // ✅ for dynamic footer
-     const imagesFromApi = propertyObj.images || [];
-     const imageUrls = imagesFromApi
-       .map((img) => img.propertyImage)
-       .filter(Boolean);
-     setBannerImages(imageUrls);
-   }
-
-   const allDineDetails =
-     banners.flatMap((b) => b.dineDetails || []) || [];
-   setDineData(allDineDetails);
-  } catch (error) {
-    console.error("Error fetching property data:", error);
-    setDineData([]);
-    setBanner(null);
-  } finally {
-    setLoading(false);
-  }
-};
-
+        const allDineDetails = banners.flatMap((b) => b.dineDetails || []) || [];
+        setDineData(allDineDetails);
+      } catch (error) {
+        console.error("Error fetching property data:", error);
+        setDineData([]);
+        setBanner(null);
+      } finally {
+        setLoading(false);
+      }
+    };
 
     fetchData();
   }, [propertySlug]);
@@ -117,46 +131,40 @@ export default function DineHotelClient({ propertySlug }) {
 
   return (
     <>
-      {/* <PropertyHeader
-        brand_slug={propertySlug}
-        id={banner?.propertyId}
-        onSubmit={handleBookNowClick}
-      /> */}
-      <PropertyMainHeader></PropertyMainHeader>
+      <PropertyMainHeader />
 
       <section className="position-relative inner-banner-section-slider d-none">
-          {bannerImages.length > 0 ? (
-            <Swiper
-              modules={[Navigation, Pagination, Autoplay]}
-              navigation
-              autoplay={{ delay: 4000 }}
-              loop
-              className="w-100 slider-banner-inner"
-            >
-              {bannerImages.map((imgUrl, index) => (
-                <SwiperSlide key={index}>
-                  <Image
-                    src={imgUrl}
-                    alt={`Banner ${index + 1}`}
-                    width={1920}
-                    height={1080}
-                    className="w-100 object-cover"
-                  />
-                </SwiperSlide>
-              ))}
-            </Swiper>
-          ) : (
-            <Image
-              src="/images/banner_img.png"
-              alt="Default Banner"
-              width={1920}
-              height={1080}
-              className="w-100 object-cover"
-            />
-          )}
+        {bannerImages.length > 0 ? (
+          <Swiper
+            modules={[Navigation, Pagination, Autoplay]}
+            navigation
+            autoplay={{ delay: 4000 }}
+            loop
+            className="w-100 slider-banner-inner"
+          >
+            {bannerImages.map((imgUrl, index) => (
+              <SwiperSlide key={index}>
+                <Image
+                  src={imgUrl}
+                  alt={`Banner ${index + 1}`}
+                  width={1920}
+                  height={1080}
+                  className="w-100 object-cover"
+                />
+              </SwiperSlide>
+            ))}
+          </Swiper>
+        ) : (
+          <Image
+            src="/images/banner_img.png"
+            alt="Default Banner"
+            width={1920}
+            height={1080}
+            className="w-100 object-cover"
+          />
+        )}
 
         <div className="position-absolute bottom-0 start-0 w-100 bg-white shadow">
-          {/* <BookNowForm /> */}
           <div
             className={`absolute left-1/2 transform -translate-x-1/2 home-page-class`}
             style={{ zIndex: 10 }}
@@ -171,10 +179,11 @@ export default function DineHotelClient({ propertySlug }) {
               {isOpen ? <X size={18} color="black" /> : "Book Now"}
             </button>
           </div>
+
           {showFilterBar && (
             <BookingEngineProvider>
               <FilterBar
-                selectedProperty={parseInt(propertyId)}
+                selectedProperty={parseInt(staahPropertyId)}   // ✅ Booking engine uses STAAH id
                 cityDetails={cityDetails}
                 roomDetails={roomDetails}
                 openBookingBar={isOpenFilterBar}
@@ -197,19 +206,19 @@ export default function DineHotelClient({ propertySlug }) {
                 <h2 className="global-heading">
                   {banner?.dineBannerTitle || "Dining"}
                 </h2>
-                {/* <p className="mb-0">
-                  {banner?.dineBannerDesc ||
-                    "Enjoy our signature dining experiences with local and international flavors."}
-                </p> */}
               </div>
             </div>
           </div>
 
-          {/* Show slider only if data exists */}
           {dineData.length > 0 ? (
             <div className="winter-sec">
               <div className="row">
-                <Diningpageslider dineData={dineData} />
+                {/* ✅ Pass the correct IDs for the enquiry API */}
+                <Diningpageslider
+                  dineData={dineData}
+                  cityId={cityId}
+                  propertyId={cmsPropertyId}
+                />
               </div>
             </div>
           ) : (
@@ -219,7 +228,6 @@ export default function DineHotelClient({ propertySlug }) {
           )}
         </div>
       </section>
-
     </>
   );
 }
