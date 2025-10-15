@@ -112,13 +112,27 @@ export default function ZoneTabs({ zones }) {
                             >
                               Explore
                             </Link>
-                            <Link
+                            {/* <Link
                               href={property.booking_url || "#"}
                               className="book-now-btn"
                               target="_blank"
                             >
                               Book Now
-                            </Link>
+                            </Link> */}
+
+                            <button
+  className="book-now-btn"
+  onClick={() => {
+    if (property?.staahBookingId) {
+      const bookingUrl = `https://bookings.amritara.co.in/?chainId=5971&propertyId=${property.staahBookingId}&_gl=1*1d9irrh*_gcl_au*MzgxMDEyODcxLjE3NTgyNjIxOTIuNzY2OTMwNzIwLjE3NTkzMTE2MjAuMTc1OTMxMTcyMA..*_ga*NzUyODI0NDE0LjE3NTgyNjIxOTI.*_ga_7XSGQLL96K*czE3NjA0NDUzOTUkbzQ4JGcxJHQxNzYwNDQ2NTA2JGo2MCRsMCRoODE1NTgwNjUw*_ga_DVBE6SS569*czE3NjA0NDUzOTQkbzQ1JGcxJHQxNzYwNDQ1NDY2JGo2MCRsMCRoOTgzMzg5ODY.`;
+      window.open(bookingUrl, "_blank"); // opens in new tab
+    } else {
+      alert("Booking not available for this property.");
+    }
+  }}
+>
+  Book Now
+</button>
                           </div>
                         </div>
                       </div>

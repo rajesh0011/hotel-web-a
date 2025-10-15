@@ -22,6 +22,7 @@ export default function GalleryHotelClient({ propertySlug, id }) {
   const [bannerImages, setBannerImages] = useState([]);
   const [loading, setLoading] = useState(true);
     const [propertyData, setPropertyData] = useState(null);
+    const [type, setPropertyType] = useState(null);
 
   const [propertyId, setPropertyId] = useState(null);
   const [showFilterBar, setShowFilterBar] = useState(false);
@@ -102,8 +103,10 @@ export default function GalleryHotelClient({ propertySlug, id }) {
       const label = found?.cityName;
       const value = found?.cityId;
       const property_Id = found?.staahPropertyId;
+      const type = found?.propertyType;
 
       // ✅ City + staah for booking engine
+      setPropertyType(type);
       setCityDetails({ label, value, property_Id });
 
       // ✅ Important: set propertyId from actual propertyId
@@ -200,11 +203,14 @@ export default function GalleryHotelClient({ propertySlug, id }) {
         id={id}
         onSubmit={handleBookNowClick}
       /> */}
-      <PropertyMainHeader
-        brand_slug={propertySlug}
-        id={id}
+      {/* <PropertyMainHeader
+        id={propertyId}
         onSubmit={() => {}}
-      />
+      /> */}
+
+      <PropertyMainHeader id={propertyId} type={type} />
+
+      {/* <h1>proerty id {propertyId}</h1> */}
 
       {/* ✅ Banner Section with Swiper */}
       <section className="position-relative banner-section d-none">
@@ -275,6 +281,7 @@ export default function GalleryHotelClient({ propertySlug, id }) {
         <div className="container">
           <div className="global-heading-sec text-center">
             <h2 className="global-heading">Our Gallery</h2>
+            {/* <h1>property id {propertyId}</h1> */}
           </div>
           <HotelGallery galleryData={galleryData} />
         </div>

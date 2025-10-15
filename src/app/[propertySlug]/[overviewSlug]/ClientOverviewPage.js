@@ -91,8 +91,8 @@ export default function ClientOverviewPage({
   return (
     <>
       <PropertyMainHeader
-        // propertySlug={propertySlug}
-        id={propertyData.propertyId}
+        id={propertyData?.propertyId}
+        type={propertyData?.propertyType}
       />
       <section className="hero-section inner-gumlet-video position-relative overflow-hidden h-full flex items-center justify-center">
   <div style={{ position: "relative", aspectRatio: "16/9" }}>
@@ -122,8 +122,6 @@ export default function ClientOverviewPage({
     })()}
   </div>
 </section>
-
-{/* <h1>video id: {propertyData?.videoId || "fallback (68e7a50001fefe1a9aadc00d)"} </h1> */}
 
 
       <section className="position-relative banner-section d-none">
@@ -192,7 +190,7 @@ export default function ClientOverviewPage({
       </section>
 
 
-      <AccommodationSlider propertyId={propertyData.propertyId} setShowModal={setShowModal} setSelectedRoom={setSelectedRoom}
+      <AccommodationSlider propertyId={propertyData.propertyId} BeId={propertyData.staahBookingId} setShowModal={setShowModal} setSelectedRoom={setSelectedRoom}
       // onSubmit={handleRoomBookNow}
       />
 

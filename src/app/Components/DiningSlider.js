@@ -105,8 +105,12 @@ const DiningSlider = ({ propertyId, hotelName, propertyData }) => {
           <div className="row justify-content-center mb-4">
             <div className="col-md-9">
               <div className="global-heading-sec text-center">
-                <h2 className="global-heading pt-5">{bannerData.title || "Dining"}</h2>
-                {/* {bannerData.desc && (
+                <h2 className="global-heading pt-5">Dining</h2>
+              </div>
+              {/* {bannerData?.title && (
+              <div className="global-heading-sec text-center">
+                <h2 className="global-heading pt-5">{bannerData?.title || "Dining"}</h2>
+                {bannerData.desc && (
                       <p className="mb-2 whitespace-pre-line">
                             {bannerData?.desc.length > 150 ? (
                               <>
@@ -128,11 +132,11 @@ const DiningSlider = ({ propertyId, hotelName, propertyData }) => {
                               bannerData?.desc
                             )}
                           </p>
-                    )} */}
+                    )}
               </div>
+              )} */}
             </div>
             <div className="winter-sec">
-
               <Swiper
                 navigation
                 modules={[Navigation]}

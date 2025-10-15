@@ -165,10 +165,82 @@ font-size:14px!important;
   background: none !important;
 }
 
+.corporate-page-offer-box{
+box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
+margin-bottom:1.5rem;
+padding:1rem;
+border-radius:10px;
+transition:all 0.3s ease-in-out;
+/* background-color: #e5e5f7; */
+/* opacity: 0.8; */
+/* background: linear-gradient(135deg, #444cf755 25%, transparent 25%) -10px 0/ 20px 20px, linear-gradient(225deg, #444cf7 25%, transparent 25%) -10px 0/ 20px 20px, linear-gradient(315deg, #444cf755 25%, transparent 25%) 0px 0/ 20px 20px, linear-gradient(45deg, #444cf7 25%, #e5e5f7 25%) 0px 0/ 20px 20px; */
+}
+
+
+
+
+
+.corporate-offers-page-section .row .col-md-4:nth-child(odd) .corporate-page-offer-box,
+.corporate-offers-page-section .row .col-md-4:nth-child(odd) .corporate-page-offer-box .rounded-0{
+  background-color:var(--brown);
+  color:#fff;
+  
+}
+.corporate-offers-page-section .row .col-md-4:nth-child(odd) .corporate-page-offer-box{
+border-bottom:6px solid var(--bg-yellow);
+}
+
+.corporate-offers-page-section .row .col-md-4:nth-child(even) .corporate-page-offer-box,
+.corporate-offers-page-section .row .col-md-4:nth-child(even) .corporate-page-offer-box .rounded-0{
+  background-color:var(--bg-yellow);
+  color:#fff;
+  
+}
+.corporate-offers-page-section .row .col-md-4:nth-child(even) .corporate-page-offer-box{
+border-bottom:6px solid var(--brown);
+}
+
+
 .property-book-now-header {
 	margin-top: .5rem !important;
 }
 
+.corporate-offers-section{
+  padding:3rem 0;
+}
+.corporate-offers-section .offer-content,
+.corporate-offers-section .offer-content .offer-desc{
+  color:#fff!important;
+}
+
+.corporate-offers-section .swiper-wrapper .swiper-slide:nth-child(odd) .offer-card{
+  background-color:var(--brown);
+  color:#fff;
+  
+}
+.corporate-offers-section .swiper-wrapper .swiper-slide:nth-child(odd) .offer-card{
+border-bottom:6px solid var(--bg-yellow);
+}
+
+.corporate-offers-section .swiper-wrapper .swiper-slide:nth-child(even) .offer-card{
+  background-color:var(--bg-yellow);
+  color:#fff;
+  
+}
+.corporate-offers-section .swiper-wrapper .swiper-slide:nth-child(even) .offer-card{
+border-bottom:6px solid var(--brown);
+}
+.privacy-policy-page p{
+  line-height:1.8;
+  text-align:justify;
+}
+.privacy-policy-page ul{
+  list-style-type: circle;
+  padding-left:20px;
+}
+.privacy-policy-page ul li{
+  margin-bottom:0.5rem;
+}
 
 /* ===========================
    SignInComponent Styles
@@ -188,6 +260,7 @@ font-size:14px!important;
   width: 100%;
   max-width: 400px;
   background-color:#fff;
+  border-bottom: 6px solid var(--brown);
 }
 .signin-checkbox {
     display: flex;

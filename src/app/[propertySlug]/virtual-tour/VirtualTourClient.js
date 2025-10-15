@@ -2,11 +2,6 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-// import BookNowForm from "@/components/BookNowForm";
-import AccommodationSliderNew from "@/app/Components/AccommodationSliderNew";
-import Image from "next/image";
-import { Swiper, SwiperSlide } from "swiper/react";
-import { Navigation, Pagination, Autoplay } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
@@ -15,20 +10,19 @@ import { BookingEngineProvider } from "@/app/cin_context/BookingEngineContext";
 import FilterBar from "@/app/cin_booking_engine/Filterbar";
 import { X } from "lucide-react";
 import PropertyMainHeader from "@/app/Common/PropertyMainHeader";
-import GalleryModal from "../../Components/GalleryModal";
-// import { getUserInfo } from "../../../../utilities/userInfo";
+import VirtualTourPropertyPage from "@/app/Components/VirtualTourPropertyPage";
 
-export default function RoomHotelClient() {
+export default function VirtualTour() {
   const { brandSlug, propertySlug } = useParams();
+  const [type, setPropertyType] = useState(null);
 
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [propertyId, setPropertyId] = useState(null);
-  const [type, setPropertyType] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const [showModal, setShowModal] = useState(false);
   const [openIndex, setOpenIndex] = useState(0);
-const [BeId, setBeId] = useState(null);
+
   const [bannerImages, setBannerImages] = useState([]);
       const [propertyData, setPropertyData] = useState(null);
 
@@ -126,8 +120,6 @@ const [BeId, setBeId] = useState(null);
         const value = found?.cityId;
         const property_Id = found?.staahPropertyId;
         const type = found?.propertyType;
-        const BeqId = found?.staahBookingId;
-        setBeId(BeqId);
 
         // ✅ City + staah for booking engine
         setPropertyType(type);
@@ -154,55 +146,39 @@ const [BeId, setBeId] = useState(null);
  useEffect(() => {
   if (!propertyId) return;
 
-  const fetchPropertyDetails = async () => {
+ const fetchExperienceBannerImages = async () => {
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_CMS_API_Base_URL}/property/GetPropertyByFilter?PropertyId=${propertyId}`
+        `${process.env.NEXT_PUBLIC_CMS_API_Base_URL}/property/GetPropertyExperiancesBanner?propertyId=${propertyId}`,
+        { cache: "no-store" }
       );
       const json = await res.json();
 
-      if (json.errorMessage !== "success") {
-        console.error("Property details fetch error:", json);
-        return;
-      }
-     const fetchedPropertyData = json.data?.[0] || null;
-     setPropertyData(fetchedPropertyData);
+      if (json.errorMessage === "success" && Array.isArray(json.data)) {
+        // Collect images from expBannerImages + expDetails.expImages
+        const images =
+          json.data.flatMap((banner) => {
+            const bannerImgs = banner.expBannerImages?.map((img) => img.experiancesImages) || [];
+            const detailImgs = banner.expDetails?.flatMap((exp) =>
+              exp.expImages?.map((img) => img.experiancesImages) || []
+            ) || [];
+            return [...bannerImgs, ...detailImgs];
+          }) || [];
 
+        setBannerImages(images);
+      } else {
+        setBannerImages([]);
+      }
     } catch (error) {
-      console.error("Error fetching property details:", error);
+      console.error("Error fetching experience banner images:", error);
+      setBannerImages([]);
+    } finally {
+      setLoading(false);
     }
   };
+  
 
-  fetchPropertyDetails();
-
-  const fetchRoomBannerImages = async () => {
-      try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_CMS_API_Base_URL}/property/GetPropertyRoomBanner?propertyId=${propertyId}`,
-          { cache: "no-store" }
-        );
-        const json = await res.json();
-
-        if (json.errorMessage === "success" && Array.isArray(json.data)) {
-          const images =
-            json.data?.flatMap((banner) =>
-              banner.roomsInfo?.flatMap((room) =>
-                room.roomImages?.map((img) => img.roomImage) || []
-              )
-            ) || [];
-          setBannerImages(images);
-        } else {
-          setBannerImages([]);
-        }
-      } catch (error) {
-        console.error("Error fetching room banner images:", error);
-        setBannerImages([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchRoomBannerImages();
+  fetchExperienceBannerImages();
 
 }, [propertyId]);
 
@@ -214,66 +190,10 @@ const [BeId, setBeId] = useState(null);
         id={propertyId}
         onSubmit={handleBookNowClick}
       /> */}
-      <PropertyMainHeader id={propertyId} type={type}></PropertyMainHeader>
+      <PropertyMainHeader id={propertyId || "6"} type={type || "resort"}></PropertyMainHeader>
 
-      <section className="position-relative inner-banner-section-slider d-none">
-      
-        {bannerImages.length > 0 ? (
-          <Swiper
-            modules={[Navigation, Pagination, Autoplay]}
-            navigation
-            pagination={{ clickable: true }}
-            autoplay={{ delay: 4000, disableOnInteraction: false }}
-            loop={true}
-            className="w-100 slider-banner-inner"
-          >
-            {bannerImages.map((image, index) => (
-              <SwiperSlide key={index}>
-                <Image
-                  src={image || "/amritara-dummy-room.jpeg"}
-                  alt={`Room Banner ${index + 1}`}
-                  width={1920}
-                  height={1080}
-                  className="w-100 object-cover"
-                />
-              </SwiperSlide>
-            ))}
-          </Swiper>
-        ) : (
-          <Image
-            src="/amritara-dummy-room.jpeg"
-            alt="Default Banner"
-            width={1920}
-            height={1080}
-            className="w-100 object-cover"
-          />
-        )}
-    
-        <div className="position-absolute bottom-0 start-0 w-100 bg-white shadow">
-          
-          <div
-            className={`absolute left-1/2 transform -translate-x-1/2 home-page-class`}
-            style={{ zIndex: 10 }}
-          > 
-          </div>
-          {showFilterBar && ReactDOM.createPortal (
-            <BookingEngineProvider>
-              <FilterBar
-                selectedProperty={parseInt(cityDetails.property_Id)}
-                cityDetails={cityDetails}
-                roomDetails={roomDetails}
-                openBookingBar={isOpenFilterBar}
-                onClose={() => {
-                  openFilterBar(false);
-                  setOpen(false);
-                  setShowFilterBar(false);
-                }}
-              />
-            </BookingEngineProvider>,
-          document.body
-          )}
-        </div>
-      </section>
+     
+
 
       <section className="position-relative">
         <div className="position-absolute top-100 start-0 w-100 bg-white shadow">
@@ -299,24 +219,19 @@ const [BeId, setBeId] = useState(null);
         
         </div>
       </section>
-{/* <h1>porperty id {propertyId}</h1> */}
+
 
       <section className="inner-no-banner-sec">
         <div className="container-fluid">
           <div className="winter-sec">
             <div className="row">
-              { propertyId && <AccommodationSliderNew
+              { propertyId && <VirtualTourPropertyPage
                 propertyId={propertyId}
                 setShowModal={setShowModal}
                 setSelectedRoom={setSelectedRoom}
                 onSubmit={handleRoomBookNow}
-                BeId={staahPropertyId}
               />}
-              <GalleryModal
-                showModal={showModal}
-                setShowModal={setShowModal}
-                roomData={selectedRoom}
-              />
+              
             </div>
           </div>
         </div>

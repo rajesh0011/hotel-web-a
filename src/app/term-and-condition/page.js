@@ -44,9 +44,9 @@ export default function TandCPage() {
                     </div>
                     <div className="row align-items-center mb-2">
                         <div className="col-md-12">
-                            <h3>Information Security Practices and Controls</h3>
+                            <h4 className='mb-2 mt-4'>Information Security Practices and Controls</h4>
                             <p>Your credit or debit card information is NOT requested or stored on our servers. We direct you to the secured HDFC payment gateway to enter your credit/debit card information. Only successful and failure transaction information is stored on our server and no card details are stored on our server.</p>
-                            <p>In order to avoid credit card frauds, guests are requested to note the following:</p>
+                            <h5 className='mt-3 mb-1'>In order to avoid credit card frauds, guests are requested to note the following:</h5>
                             <ul>
                                 <li>In case the booking is made using credit card, guests are requested to carry the following documents at the time of check-in.</li>
                                 <li>If the credit card holder is the guest or one of the guests, then the credit card will have to be produced at the time of check-in.</li>
@@ -57,25 +57,25 @@ export default function TandCPage() {
                             <p>In case the above documents are not produced by the guests, Hotel reserves the right to deny the reservation. In such case no refund (except for the taxes) will be given to the guest.</p>
                             <p>In case of erroneous / inadequate / misleading information given while booking, the hotel reserves the right to cancel the booking without any intimation.</p>
                             <p>Guests are required to carry a valid identity proof and produce the same at the time of check in.<br/>Please bring along with you the same identity proof you have entered while booking for verification at the hotel.</p>
-                            <h3>Billing Information</h3>
+                            <h4 className='mb-2 mt-4'>Billing Information</h4>
                             <p>All online payments made through credit/debits will be debited from your account immediately in the name of AMRITARA HOTELS AND RESORTS PVT. LTD.</p>
-                            <h3>Reservation Policy</h3>
+                            <h4 className='mb-2 mt-4'>Reservation Policy</h4>
                             <ul>
                                 <li>All bookings would be confirmed subject to receipt of full advance payment.</li>
                                 <li>Any changes in the Government taxes or surcharges that may be levied shall be applicable and will have to be paid.</li>
                             </ul>
-                            <h3>Cancellation Policy</h3>
+                            <h4 className='mb-2 mt-4'>Cancellation Policy</h4>
                             <ul>
                                 <li>No cancellation fee will apply if the reservation is cancelled 30 (thirty) days prior to the date of arrival.</li>
                                 <li>In case of cancellation bank charges will be applicable.</li>
                             </ul>
                             <p><strong>Hotel Alerts:</strong> As a Mandatory check-In Requirement all Foreign Nationals and Non-Residential Indians Need to present Passport/Visa and all Indian Nationals need to present Photo Identity Card with address Proof.</p>
-                            <h3>Refund Policy</h3>
+                            <h4 className='mb-2 mt-4'>Refund Policy</h4>
                             <ul>
                                 <li>In case of refund, bank transactions will be deducted above cancellation charges.</li>
                                 <li>In case of credit card transactions, refund will be done only to the same credit card. Refund process will take minimum of 15 days.</li>
                             </ul>
-                            <h3>Disclaimer</h3>
+                            <h4 className='mb-2 mt-4'>Disclaimer</h4>
                             <p><em><small>We as a merchant shall be under no liability whatsoever in respect of any loss or damage arising directly or indirectly out of the decline of authorization for any Transaction, on Account of the Cardholder having exceeded the preset limit mutually agreed by us with our acquiring bank from time to time.</small></em></p>
                         </div>
                        

@@ -104,6 +104,7 @@ setBannerImages(validImageUrls);
       <PropertyMainHeader
         brand_slug={brandSlug}
         id={propertyData.propertyId}
+        type={propertyData.propertyType}
         onSubmit={() => {}}
       />
      <section className="position-relative inner-banner-section-slider d-none">

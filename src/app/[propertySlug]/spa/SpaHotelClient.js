@@ -2,8 +2,6 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-// import BookNowForm from "@/components/BookNowForm";
-import AccommodationSliderNew from "@/app/Components/AccommodationSliderNew";
 import Image from "next/image";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination, Autoplay } from "swiper/modules";
@@ -15,10 +13,11 @@ import { BookingEngineProvider } from "@/app/cin_context/BookingEngineContext";
 import FilterBar from "@/app/cin_booking_engine/Filterbar";
 import { X } from "lucide-react";
 import PropertyMainHeader from "@/app/Common/PropertyMainHeader";
-import GalleryModal from "../../Components/GalleryModal";
+import SpaModal from "@/app/Components/SpaModal";
+import SpaSliderNew from "@/app/Components/SpaSliderNew";
 // import { getUserInfo } from "../../../../utilities/userInfo";
 
-export default function RoomHotelClient() {
+export default function SpaHotelClient() {
   const { brandSlug, propertySlug } = useParams();
 
   const [selectedRoom, setSelectedRoom] = useState(null);
@@ -28,7 +27,7 @@ export default function RoomHotelClient() {
 
   const [showModal, setShowModal] = useState(false);
   const [openIndex, setOpenIndex] = useState(0);
-const [BeId, setBeId] = useState(null);
+
   const [bannerImages, setBannerImages] = useState([]);
       const [propertyData, setPropertyData] = useState(null);
 
@@ -126,8 +125,6 @@ const [BeId, setBeId] = useState(null);
         const value = found?.cityId;
         const property_Id = found?.staahPropertyId;
         const type = found?.propertyType;
-        const BeqId = found?.staahBookingId;
-        setBeId(BeqId);
 
         // ✅ City + staah for booking engine
         setPropertyType(type);
@@ -305,14 +302,13 @@ const [BeId, setBeId] = useState(null);
         <div className="container-fluid">
           <div className="winter-sec">
             <div className="row">
-              { propertyId && <AccommodationSliderNew
+              { propertyId && <SpaSliderNew
                 propertyId={propertyId}
                 setShowModal={setShowModal}
                 setSelectedRoom={setSelectedRoom}
                 onSubmit={handleRoomBookNow}
-                BeId={staahPropertyId}
               />}
-              <GalleryModal
+              <SpaModal
                 showModal={showModal}
                 setShowModal={setShowModal}
                 roomData={selectedRoom}

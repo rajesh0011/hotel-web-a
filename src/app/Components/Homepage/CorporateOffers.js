@@ -1,159 +1,268 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
+import * as ReactDOM from "react-dom";
+import Image from "next/image";
+import Link from "next/link";
 
 export default function CorporateOffers() {
-  const offers = [
-    {
-      id: 1,
-      bank: "Visa",
-      title: "Visa card offer – 3 or more nights",
-      desc: "Pay for 2 nights and get 1 night free of cost at ELIVAAS' properties",
-      color: "visa",
-    },
-    {
-      id: 2,
-      bank: "Visa",
-      title: "Visa card offer – 2 nights",
-      desc: "Stay for 2 nights and get 50% off on 2nd night at ELIVAAS' properties",
-      color: "visa",
-    },
-    {
-      id: 3,
-      bank: "ICICI",
-      title: "ICICI Bank EMI Offer",
-      desc: "NO-COST EMI and Extra 10% instant discount upto ₹50,000 on ICICI Bank cards",
-      color: "icici",
-    },
-    {
-      id: 4,
-      bank: "ICICI",
-      title: "ICICI Bank Offer",
-      desc: "Extra 10% instant discount upto ₹25,000/- on ICICI Bank Credit & Debit cards",
-      color: "icici",
-    },
-  ];
+  const [offers, setOffers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalContent, setModalContent] = useState({});
+
+  // 📦 Fetch offers data
+  useEffect(() => {
+    async function fetchOffers() {
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_CMS_API_Base_URL}/offers/GetCorporateOffers`
+        );
+        const data = await res.json();
+
+        if (data.errorCode === "0" && Array.isArray(data.data)) {
+          const corporateOffers = data.data.filter(
+            (offer) => offer.isCorporate === "Y"
+          );
+          setOffers(corporateOffers);
+        } else {
+          setError("Failed to fetch offers");
+        }
+      } catch (err) {
+        setError("Something went wrong while fetching offers");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchOffers();
+  }, []);
+
+  const handleKnowMore = (offer) => {
+    setModalContent({
+      title: offer.offerTitle || offer.offerName,
+      description:
+        offer.internalDescription ||
+        offer.offerDesc ||
+        "No detailed description available.",
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+  };
+
+  if (loading) {
+    return (
+      <div className="text-center py-10 text-gray-600">Loading offers...</div>
+    );
+  }
+
+  if (error) {
+    return <div className="text-center py-10 text-red-600">{error}</div>;
+  }
+
+  if (offers.length === 0) {
+    return (
+      <div className="text-center py-10 text-gray-500">
+        No corporate offers available.
+      </div>
+    );
+  }
 
   return (
     <>
+      <section className="corporate-offers-section section-padding bg-lred">
+        <div className="container">
+          <div className="global-heading-sec text-center">
+            <h2 className="global-heading">Our Offers</h2>
+          </div>
 
-    <section className="corporate-offers-section section-padding bg-lred">
-      <div className="container">
-        <div className="global-heading-sec text-center">
-          <h2 className="global-heading">Offers</h2>
+          <Swiper
+            modules={[Navigation, Pagination]}
+            spaceBetween={20}
+            slidesPerView={3}
+            navigation
+            pagination={false}
+            breakpoints={{
+              320: { slidesPerView: 1 },
+              768: { slidesPerView: 2 },
+              1024: { slidesPerView: 3 },
+            }}
+          >
+            {offers.map((offer) => {
+              const imageUrl =
+                offer.offersImages?.[0]?.offerImages ||
+                "/img/offer-placeholder.jpg";
+
+              return (
+                <SwiperSlide key={offer.propertyOfferId}>
+                  <div className="offer-card">
+                    {/* <div className="offer-image-wrapper">
+                      <Image
+                        src={imageUrl}
+                        alt={offer.offerTitle || "Offer Image"}
+                        width={400}
+                        height={250}
+                        className="offer-image"
+                      />
+                    </div> */}
+                    <div className="offer-content">
+                      <h4 className="offer-title">
+                        {offer.offerTitle || offer.offerName}
+                      </h4>
+                      <p className="offer-desc two-line-text">
+                        <span>
+                          {offer?.offerDesc || ""}
+                        </span>
+                        
+                      </p>
+                      <div className="winter-box-btn mt-1">
+                        <button className="box-btn book-now">
+                          Book Now
+                        </button>
+                        <button
+                          className="box-btn know-more"
+                          onClick={() => handleKnowMore(offer)}
+                        >
+                          Know More
+                        </button>
+                        
+                      </div>
+                    </div>
+                  </div>
+                </SwiperSlide>
+              );
+            })}
+          </Swiper>
         </div>
+      </section>
 
-        <Swiper
-          modules={[Navigation, Pagination]}
-          spaceBetween={20}
-          slidesPerView={3}
-          navigation
-          pagination={{ clickable: true }}
-          breakpoints={{
-            320: { slidesPerView: 1 },
-            768: { slidesPerView: 2 },
-            1024: { slidesPerView: 3 },
-          }}
-        >
-          {offers.map((offer) => (
-            <SwiperSlide key={offer.id}>
-              <div className={`offer-card ${offer.color}`}>
-                <div className="offer-logo">{offer.bank}</div>
-                <h4 className="offer-title">{offer.title}</h4>
-                <p className="offer-desc">{offer.desc}</p>
-                <a href="#" className="learn-more">
-                  Explore More
-                </a>
+      {/* Popup Modal */}
+      {isModalOpen &&
+        ReactDOM.createPortal(
+          <div
+            className="modal fade show new-type-popup"
+            style={{ display: "block", backgroundColor: "rgba(0,0,0,0.5)" }}
+            tabIndex="-1"
+          >
+            <div className="modal-dialog modal-dialog-centered">
+              <div className="modal-content">
+                <div className="modal-body">
+                  <h6 className="modal-title" id="offerModalLabel">
+                    {modalContent.title}
+                  </h6>
+                  <button
+                    type="button"
+                    className="btn-close modal-close-btn-in-body"
+                    onClick={handleCloseModal}
+                    aria-label="Close"
+                  >
+                    x
+                  </button>
+                  <p className="p-3">{modalContent.description}</p>
+                </div>
               </div>
-            </SwiperSlide>
-          ))}
-        </Swiper>
-      </div>
-    </section>
-    <style jsx>{
-        `
-        .offers-section {
-  margin: 3rem 0;
-  text-align: center;
-}
+            </div>
+          </div>,
+          document.body
+        )}
 
-.offers-heading {
-  font-size: 2rem;
-  font-weight: 700;
-  margin-bottom: 0.3rem;
-}
-
-.offers-subheading {
-  color: #666;
-  margin-bottom: 2rem;
-}
-
-.offer-card {
-  border-radius: 12px;
-  padding: 1.5rem;
-  min-height: 220px;
-  text-align: left;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  transition: transform 0.3s ease;
-}
-
-.offer-card:hover {
-  transform: translateX(-5px);
-}
-
-.offer-card.visa {
-  background: linear-gradient(180deg, #eef2ff, #dde7ff);
-  border: 1px dashed #3b82f6;
-}
-
-.offer-card.icici {
-  background: linear-gradient(180deg, #fff0ed, #ffe5e0);
-  border: 1px dashed #dc2626;
-}
-
-.offer-logo {
-  font-size: 1.4rem;
-  font-weight: 700;
-  margin-bottom: 0.6rem;
-}
-
-.offer-title {
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-}
-
-.offer-desc {
-  font-size: 0.95rem;
-  color: #444;
-  flex-grow: 1;
-  margin-bottom: 1rem;
-}
-
-.learn-more {
-  color: #e60023;
-  font-weight: 600;
-  font-size: 0.95rem;
-  text-decoration: none;
-}
-
-.learn-more:hover {
-  text-decoration: underline;
-}
-
-
-        
-        `
-
-
-}</style>
-</>
+      <style jsx>{`
+        .offer-card {
+          border-radius: 12px;
+          overflow: hidden;
+          box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+          display: flex;
+          flex-direction: column;
+          background: #fff;
+          height: 100%;
+          transition: transform 0.3s ease;
+        }
+        .offer-card:hover {
+          transform: translateY(-5px);
+        }
+        .offer-image-wrapper {
+          width: 100%;
+          height: 250px;
+          overflow: hidden;
+        }
+        .offer-image {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+        .offer-content {
+          padding: 1rem;
+          flex-grow: 1;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+        }
+        .offer-title {
+          font-size: 1.1rem;
+          font-weight: 600;
+          margin-bottom: 0.5rem;
+        }
+        .offer-desc {
+          font-size: 0.95rem;
+          color: #444;
+          margin-bottom: 1rem;
+        }
+        .offer-actions {
+          display: flex;
+          gap: 10px;
+        }
+        .learn-more-btn,
+        .book-now-btn {
+          padding: 8px 14px;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+          font-weight: 600;
+          font-size: 0.95rem;
+          transition: all 0.3s ease;
+        }
+        .learn-more-btn {
+          background-color: #000;
+          color: #fff;
+        }
+        .learn-more-btn:hover {
+          background-color: #333;
+        }
+        .book-now-btn {
+          background-color: #e60023;
+          color: #fff;
+          text-decoration: none;
+        }
+        .book-now-btn:hover {
+          background-color: #c3001c;
+        }
+        /* Popup Modal Styles */
+        .new-type-popup {
+          backdrop-filter: blur(10px);
+        }
+        .new-type-popup .btn-close {
+          background: #000 !important;
+          border: none;
+          color: white;
+          font-size: 1rem;
+          line-height: 1rem;
+          height: 30px;
+          width: 30px;
+          position: absolute;
+          top: 10px !important;
+          right: 10px !important;
+          cursor: pointer;
+          opacity: 1;
+        }
+      `}</style>
+    </>
   );
 }

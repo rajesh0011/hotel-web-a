@@ -163,6 +163,7 @@ const UntoldStories = () => {
                 spaceBetween={10}
                 slidesPerView={1}
                 navigation={true}
+                centeredSlides={hotels.length === 1} 
                 pagination={false}
                 breakpoints={{
                   0: { slidesPerView: 1 },
@@ -200,7 +201,21 @@ const UntoldStories = () => {
                         <div className="winter-box-content main-new-hotel-box">
                           <div className="hotel-box-content hotel-left-side-box">
                             <div className="winter-box-btn">
-                              <button className="box-btn book-now" onClick={() => handleBookNow(hotel.staahPropertyId, hotel.cityName, hotel.cityId)} > Book Now </button>
+                              {/* <button className="box-btn book-now" onClick={() => handleBookNow(hotel.staahPropertyId, hotel.cityName, hotel.cityId)} > Book Now </button> */}
+                              
+                              <button
+  className="box-btn book-now"
+  onClick={() => {
+    if (hotel?.staahBookingId) {
+      const bookingUrl = `https://bookings.amritara.co.in/?chainId=5971&propertyId=${hotel.staahBookingId}&_gl=1*1d9irrh*_gcl_au*MzgxMDEyODcxLjE3NTgyNjIxOTIuNzY2OTMwNzIwLjE3NTkzMTE2MjAuMTc1OTMxMTcyMA..*_ga*NzUyODI0NDE0LjE3NTgyNjIxOTI.*_ga_7XSGQLL96K*czE3NjA0NDUzOTUkbzQ4JGcxJHQxNzYwNDQ2NTA2JGo2MCRsMCRoODE1NTgwNjUw*_ga_DVBE6SS569*czE3NjA0NDUzOTQkbzQ1JGcxJHQxNzYwNDQ1NDY2JGo2MCRsMCRoOTgzMzg5ODY.`;
+      window.open(bookingUrl, "_blank"); // opens in new tab
+    } else {
+      alert("Booking not available for this property.");
+    }
+  }}
+>
+  Book Now
+</button>
                               <Link
                                 href={`/${hotel.propertySlug}/${getOverviewSlug(
                                   hotel

@@ -20,6 +20,7 @@ import ExperiencePropertyPage from "@/app/Components/ExperiencePropertyPage";
 
 export default function ExperienceClient() {
   const { brandSlug, propertySlug } = useParams();
+  const [type, setPropertyType] = useState(null);
 
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [propertyId, setPropertyId] = useState(null);
@@ -124,6 +125,10 @@ export default function ExperienceClient() {
         const label = found?.cityName;
         const value = found?.cityId;
         const property_Id = found?.staahPropertyId;
+        const type = found?.propertyType;
+
+        // ✅ City + staah for booking engine
+        setPropertyType(type);
         setCityDetails({ label, value, property_Id });
         // setPropertyId(found?.propertyId);
         // setStaahPropertyId(found?.staahPropertyId);
@@ -191,7 +196,7 @@ export default function ExperienceClient() {
         id={propertyId}
         onSubmit={handleBookNowClick}
       /> */}
-      <PropertyMainHeader></PropertyMainHeader>
+      <PropertyMainHeader id={propertyId} type={type}></PropertyMainHeader>
 
       <section className="position-relative inner-banner-section-slider d-none">
   {bannerImages.length > 0 ? (

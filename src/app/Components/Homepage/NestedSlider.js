@@ -141,7 +141,7 @@ export default function NestedSwiper() {
                           <Image
                             height={600}
                             width={600}
-                            src={hotel.images?.[0]?.propertyImage || "/img/popular-1.jpeg"}
+                            src={hotel?.images?.[0]?.propertyImage || "/img/popular-1.jpeg"}
                             alt={hotel.propertyName || hotel.propertyTitle || "Property"}
                             className="w-full h-36 object-cover rounded-md mb-2 child-image w-100"
                           />
@@ -153,7 +153,21 @@ export default function NestedSwiper() {
                               <h3 className="child-sl-title">{hotel.propertyName}</h3>
                               <div className="next-boxx-parent-div">
                                 <div className="left-nested-boxx">
-                                  <button className="child-sl-btn mt-2">Book Now</button>
+                                  {/* <button className="child-sl-btn mt-2">Book Now</button> */}
+
+                                  <button
+  className="child-sl-btn mt-2"
+  onClick={() => {
+    if (hotel?.staahBookingId) {
+      const bookingUrl = `https://bookings.amritara.co.in/?chainId=5971&propertyId=${hotel.staahBookingId}&_gl=1*1d9irrh*_gcl_au*MzgxMDEyODcxLjE3NTgyNjIxOTIuNzY2OTMwNzIwLjE3NTkzMTE2MjAuMTc1OTMxMTcyMA..*_ga*NzUyODI0NDE0LjE3NTgyNjIxOTI.*_ga_7XSGQLL96K*czE3NjA0NDUzOTUkbzQ4JGcxJHQxNzYwNDQ2NTA2JGo2MCRsMCRoODE1NTgwNjUw*_ga_DVBE6SS569*czE3NjA0NDUzOTQkbzQ1JGcxJHQxNzYwNDQ1NDY2JGo2MCRsMCRoOTgzMzg5ODY.`;
+      window.open(bookingUrl, "_blank"); // opens in new tab
+    } else {
+      alert("Booking not available for this property.");
+    }
+  }}
+>
+  Book Now
+</button>
 
                                   <Link href={{
                                     pathname: `/${hotel.propertySlug}/${getOverviewSlug(hotel)}`,

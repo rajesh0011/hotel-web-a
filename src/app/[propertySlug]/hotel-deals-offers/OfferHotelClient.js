@@ -16,6 +16,7 @@ import PropertyMainHeader from "@/app/Common/PropertyMainHeader";
 export default function OfferHotelClient({ propertySlug }) {
   const [offers, setOffers] = useState([]);
   const [propertyId, setPropertyId] = useState(null);
+  const [type, setPropertyType] = useState(null);
   const [loading, setLoading] = useState(true);
   const [bannerImages, setBannerImages] = useState([]);
   const [staahPropertyId, setStaahPropertyId] = useState(null);
@@ -46,12 +47,15 @@ useEffect(() => {
         (p) => p.propertySlug?.toLowerCase() === propertySlug.toLowerCase()
       );
       const id = property?.propertyId || null;
+      const type = property?.propertyType || null;
 
       const label = property?.cityName;
       const value = property?.cityId;
       const property_Id = property?.staahPropertyId;
       setCityDetails({ label, value, property_Id });
       setStaahPropertyId(property?.staahPropertyId);
+
+      setPropertyType(type);
 
       setPropertyId(id);
 
@@ -94,7 +98,7 @@ useEffect(() => {
 
   return (
     <>
-      <PropertyMainHeader />
+      <PropertyMainHeader id={propertyId} type={type}  />
 
       <section className="position-relative inner-banner-section-slider d-none">
         {bannerImages.length > 0 ? (
@@ -167,6 +171,7 @@ useEffect(() => {
               <div className="row justify-content-center mb-2">
                 <div className="col-md-9 md-offset-1">
                   <h2 className="global-heading">OFFERS</h2>
+                  {/* <h1>property id {propertyId}</h1> */}
                 </div>
               </div>
             </div>
