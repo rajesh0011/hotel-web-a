@@ -11,6 +11,7 @@ import FilterBar from "@/app/cin_booking_engine/Filterbar";
 import { X } from "lucide-react";
 import PropertyMainHeader from "@/app/Common/PropertyMainHeader";
 import VirtualTourPropertyPage from "@/app/Components/VirtualTourPropertyPage";
+import BookNowForm from "@/app/booking-engine-widget/BookNowForm";
 
 export default function VirtualTour() {
   const { brandSlug, propertySlug } = useParams();
@@ -22,7 +23,7 @@ export default function VirtualTour() {
 
   const [showModal, setShowModal] = useState(false);
   const [openIndex, setOpenIndex] = useState(0);
-
+const [logo, setPropertyLogo] = useState(null);
   const [bannerImages, setBannerImages] = useState([]);
       const [propertyData, setPropertyData] = useState(null);
 
@@ -120,9 +121,11 @@ export default function VirtualTour() {
         const value = found?.cityId;
         const property_Id = found?.staahPropertyId;
         const type = found?.propertyType;
+        const logo = found?.propertyLogo;
 
         // ✅ City + staah for booking engine
         setPropertyType(type);
+        setPropertyLogo(logo);
         setCityDetails({ label, value, property_Id });
         // setPropertyId(found?.propertyId);
         // setStaahPropertyId(found?.staahPropertyId);
@@ -190,10 +193,12 @@ export default function VirtualTour() {
         id={propertyId}
         onSubmit={handleBookNowClick}
       /> */}
-      <PropertyMainHeader id={propertyId || "6"} type={type || "resort"}></PropertyMainHeader>
+      <PropertyMainHeader id={propertyId || "6"} type={type || "resort"} logo={logo}></PropertyMainHeader>
 
      
-
+<section className="booking-form-section booking-form-inner-property-pages">
+              <BookNowForm />
+            </section>
 
       <section className="position-relative">
         <div className="position-absolute top-100 start-0 w-100 bg-white shadow">

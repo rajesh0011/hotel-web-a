@@ -16,6 +16,7 @@ import { X } from "lucide-react";
 import PropertyMainHeader from "@/app/Common/PropertyMainHeader";
 import GalleryModal from "../../Components/GalleryModal";
 import ExperiencePropertyPage from "@/app/Components/ExperiencePropertyPage";
+import BookNowForm from "@/app/booking-engine-widget/BookNowForm";
 // import { getUserInfo } from "../../../../utilities/userInfo";
 
 export default function ExperienceClient() {
@@ -28,6 +29,7 @@ export default function ExperienceClient() {
 
   const [showModal, setShowModal] = useState(false);
   const [openIndex, setOpenIndex] = useState(0);
+  const [logo, setPropertyLogo] = useState(null);
 
   const [bannerImages, setBannerImages] = useState([]);
       const [propertyData, setPropertyData] = useState(null);
@@ -126,9 +128,11 @@ export default function ExperienceClient() {
         const value = found?.cityId;
         const property_Id = found?.staahPropertyId;
         const type = found?.propertyType;
+        const logo = found?.propertyLogo;
 
         // ✅ City + staah for booking engine
         setPropertyType(type);
+        setPropertyLogo(logo);
         setCityDetails({ label, value, property_Id });
         // setPropertyId(found?.propertyId);
         // setStaahPropertyId(found?.staahPropertyId);
@@ -196,7 +200,11 @@ export default function ExperienceClient() {
         id={propertyId}
         onSubmit={handleBookNowClick}
       /> */}
-      <PropertyMainHeader id={propertyId} type={type}></PropertyMainHeader>
+      <PropertyMainHeader id={propertyId} type={type} logo={logo}></PropertyMainHeader>
+
+      <section className="booking-form-section booking-form-inner-property-pages">
+                    <BookNowForm />
+                  </section>
 
       <section className="position-relative inner-banner-section-slider d-none">
   {bannerImages.length > 0 ? (

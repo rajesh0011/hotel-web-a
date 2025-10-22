@@ -180,7 +180,7 @@ const OurOffers = () => {
       </section>
 
       {/* OFFERS SECTION */}
-      <section className="corporate-offers-page-section section-padding bg-lred">
+      <section className="corporate-offers-section section-padding bg-lred">
       <div className={offstyle.mainhotelbox}>
         {offers.length === 0 ? (
           <p className="text-center py-10 text-gray-500">
@@ -201,38 +201,43 @@ const OurOffers = () => {
                       
                         <div className="col-md-4" key={offer.propertyOfferId}>
                           <div className="corporate-page-offer-box">
-                            <div className={`${offstyle.offerbox} shadow-none p-0 rounded-0`}>
-                              {/* <Image
-                                src={imageUrl}
-                                alt={offer.offerTitle || "Offer Image"}
-                                height={300}
-                                width={500}
-                                className={`${offstyle.offerboximg} w-100 rounded-0`}
-                                style={ImageHeight}
-                              /> */}
-                              <div className={`${offstyle.offerboxcontent} p-0 mt-3`}>
-                                <h3 className={offstyle.offerboxcontentheading}>
-                                  {offer.offerTitle || offer.offerName}
-                                </h3>
-                                <div className={`two-line-text`}>
-                                  <span>{offer.offerDesc}</span>
-                                </div>
-                                <div className={`${offstyle.offerboxcontentbtn} mt-3`}>
-                                  <button
-                                    className={`${offstyle.offerknowmore} explore-more-btn`}
-                                    onClick={() => handleKnowMore(offer)}
-                                  >
-                                    Know More
-                                  </button>
-                                  <Link
-                                    href="#"
-                                    className={`${offstyle.offerkbooknow} book-now-btn`}
-                                  >
-                                    Book Now
-                                  </Link>
-                                </div>
-                              </div>
-                            </div>
+
+                          <div className="offer-card">
+                    {/* <div className="offer-image-wrapper">
+                      <Image
+                        src={imageUrl}
+                        alt={offer.offerTitle || "Offer Image"}
+                        width={400}
+                        height={250}
+                        className="offer-image"
+                      />
+                    </div> */}
+                    <div className="offer-content">
+                      <h4 className="offer-title">
+                        {offer.offerTitle || offer.offerName}
+                      </h4>
+                      <p className="offer-desc two-line-text">
+                        <span>
+                          {offer?.offerDesc || ""}
+                        </span>
+                        
+                      </p>
+                      <div className="winter-box-btn mt-1">
+                        <button className="box-btn book-now">
+                          Book Now
+                        </button>
+                        <button
+                          className="box-btn know-more"
+                          onClick={() => handleKnowMore(offer)}
+                        >
+                          Know More
+                        </button>
+                        
+                      </div>
+                    </div>
+                  </div>
+
+                           
                           </div>
                         </div>
 

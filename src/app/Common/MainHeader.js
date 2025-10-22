@@ -4,13 +4,19 @@ import "../Styles/HeaderStyle.css";
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState, useRef } from "react";
-import { Tally2, X } from "lucide-react";
+import { Facebook, FacebookIcon, Instagram, InstagramIcon, Linkedin, Menu, Tally2, X } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { useForm } from "../booking-engine-widget/FormContext";
+import { FaWhatsapp } from "react-icons/fa";
 
 const MainHeader = ({onClick}) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [open, setOpen] = useState(false);
+    const [isOpen, setIsOpen] = useState(true);
+  const [hotelBrands, setHotelBrands] = useState([]);
+  const { isFormOpen, setIsFormOpen } = useForm();
+  const [isRoomMenuOpen, setIsRoomMenuOpen] = useState(false);
   const { user } = useAuth();
 const filterBarRef = useRef(null);
   const isLoggedIn = !!user;
@@ -39,18 +45,23 @@ const filterBarRef = useRef(null);
     onClick();
   }
   };
+
+    const toggleBookingForm = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsFormOpen(!isFormOpen);
+    if (isRoomMenuOpen) setIsRoomMenuOpen(false);
+  };
   return (
     <>
       <header className="header-section">
+       
         <nav
           className={`navbar navbar-expand-lg navbar-light ${
             isScrolled ? "scrolled" : ""
           }`}
         >
-          <div className="container">
-            <div className="header-display-flex">
-              {/* Logo */}
-              <Link className="navbar-brand" href="/">
+          <Link className="navbar-brand" href="/">
                 <Image
                   src="/img/logo.png"
                   className="header-logo"
@@ -59,7 +70,8 @@ const filterBarRef = useRef(null);
                   height={200}
                 />
               </Link>
-
+          <div className="container">
+            <div className="header-display-flex">
               <div className="navbarnav" id="navbarNav">
                 <div className="display-flex">
                   {isLoggedIn ? (
@@ -101,18 +113,20 @@ const filterBarRef = useRef(null);
                   <Link
                     className="me-3 header-btnn-top book-menu-header"
                     href="#"
-                    onClick={handlePropertyBookNow}
+                    // onClick={handlePropertyBookNow}
+                    onClick={toggleBookingForm}
                   >
                     Book Now
                   </Link>
 
-                  {/* Sidebar Toggle */}
-                  <button
+                   <button
                     onClick={toggleSidebar}
                     className="sidebar-toggle border-0 bg-transparent ms-3"
                   >
-                    <Tally2 size={20} className="toggle-image-s" />
+                    {/* <Tally2 size={20} className="toggle-image-s" /> */}
+                    <Menu size={20} className="toggle-image-s" />
                   </button>
+                 
                 </div>
               </div>
             </div>

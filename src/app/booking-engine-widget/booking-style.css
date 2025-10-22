@@ -1,0 +1,214 @@
+
+.home-page-class .header_booking_engine{ bottom:10px; border-radius:10px; border: 1px solid #000;}
+.header_booking_engine .btn{ width:150px;}
+
+/* book now css */
+.header_booking_engine {
+width: 98%;
+/* bottom: -48px; */
+background: #fff;
+color: #000;
+/* z-index: 99999; */
+margin: auto;
+position: relative;
+padding: 10px;
+}
+.room-name-or-remove button.yellow-btn.rmv{
+  margin-top: 0px;
+}
+
+.react-datepicker-wrapper {
+    display: inline-flex;
+    padding: 0px;
+    border: 0;
+    width: 100%;
+}
+.calendar-icon {
+    position: relative;
+    color: #000;
+    width: 100% !important;
+    display: block;
+}
+.calendar-icon svg {
+    position: absolute;
+    top: -28px;
+    right: 10px;
+}
+.css-hlgwow{ font-size:14px;}
+.header_booking_engine .col, select{ width:21%;}
+.header_booking_engine .col label{     
+    color: #000000;
+    font-size: 12px;
+    font-weight: 600;}
+.header_booking_engine .col .form-control {
+    height: 36px;
+    font-size: 13px;
+    font-weight: bold;
+    padding-left: 5px !important;
+}
+.header_booking_engine .col{ width:15% !important;}
+.header_booking_engine input, .header_booking_engine select, 
+.header_booking_engine .form-control:disabled{ border:1px solid #b79e78; border-radius:4px; 
+font-size: 12px;}
+.add-rooms-block{ background-color: #fff; position: absolute; padding: 1em; width: 18%;}
+.css-13cymwt-control{background: none !important;
+border: none;
+border-radius: 0 !important;
+box-shadow: none;
+border-width: 0 !important;}
+.header_booking_engine .btn{ 
+  padding: 10px 6px;
+    margin-top: 1.4rem;
+    border-radius: 6px !important;
+    background-color: #000 !important;
+    border: none !important;
+    color: #fff !important;
+    font-size: 14px !important;
+    text-transform: capitalize;
+    outline: none;
+    min-width: 90px;
+}
+
+
+
+.react-datepicker__input-container .form-control{ width:120%;}
+
+.rooms-child-outer-block {
+position: relative;
+z-index: 1000;
+}
+
+.showmoreT.add-rooms-block {
+position: absolute !important;
+top: 100%;
+left: 0;
+width: 100%;
+background: white;
+box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+z-index: 9999; /* Ensure it's above everything */
+}
+
+
+
+/* Toggle button wrapper */
+.booking-toggle-btn-wrapper {
+  position: absolute;
+  bottom: 150px;
+  left: 50%;
+  transform: translateY(-50%);
+}
+
+/* Toggle button styles */
+.booking-toggle-btn {
+  padding: 8px;
+  background-color: #000;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s ease;
+  cursor: pointer;
+  color:#fff;
+}
+
+
+.booking-toggle-btn:hover {
+  transform: scale(1.1);
+}
+.booking-toggle-btn svg{
+    color: #fff;
+    fill-color:#fff;
+}
+.booking-toggle-btn .yellow-btn{
+    color:#fff;
+}
+/* Example styling for plus-minus boxes */
+.plus-min-style {
+  background-color: #f0f0f0;
+  padding: 10px;
+  border-radius: 5px;
+  color:#000;
+}
+
+
+
+.header_booking_engine_container {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%) translateY(100%);
+  width: 100%;
+  z-index: 1;
+  transition: transform 0.5s ease, opacity 0.5s ease;
+  opacity: 0;
+  visibility: hidden;
+}
+
+.header_booking_engine_container.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+  visibility: visible;
+}
+
+.booking-toggle-btn-wrapper {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.booking-search-bar-btn-div {
+    position: absolute;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+
+.add-rooms-block{
+  max-height: 300px;
+  overflow-y: auto;
+}
+.add-rooms-block .add-rooms-div .plus-min-style button {
+    padding: 0px;
+    height: 25px;
+    width: 25px;
+    color: #000;
+}
+.room-name-or-remove {
+    display: flex;
+    justify-content: space-between;
+    align-content: center;
+}
+.add-rooms-div .row .col-6{
+  padding:0;
+}
+.room-name-or-remove .rmv {
+    outline: none;
+    border: none;
+    background-color: transparent;
+    font-weight: bold;
+    color:#000;
+}
+.add-rooms-div {
+    margin-bottom: 1rem;
+}
+
+.form-control#hotel-select,
+.form-control#city-select {
+      border-width: 1px !important;
+    border-style: solid !important;
+    border-color: #000 !important;
+}
+#react-select-5-placeholder{
+  font-size: 12px!important;
+  color:#000!important;
+}
+.datepicker-outer .react-datepicker__input-container .form-control {
+    width: 100%!important;
+    padding: 10px 10px;
+}
+.rooms-child-outer-block .rooms-childs-input{
+    padding: 10px 10px;
+}

@@ -15,8 +15,12 @@ import { getUserInfo } from "../../../utilities/userInfo";
 import FilterBar from "@/app/cin_booking_engine/Filterbar";
 import { BookingEngineProvider } from "@/app/cin_context/BookingEngineContext";
 import Link from "next/link";
-import { Search, X } from 'lucide-react'
+import { FacebookIcon, InstagramIcon, Linkedin, Search, X } from 'lucide-react'
 import CorporateOffers from "./CorporateOffers";
+import BookNowForm from "@/app/booking-engine-widget/BookNowForm";
+import { FaWhatsapp } from "react-icons/fa";
+import Image from "next/image";
+import AsideFixed from "../AsideFixed";
 
 export default function HomePage (){
   const [isOpen, setOpen] = useState(false);
@@ -73,7 +77,9 @@ const handleBookNowClick2 = async () => {
 
       <MainHeader onClick={handleBookNowClick2}></MainHeader>
       {/* <BannerSec  onClick={handleBookNowClick2}></BannerSec> */}
-      <section className="hero-section position-relative vh-100 overflow-hidden h-full flex items-center justify-center">
+      <section className="hero-section home-hero-section position-relative vh-100 overflow-hidden h-full flex items-center justify-center">
+      {/* <AsideFixed></AsideFixed> */}
+       
       <video className="w-100 h-[102vh] object-cover for-desktop-video-main"
       autoPlay
             muted
@@ -83,14 +89,14 @@ const handleBookNowClick2 = async () => {
         <source src="/amritara-new-banner-video.mp4" type="video/mp4" />
       </video>
       {/* <video src="/amritara-new-banner-video.mp4" autoPlay loop ></video> */}
-       <div className="hero-bottom-part-ab">
+       {/* <div className="hero-bottom-part-ab">
         <Link href="#" onClick={(e) => {
               e.preventDefault();
               handleBookNowClick2();
             }} className="search-icon-banner">
           {isOpen ? <X /> :<Search />}
         </Link>
-      </div> 
+      </div>  */}
       
         {/* <div
           className={`absolute left-1/2 transform -translate-x-1/2 home-page-class`}
@@ -122,6 +128,13 @@ const handleBookNowClick2 = async () => {
                     document.body
                 )}
     </section>
+
+
+    <section className="booking-form-section">
+        <BookNowForm />
+      </section>
+
+
       <AboutSec></AboutSec>
       <NestedSwiper></NestedSwiper>
       <UntoldStories></UntoldStories>

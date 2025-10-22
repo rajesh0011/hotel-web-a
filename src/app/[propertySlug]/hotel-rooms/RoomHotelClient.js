@@ -16,6 +16,7 @@ import FilterBar from "@/app/cin_booking_engine/Filterbar";
 import { X } from "lucide-react";
 import PropertyMainHeader from "@/app/Common/PropertyMainHeader";
 import GalleryModal from "../../Components/GalleryModal";
+import BookNowForm from "@/app/booking-engine-widget/BookNowForm";
 // import { getUserInfo } from "../../../../utilities/userInfo";
 
 export default function RoomHotelClient() {
@@ -25,6 +26,7 @@ export default function RoomHotelClient() {
   const [propertyId, setPropertyId] = useState(null);
   const [type, setPropertyType] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [logo, setPropertyLogo] = useState(null);
 
   const [showModal, setShowModal] = useState(false);
   const [openIndex, setOpenIndex] = useState(0);
@@ -126,11 +128,13 @@ const [BeId, setBeId] = useState(null);
         const value = found?.cityId;
         const property_Id = found?.staahPropertyId;
         const type = found?.propertyType;
+        const logo = found?.propertyLogo;
         const BeqId = found?.staahBookingId;
         setBeId(BeqId);
 
         // ✅ City + staah for booking engine
         setPropertyType(type);
+        setPropertyLogo(logo);
         setCityDetails({ label, value, property_Id });
         // setPropertyId(found?.propertyId);
         // setStaahPropertyId(found?.staahPropertyId);
@@ -214,8 +218,10 @@ const [BeId, setBeId] = useState(null);
         id={propertyId}
         onSubmit={handleBookNowClick}
       /> */}
-      <PropertyMainHeader id={propertyId} type={type}></PropertyMainHeader>
-
+      <PropertyMainHeader id={propertyId} type={type} logo={logo}></PropertyMainHeader>
+<section className="booking-form-section booking-form-inner-property-pages">
+              <BookNowForm />
+            </section>
       <section className="position-relative inner-banner-section-slider d-none">
       
         {bannerImages.length > 0 ? (
@@ -274,6 +280,8 @@ const [BeId, setBeId] = useState(null);
           )}
         </div>
       </section>
+
+      
 
       <section className="position-relative">
         <div className="position-absolute top-100 start-0 w-100 bg-white shadow">

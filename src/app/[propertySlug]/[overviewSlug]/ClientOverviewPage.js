@@ -17,6 +17,7 @@ import OverExp from "@/app/Components/OverExp";
 import PropertyGalleryOverview from "@/app/Components/PropertyGalleryOverview";
 import PropertyTestimonials from "@/app/Components/PropertyTestimonials";
 import PropertyFaq from "../PropertyFaq";
+import BookNowForm from "@/app/booking-engine-widget/BookNowForm";
 
 export default function ClientOverviewPage({
   propertySlug: slugFromProps, propertyId: idFromProps, propertyName: nameFromProps,
@@ -93,6 +94,7 @@ export default function ClientOverviewPage({
       <PropertyMainHeader
         id={propertyData?.propertyId}
         type={propertyData?.propertyType}
+        logo={propertyData?.propertyLogo}
       />
       <section className="hero-section inner-gumlet-video position-relative overflow-hidden h-full flex items-center justify-center">
   <div style={{ position: "relative", aspectRatio: "16/9" }}>
@@ -122,6 +124,10 @@ export default function ClientOverviewPage({
     })()}
   </div>
 </section>
+
+<section className="booking-form-section">
+        <BookNowForm />
+      </section>
 
 
       <section className="position-relative banner-section d-none">
@@ -200,13 +206,13 @@ export default function ClientOverviewPage({
 
       {/* <EventWedding propertyId={propertyData.propertyId} /> */}
 
-      <LatestOffers propertyId={propertyData.propertyId} />
+      <LatestOffers propertyId={propertyData.propertyId} BeId={propertyData.staahBookingId} />
 
       <OverExp propertyId={propertyData.propertyId} />
 
       <PropertyGalleryOverview propertyId={propertyData.propertyId}></PropertyGalleryOverview>
 
-      <PropertyTestimonials propertyId={propertyData.propertyId}></PropertyTestimonials>
+      {/* <PropertyTestimonials propertyId={propertyData.propertyId}></PropertyTestimonials> */}
 
       <PropertyFaq propertyId={propertyData.propertyId} />
 

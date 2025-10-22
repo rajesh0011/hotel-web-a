@@ -7,7 +7,7 @@ const TierWiseDataTable = () => {
     <>
       <div className="atithyam-benefits offes-details text-center p-0 mt-5">
         <div className="table-responsive">
-          <div className="heading-style-1">
+          <div className="heading-style">
             <h1 className="mb-4 mt-4 text-center global-heading">
               Your Benefits, Tailored to Every Tier
             </h1>

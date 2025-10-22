@@ -14,6 +14,7 @@
   height: 100%;
   background: rgba(1, 2, 11, 0.3);
   z-index: 1;
+  display: none;
 }
 
 .hero-section-inner .inner-hero-image {

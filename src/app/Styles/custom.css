@@ -943,11 +943,12 @@ footer ul li {
 
 .footer h5 {
   text-transform: capitalize !important;
-  font-family: var(--font-heading) !important;
+  font-family: var(--font-body) !important;
+  /* font-family: var(--font-heading) !important; */
   margin-bottom: 10px;
   color: var(--red);
-  font-size: 1.7rem;
-  font-weight: 500 !important;
+  font-size: 1.3rem;
+  font-weight: 600 !important;
 }
 
 .ftr_logo {
@@ -1128,6 +1129,7 @@ font-weight: bold;
 
 .expericence-sliderr .winter-box {
   box-shadow: none;
+  height:100%;
 }
 
 .expericence-sliderr .expericence-content {
@@ -1135,11 +1137,12 @@ font-weight: bold;
 }
 
 .expericence-sliderr .expericence-content .experience-title {
-  font-size: 20px;
-  font-weight: 400;
+  font-size: 16px;
+  font-weight: 600;
   color: var(--primary-color);
-  font-family: var(--font-billmake);
-  text-transform: uppercase;
+  font-family: var(--font-body);
+  text-transform: capitalize;
+  margin-bottom: 0.5rem;
 }
 
 .expericence-sliderr .expericence-content .winter-box-btn .box-btn {
@@ -1482,9 +1485,9 @@ font-weight: bold;
 }
 
 .accommodation-box-content .hotel-box-content .button-secondary {
-  position: absolute;
+  /* position: absolute;
   right: 12px;
-  bottom: 10px;
+  bottom: 10px; */
   padding: 5px 14px;
   line-height: 18px;
   font-size: 10px;
@@ -1633,11 +1636,11 @@ hotel page css */
   bottom: 2em;
 }
 
-.home-page-class button {
+/* .home-page-class button {
   bottom: 11em;
   position: relative;
   border-radius: 50%;
-}
+} */
 
 /* .header_booking_engine label{ color:#ffffff;} */
 

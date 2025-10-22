@@ -24,19 +24,19 @@ export default function ZoneTabs({ zones }) {
   }, [activeZone]);
 
   useEffect(() => {
-  if (zones?.length > 0 && !activeZone) {
-    setActiveZone(zones[0].zoneId);
-  }
-}, [zones, activeZone]);
+    if (zones?.length > 0 && !activeZone) {
+      setActiveZone(zones[0].zoneId);
+    }
+  }, [zones, activeZone]);
 
   const getOverviewSlug = (p) => {
-  const t = (p?.propertyType ?? "").toString().toLowerCase();
+    const t = (p?.propertyType ?? "").toString().toLowerCase();
 
-  // if your API sends names:
-  if (t.includes("resort")) return "resort-overview";
-  if (t.includes("hotel")) return "hotel-overview";
-  return "property-overview"; // safe fallback
-};
+    // if your API sends names:
+    if (t.includes("resort")) return "resort-overview";
+    if (t.includes("hotel")) return "hotel-overview";
+    return "property-overview"; // safe fallback
+  };
 
   return (
     <>
@@ -50,16 +50,15 @@ export default function ZoneTabs({ zones }) {
             <ul className={`nav nav-tabs ${styles.ZonetabHome}`}>
               {zones.map((zone) => (
                 <li className="nav-item" key={zone.zoneId}>
-             <button
-  className={`nav-link ${
-    activeZone === zone.zoneId
-      ? `active ${styles.ActiveTab}`
-      : styles.InActiveTab
-  }`}
-  onClick={() => setActiveZone(zone.zoneId)}
->
-  {zone.zoneName}
-</button>
+                  <button
+                    className={`nav-link ${activeZone === zone.zoneId
+                        ? `active ${styles.ActiveTab}`
+                        : styles.InActiveTab
+                      }`}
+                    onClick={() => setActiveZone(zone.zoneId)}
+                  >
+                    {zone.zoneName}
+                  </button>
 
                 </li>
               ))}
@@ -78,9 +77,9 @@ export default function ZoneTabs({ zones }) {
                   loop={true}
                   breakpoints={{
                     320: { slidesPerView: 1 },
-                    640: { slidesPerView: 2 },
+                    640: { slidesPerView: 1 },
                     768: { slidesPerView: 2 },
-                    991: { slidesPerView: 4 },
+                    991: { slidesPerView: 3 },
                   }}
                 >
                   {properties.map((property) => (
@@ -88,52 +87,45 @@ export default function ZoneTabs({ zones }) {
                       <div className={styles.TabCardWrapper}>
                         <div className={styles.TabCard}>
                           <div className={styles.NoImgBg}>
-                          <Image
-                            src={
-                              property?.images[0]?.propertyImage ||
-                              "/no_image1.jpg"
-                            } // adjust key if needed
-                            height={300}
-                            width={500}
-                            alt={property.propertyTitle}
-                            className={styles.TabCardImg}
-                          />
+                            <Image
+                              src={
+                                property?.images[0]?.propertyImage ||
+                                "/no_image1.jpg"
+                              } // adjust key if needed
+                              height={300}
+                              width={500}
+                              alt={property.propertyTitle}
+                              className={styles.TabCardImg}
+                            />
                           </div>
                           <h5 className={styles.TabCardTitle}>
                             {property.propertyTitle}
                           </h5>
-                          <div className={styles.TabContentBtn}>
-                            <Link
-                              href={{
-    pathname: `/${property.propertySlug}/${getOverviewSlug(property)}`,
-    // query: { id: hotel.propertyId, name: hotel.propertyName },
-  }}
-                              className="explore-more-btn"
-                            >
-                              Explore
-                            </Link>
-                            {/* <Link
-                              href={property.booking_url || "#"}
-                              className="book-now-btn"
-                              target="_blank"
-                            >
-                              Book Now
-                            </Link> */}
 
-                            <button
-  className="book-now-btn"
-  onClick={() => {
-    if (property?.staahBookingId) {
-      const bookingUrl = `https://bookings.amritara.co.in/?chainId=5971&propertyId=${property.staahBookingId}&_gl=1*1d9irrh*_gcl_au*MzgxMDEyODcxLjE3NTgyNjIxOTIuNzY2OTMwNzIwLjE3NTkzMTE2MjAuMTc1OTMxMTcyMA..*_ga*NzUyODI0NDE0LjE3NTgyNjIxOTI.*_ga_7XSGQLL96K*czE3NjA0NDUzOTUkbzQ4JGcxJHQxNzYwNDQ2NTA2JGo2MCRsMCRoODE1NTgwNjUw*_ga_DVBE6SS569*czE3NjA0NDUzOTQkbzQ1JGcxJHQxNzYwNDQ1NDY2JGo2MCRsMCRoOTgzMzg5ODY.`;
-      window.open(bookingUrl, "_blank"); // opens in new tab
-    } else {
-      alert("Booking not available for this property.");
-    }
-  }}
->
-  Book Now
-</button>
+                          <div className="winter-box-content main-new-hotel-box">
+                        <div className="hotel-box-content hotel-left-side-box">
+                          <div className="winter-box-btn">
+                            <Link href={`https://bookings.amritara.co.in/?chainId=5971&propertyId=${property.staahBookingId}&_gl=1*1d9irrh*_gcl_au*MzgxMDEyODcxLjE3NTgyNjIxOTIuNzY2OTMwNzIwLjE3NTkzMTE2MjAuMTc1OTMxMTcyMA..*_ga*NzUyODI0NDE0LjE3NTgyNjIxOTI.*_ga_7XSGQLL96K*czE3NjA0NDUzOTUkbzQ4JGcxJHQxNzYwNDQ2NTA2JGo2MCRsMCRoODE1NTgwNjUw*_ga_DVBE6SS569*czE3NjA0NDUzOTQkbzQ1JGcxJHQxNzYwNDQ1NDY2JGo2MCRsMCRoOTgzMzg5ODY.`}
+                              target="_blank" className="box-btn book-now">Book Now</Link>
+                            <Link
+                              href={{ pathname: `/${property.propertySlug}/${getOverviewSlug(property)}`, }}
+                              className="box-btn know-more"
+                            >
+                              Visit Hotel
+                            </Link>
                           </div>
+                        </div>
+
+                        <div className="hotel-box-content hotel-right-side-box">
+                          <p className="text-xs text-gray-600 price-show f-new-10 text-end">
+                            Starting from
+                          </p>
+                          <p className="font-semibold text-lg price-show">
+                            INR {property.staahPropertyPrice}
+                            <small className="f-new-10">/Night</small>
+                          </p>
+                        </div>
+                      </div>
                         </div>
                       </div>
                     </SwiperSlide>

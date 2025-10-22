@@ -42,8 +42,8 @@
     position: relative;
 }
 .main-child-slider .swiper-button-prev, .main-child-slider .swiper-button-next {
-    background-color: var(--gold);
-    color: var(--bs-black);
+    background-color: #fff!important;
+    color: var(--bs-black)!important;
     height: 40px;
     width: 40px;
     outline: none;
@@ -51,6 +51,7 @@
     position: absolute !important;
     bottom: 38% !important;
     top: auto !important;
+    border-radius: 0%!important;
 }
 .main-child-slider .swiper-button-prev{
     left: auto!important;
@@ -67,9 +68,9 @@
 .child-slider-content .child-sl-title {
         color: var(--red);
     text-align: left;
-    font-size: 26px;
-    font-weight: 500;
-        margin-top: 0.7rem;
+    font-size: 22px;
+    font-weight: 600 !important;
+    margin-top: 0.7rem;
     text-transform: capitalize;
 }
 .child-slider-content .child-slider-content-btm {

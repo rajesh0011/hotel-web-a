@@ -11,6 +11,7 @@ import * as ReactDOM from "react-dom";
 import { getUserInfo } from "../../utilities/userInfo";
 import FilterBar from "@/app/cin_booking_engine/Filterbar";
 import { BookingEngineProvider } from "@/app/cin_context/BookingEngineContext";
+import BookNowForm from "../booking-engine-widget/BookNowForm";
 
 const NoImagePlaceholder = "/no_image1.jpg";
 
@@ -140,6 +141,9 @@ export default function HotelsPageClient() {
     <>
       <MainHeader onClick={handleBookNowClick2} />
 
+<section className="booking-form-section booking-form-inner-property-pages">
+                    <BookNowForm />
+                  </section>
       {/* Hero Section */}
       <section className="hero-section-inner">
         <video
@@ -161,7 +165,7 @@ export default function HotelsPageClient() {
           {isOpen ? <X /> :<Search />}
         </Link>
       </div>  */}
-        <div className="inner-hero-content">
+        <div className="inner-hero-content d-none">
           <div className="text-center">
             <Link href="#" onClick={(e) => {
               e.preventDefault();
@@ -192,7 +196,7 @@ export default function HotelsPageClient() {
       {/* Intro Section */}
       <section className="about-us-page section-padding">
         <div className="container">
-          <div className="heading-style-1">
+          <div className="heading-style">
             <h1 className="mb-4 text-center global-heading">Our Hotels</h1>
           </div>
           <div className="row align-items-center">
@@ -248,14 +252,15 @@ export default function HotelsPageClient() {
                         style={{ objectFit: "cover" }}
                       />
                       <h5 className="card-title mt-3">{hotel.propertyName}</h5>
-                      <p
-                        className="card-text"
-                        dangerouslySetInnerHTML={{
+                      <p className="card-text two-line-text">
+                        <span dangerouslySetInnerHTML={{
                           __html:
-                            (hotel.shortDescription?.slice(0, 100) ||
+                            (hotel.shortDescription||
                               "No description available") + "...",
-                        }}
-                      />
+                        }} />
+                      </p>
+                        
+                      
                       <div className="hotel-bottom-box-cta-n-content">
                         <div className="cta-buttons-box">
 
@@ -271,7 +276,10 @@ export default function HotelsPageClient() {
                             Book Now
                           </Link> */}
 
-                          <button
+                          <Link href={`https://bookings.amritara.co.in/?chainId=5971&propertyId=${hotel.staahBookingId}&_gl=1*1d9irrh*_gcl_au*MzgxMDEyODcxLjE3NTgyNjIxOTIuNzY2OTMwNzIwLjE3NTkzMTE2MjAuMTc1OTMxMTcyMA..*_ga*NzUyODI0NDE0LjE3NTgyNjIxOTI.*_ga_7XSGQLL96K*czE3NjA0NDUzOTUkbzQ4JGcxJHQxNzYwNDQ2NTA2JGo2MCRsMCRoODE1NTgwNjUw*_ga_DVBE6SS569*czE3NjA0NDUzOTQkbzQ1JGcxJHQxNzYwNDQ1NDY2JGo2MCRsMCRoOTgzMzg5ODY.`}
+target="_blank" className="book-now-btn">Book Now</Link>
+
+                          {/* <button
   className="book-now-btn"
   onClick={() => {
     if (hotel?.staahBookingId) {
@@ -283,7 +291,7 @@ export default function HotelsPageClient() {
   }}
 >
   Book Now
-</button>
+</button> */}
                         </div>
                         <div className="price-content-hotel-boxx">
                           <p className="price-starts-hotel">Starting From</p>

@@ -4,8 +4,6 @@ import { useBookingEngineContext } from "../cin_context/BookingEngineContext";
 import React, { useEffect, useState, useMemo, useRef } from "react";
 import flatpickr from "flatpickr";
 import "flatpickr/dist/flatpickr.min.css";
-import axios from "axios";
-import { createSignature } from "../../utilities/signature";
 
 const styles = {
   input: {
@@ -37,10 +35,6 @@ const DateRangePicker = () => {
     return d.toISOString().split("T")[0];
   };
 
-  // const fromDate = useMemo(
-  //   () => formatDateWithOffset(currentDate, 330), // +5:30 = 330 minutes
-  //   [currentDate]
-  // );
 const fromDate = useMemo(() => {
   const d = new Date();
   d.setHours(0, 0, 0, 0);
@@ -59,39 +53,6 @@ const fromDate = useMemo(() => {
     return `${year}-${month}-${day}`;
   };
 
-    // useEffect(() => {
-    //   const fetchPrices = async () => {
-    //     if (!selectedPropertyId) return;
-
-    //     loadingRef.current = true;
-    //     try {
-    //       const url = `${process.env.NEXT_PUBLIC_CMS_BASE_URL_ROOM_RATES}/staah/rates/GetRoomsRates?RequestType=bedata&PropertyId=${selectedPropertyId}&Product=yes&CheckInDate=${fromDate}&CheckOutDate=${toDate}`;
-    //       const response = await fetch(url, {
-    //         method: "GET",
-    //         headers: {
-    //           "Content-Type": "application/json",
-    //           "x-api-key": process.env.NEXT_PUBLIC_API_KEY_GETRATE,
-    //         },
-    //       });
-    //       const data = await response?.json();
-    //       const dayRate = data?.PropertyList?.[0]?.DayRate || {};
-    //       const prices = {};
-    //       for (const date in dayRate) {
-    //         prices[date] = dayRate[date]?.Rate || 0;
-    //       }
-    //       pricesMapRef.current = prices;
-    //     } catch (error) {
-    //       console.error("Error fetching prices:", error);
-    //     } finally {
-    //       loadingRef.current = false;
-    //       if (flatpickrRef?.current) {
-    //         flatpickrRef?.current?.redraw();
-    //       }
-    //     }
-    //   };
-
-    //   fetchPrices();
-    // }, [selectedPropertyId, fromDate, toDate]);
 
   useEffect(() => {
     const inputElement = document.getElementById("dateRangePicker");

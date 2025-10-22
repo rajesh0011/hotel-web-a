@@ -8,7 +8,6 @@ import Link from 'next/link';
 import MainHeader from "../Common/MainHeader";
 import { ChevronRight } from 'lucide-react';
 import "../Styles/inner-hero.css";
-import Footer from '../Common/Footer';
 
 export default function CareerPage() {
   const [formData, setFormData] = useState({
@@ -158,7 +157,6 @@ const handleSubmit = async (e) => {
         </div>
       </section>
 
-      <Footer></Footer>
     </>
   );
 }

@@ -12,6 +12,7 @@ import { BookingEngineProvider } from "../../cin_context/BookingEngineContext";
 import FilterBar from "../../cin_booking_engine/Filterbar";
 import { X } from "lucide-react";
 import PropertyMainHeader from "@/app/Common/PropertyMainHeader";
+import BookNowForm from "@/app/booking-engine-widget/BookNowForm";
 
 export default function OfferHotelClient({ propertySlug }) {
   const [offers, setOffers] = useState([]);
@@ -25,6 +26,7 @@ export default function OfferHotelClient({ propertySlug }) {
   const [roomDetails, setRoomDetails] = useState(null);
   const [isOpenFilterBar, openFilterBar] = useState(false);
   const [isOpen, setOpen] = useState(false);
+  const [logo, setPropertyLogo] = useState(null);
 
   const handleBookNowClick = async () => {
     setOpen(!isOpen);
@@ -48,6 +50,7 @@ useEffect(() => {
       );
       const id = property?.propertyId || null;
       const type = property?.propertyType || null;
+      const logo = property?.propertyLogo || null;
 
       const label = property?.cityName;
       const value = property?.cityId;
@@ -56,6 +59,7 @@ useEffect(() => {
       setStaahPropertyId(property?.staahPropertyId);
 
       setPropertyType(type);
+      setPropertyLogo(logo);
 
       setPropertyId(id);
 
@@ -98,8 +102,11 @@ useEffect(() => {
 
   return (
     <>
-      <PropertyMainHeader id={propertyId} type={type}  />
+      <PropertyMainHeader id={propertyId} type={type} logo={logo}  />
 
+<section className="booking-form-section booking-form-inner-property-pages">
+              <BookNowForm />
+            </section>
       <section className="position-relative inner-banner-section-slider d-none">
         {bannerImages.length > 0 ? (
           <Swiper
@@ -166,11 +173,11 @@ useEffect(() => {
 
       {offers.length > 0 ? (
         <section className="inner-offer-page-sec inner-no-banner-sec">
-          <div className="container">
+          <div className="container pt-5">
             <div className="global-heading-sec text-center">
               <div className="row justify-content-center mb-2">
                 <div className="col-md-9 md-offset-1">
-                  <h2 className="global-heading">OFFERS</h2>
+                  <h1 className="global-heading">OFFERS</h1>
                   {/* <h1>property id {propertyId}</h1> */}
                 </div>
               </div>

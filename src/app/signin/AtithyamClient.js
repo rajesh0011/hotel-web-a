@@ -18,7 +18,7 @@ const AtithyamClient = () => {
           />
         </div>
         <div className="rewards-content">
-          <div className="heading-style-1">
+          <div className="heading-style">
             <h1 className="mb-4 mt-4 text-center global-heading">
               Unlock a World of Exclusive Rewards and Privileges
             </h1>

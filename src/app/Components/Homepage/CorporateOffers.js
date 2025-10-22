@@ -86,7 +86,7 @@ export default function CorporateOffers() {
 
           <Swiper
             modules={[Navigation, Pagination]}
-            spaceBetween={20}
+            spaceBetween={10}
             slidesPerView={3}
             navigation
             pagination={false}

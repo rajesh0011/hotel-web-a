@@ -7,8 +7,9 @@ import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
 import Image from "next/image";
+import Link from "next/link";
 
-export default function LatestOffers({ propertyId, onSubmit }) {
+export default function LatestOffers({ propertyId, onSubmit, BeId }) {
   const [offers, setOffers] = useState([]);
   const [modalContent, setModalContent] = useState({});
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -67,7 +68,7 @@ export default function LatestOffers({ propertyId, onSubmit }) {
       <section className="sec-padding" data-aos="fade-up">
         <div className="container">
           <div className="global-heading-sec text-center">
-            <div className="row justify-content-center mb-4">
+            <div className="row justify-content-center mb-2">
               <div className="col-md-9 md-offset-1">
                 <h2 className="global-heading">Offers</h2>
               </div>
@@ -87,7 +88,7 @@ export default function LatestOffers({ propertyId, onSubmit }) {
                     767: { slidesPerView: 2 },
                     1000: { slidesPerView: 3 },
                   }}
-                  className="n-hotel-slider offer-section-overview-page"
+                  className="n-hotel-slider offer-section-overview-page px-3"
                 >
                   {offers.map((offer, index) => {
                     const imageUrl =
@@ -95,9 +96,9 @@ export default function LatestOffers({ propertyId, onSubmit }) {
                       "/images/event/event-img1.png";
 
                     return (
-                      <SwiperSlide key={offer.propertyOfferId || index}>
+                      <SwiperSlide key={offer.propertyOfferId || index} className="py-3">
                         {/* Offer Image */}
-                        <div className="winter-box shadow hotel-box mt-2 no-image-bg">
+                        {/* <div className="winter-box shadow hotel-box mt-2 no-image-bg">
                           <Image
                             src={imageUrl}
                             alt={offer.offerTitle || "Offer"}
@@ -106,10 +107,10 @@ export default function LatestOffers({ propertyId, onSubmit }) {
                             height={220}
                             quality={75}
                           />
-                        </div>
+                        </div> */}
 
                         {/* Offer Content */}
-                        <div className="winter-box-content-box">
+                        <div className="winter-box-content-box property-offer-card-box property-offreer-box-min-hight">
                           <div className="winter-box-content">
                             <div className="hotel-box-content">
                               <h3 className="winter-box-heading mb-2 offer-box-heding no-cursor">
@@ -117,13 +118,18 @@ export default function LatestOffers({ propertyId, onSubmit }) {
                               </h3>
                             </div>
                             <p className="display-block one-line-text">
-                              <span
+                              {/* <span
                                 dangerouslySetInnerHTML={{
                                   __html:
                                     offer.offerDesc?.slice(0, 100) ||
                                     "No description available.",
                                 }}
-                              />
+                              /> */}
+                              <span>
+                                {offer.offerDesc
+                                  ? offer.offerDesc.replace(/<[^>]*>/g, '').slice(0, 100)
+                                  : "No description available."}
+                              </span>
                             </p>
                             <div className="winter-box-btn">
                               <button
@@ -132,12 +138,15 @@ export default function LatestOffers({ propertyId, onSubmit }) {
                               >
                                 Know More
                               </button>
-                              <button
+                              {/* <button
                                 className="box-btn book-now"
                                 onClick={() => handleBookNow(offer)}
                               >
                                 Book Now
-                              </button>
+                              </button> */}
+
+                              <Link href={`https://bookings.amritara.co.in/?chainId=5971&propertyId=${BeId}&_gl=1*1d9irrh*_gcl_au*MzgxMDEyODcxLjE3NTgyNjIxOTIuNzY2OTMwNzIwLjE3NTkzMTE2MjAuMTc1OTMxMTcyMA..*_ga*NzUyODI0NDE0LjE3NTgyNjIxOTI.*_ga_7XSGQLL96K*czE3NjA0NDUzOTUkbzQ4JGcxJHQxNzYwNDQ2NTA2JGo2MCRsMCRoODE1NTgwNjUw*_ga_DVBE6SS569*czE3NjA0NDUzOTQkbzQ1JGcxJHQxNzYwNDQ1NDY2JGo2MCRsMCRoOTgzMzg5ODY.`}
+target="_blank" className="box-btn book-now py-2">Book Now</Link>
                             </div>
                           </div>
                         </div>

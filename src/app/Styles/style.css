@@ -6,21 +6,17 @@
 
 /* homepage css */
 
-.home-page-class button{    bottom: 11em;
+/* .home-page-class button{    bottom: 11em;
     position: relative;
     padding: 4px 10px !important;
     border: 1px solid #fff;
     color: #fff;
-    /* border-radius: 50%; */
     background-color: transparent !important;border-radius:0px !important;}
 .banner-section {
 position: relative;
-/* height: calc(107vh + 0px);
-    margin-top: -90px; */
-/* overflow: hidden; */
 
 
-}
+} */
 .banner-section .banner-image{
 position: relative;
 }
@@ -411,6 +407,9 @@ padding: 8px!important;
     text-transform: capitalize;
     font-weight: 600;
     border-radius: 9px;
+}
+.experience-category-slider-tabs .category-btn.all-tab-btn{
+    padding: 10px 30px;
 }
 .experience-category-slider-tabs .category-btn.active{
   background-color:var(--brown);

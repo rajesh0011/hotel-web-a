@@ -108,7 +108,7 @@ const handleBookNowClick = async () => {
         
             <section className="about-us-page section-padding">
                 <div className="container">
-                    <div className='heading-style-1'>
+                    <div className='heading-style'>
                         <h1 className="mb-4 text-center global-heading">ABOUT AMRITARA</h1>
                     </div>
                     

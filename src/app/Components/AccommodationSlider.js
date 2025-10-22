@@ -173,10 +173,10 @@ export default function AccommodationSlider({
                     </Swiper>
                     <div className="accommodation-box-content">
                       <div className="hotel-box-content mt-0">
-                        <h3 className="winter-box-heading mt-2">{room.roomName}</h3>
-                        <p className="winter-box-text text-with-rd-mr text-style-none">
-                          {(room.roomDesc || "").replace(/<[^>]+>/g, "").slice(0, 80)}...
-                          <button
+                        <h3 className="winter-box-heading mt-3">{room.roomName}</h3>
+                        <p className="winter-box-text text-with-rd-mr text-style-none one-line-text">
+                          <span>{(room.roomDesc || "").replace(/<[^>]+>/g, "").slice(0, 80)}...</span>
+                          {/* <button
                             className="read-more-btnn text-style-none "
                             onClick={() => {
                               setSelectedRoom(room);
@@ -184,7 +184,7 @@ export default function AccommodationSlider({
                             }}
                           >
                              read more
-                          </button>
+                          </button> */}
                         </p>
                         {/* Example price field if available */}
                         {/* <p className="f-20-new acc-price mt-4">
@@ -214,7 +214,10 @@ export default function AccommodationSlider({
                             Book Now
                           </Link> */}
 
-                          <button
+                           <Link href={`https://bookings.amritara.co.in/?chainId=5971&propertyId=${BeId}&_gl=1*1d9irrh*_gcl_au*MzgxMDEyODcxLjE3NTgyNjIxOTIuNzY2OTMwNzIwLjE3NTkzMTE2MjAuMTc1OTMxMTcyMA..*_ga*NzUyODI0NDE0LjE3NTgyNjIxOTI.*_ga_7XSGQLL96K*czE3NjA0NDUzOTUkbzQ4JGcxJHQxNzYwNDQ2NTA2JGo2MCRsMCRoODE1NTgwNjUw*_ga_DVBE6SS569*czE3NjA0NDUzOTQkbzQ1JGcxJHQxNzYwNDQ1NDY2JGo2MCRsMCRoOTgzMzg5ODY.`}
+target="_blank" className="box-btn book-now button-secondary">Book Now</Link>
+
+                          {/* <button
   className="box-btn book-now button-secondary"
   onClick={() => {
     if (BeId) {
@@ -226,7 +229,7 @@ export default function AccommodationSlider({
   }}
 >
   Book Now
-</button>
+</button> */}
                         </div>
                       </div>
                     </div>

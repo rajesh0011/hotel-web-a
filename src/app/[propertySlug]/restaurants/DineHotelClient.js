@@ -11,6 +11,7 @@ import { BookingEngineProvider } from "../../cin_context/BookingEngineContext";
 import FilterBar from "../../cin_booking_engine/Filterbar";
 import { X } from "lucide-react";
 import PropertyMainHeader from "@/app/Common/PropertyMainHeader";
+import BookNowForm from "@/app/booking-engine-widget/BookNowForm";
 
 export default function DineHotelClient({ propertySlug }) {
   const [propertyData, setPropertyData] = useState(null);
@@ -131,7 +132,11 @@ export default function DineHotelClient({ propertySlug }) {
 
   return (
     <>
-      <PropertyMainHeader id={propertyData.propertyId} type={propertyData.propertyType} />
+      <PropertyMainHeader id={propertyData?.propertyId} type={propertyData?.propertyType} logo={propertyData?.propertyLogo} />
+
+<section className="booking-form-section booking-form-inner-property-pages">
+              <BookNowForm />
+            </section>
 
       <section className="position-relative inner-banner-section-slider d-none">
         {bannerImages.length > 0 ? (
@@ -200,9 +205,9 @@ export default function DineHotelClient({ propertySlug }) {
       {/* <h1>proprty id {propertyData.propertyId}</h1> */}
 
       <section className="Dining-Inner-Section inner-no-banner-sec">
-        <div className="container">
+        <div className="container pt-1">
           <div className="global-heading-sec text-center">
-            <div className="row justify-content-center mb-2">
+            <div className="row justify-content-center mb-0 mt-5">
               <div className="col-md-9 md-offset-1">
                 <h2 className="global-heading">
                   {banner?.dineBannerTitle || "Dining"}

@@ -14,6 +14,7 @@ import { getUserInfo } from "../../utilities/userInfo";
 import FilterBar from "@/app/cin_booking_engine/Filterbar";
 import { BookingEngineProvider } from "@/app/cin_context/BookingEngineContext";
 import MainHeader from "../Common/MainHeader";
+import BookNowForm from "../booking-engine-widget/BookNowForm";
 
 const AboutUs = () => {
     const [isOpen, setOpen] = useState(false);
@@ -70,6 +71,8 @@ const handleBookNowClick = async () => {
   return (
     <>
     <MainHeader onClick={handleBookNowClick}></MainHeader>
+
+    
     <section className="hero-section-inner" ref={filterBarRef}>
         <video autoPlay loop muted playsInline className="w-100 inner-hero-image" thumbnail="/img/banner-thumbnail.png"
             poster="/img/banner-thumbnail.png"
@@ -78,7 +81,7 @@ const handleBookNowClick = async () => {
             Your browser does not support the video tag.
         </video>
         {/* <Image src="/img/popular-1.jpeg" alt="About Us Hero Image" height={500} width={1500} className="w-100 inner-hero-image" /> */}
-        <div className="inner-hero-content">
+        <div className="inner-hero-content d-none">
             <div className="text-center">
                 <Link href="#" onClick={(e) => {
               e.preventDefault();
@@ -105,10 +108,14 @@ const handleBookNowClick = async () => {
           document.body
         )}
     </section>
+
+    <section className="booking-form-section booking-form-inner-property-pages">
+                        <BookNowForm />
+                      </section>
         
             <section className="about-us-page section-padding">
                 <div className="container">
-                    <div className='heading-style-1'>
+                    <div className='heading-style'>
                         <h1 className="mb-4 text-center global-heading">ABOUT AMRITARA HOTELS & RESORTS</h1>
                     </div>
                     
@@ -143,7 +150,7 @@ const handleBookNowClick = async () => {
                 <div className="row align-items-center">
                     
                     <div className="col-md-6">
-                        <div className='heading-style-2'>
+                        <div className='heading-style'>
                             <h2 className="global-heading">Our Story</h2>
                         </div>
                         

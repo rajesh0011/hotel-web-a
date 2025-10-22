@@ -32,9 +32,10 @@ body {
   background-color: var(--lred);
 }
 h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-heading), serif !important;
+  /* font-family: var(--font-heading), serif !important; */
+  font-family: var(--font-body), serif !important;
   margin-top: 0;
-  font-weight: 400; /* Elsie has 400 and 900 weights */
+  font-weight: 600!important;
   color: #111;
 }
 
@@ -97,8 +98,8 @@ p{
 .global-heading{
     color: var(--red)!important;
     text-transform: uppercase!important;
-    font-size: 35px !important;
-    font-weight: 500 !important;
+    font-size: 30px !important;
+    font-weight: 600 !important;
 }
 .section-padding{
     padding: 3rem 0;
@@ -111,7 +112,7 @@ p{
 .heading-style-1 .global-heading {
   color: var(--red) !important;
   text-transform: uppercase !important;
-  font-size: 35px !important;
+  font-size: 30px !important;
   font-weight: 500 !important;
   position: relative;
 }
@@ -212,7 +213,15 @@ font-weight: 300;
   left: 0%;
   transform: translateX(0%);
 }
-
+.booking-form-inner-property-pages .booking-search-bar-btn-div {
+  display: none!important;
+}
+.booking-form-inner-property-pages .header_booking_engine_container{
+  top:90px!important;
+}
+.booking-form-inner-property-pages .header_booking_engine {
+    background: #fff7ed;
+}
 
 .explore-more-btn {
     font-size: 12px;

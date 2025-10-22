@@ -39,7 +39,7 @@ export default function TandCPage() {
             </section>
             <section className="privacy-policy-page section-padding">
                 <div className="container">
-                    <div className='heading-style-1'>
+                    <div className='heading-style'>
                         <h1 className="mb-4 text-center global-heading">TERMS AND CONDITIONS</h1>
                     </div>
                     <div className="row align-items-center mb-2">

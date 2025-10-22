@@ -42,10 +42,10 @@ export default function ContactPage() {
     </section>
     <section className="about-us-page section-padding">
         <div className="container">
-            <div className='heading-style-1'>
+            <div className='heading-style'>
                 <h1 className="mb-4 text-center global-heading">Amritara Hotels & Resorts</h1>
-                <span className='line-1'></span>
-                <span className='line-2'></span>
+                {/* <span className='line-1'></span>
+                <span className='line-2'></span> */}
             </div>
         </div>
         <ContactUsMain></ContactUsMain>

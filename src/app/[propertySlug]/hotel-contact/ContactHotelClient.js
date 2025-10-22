@@ -16,6 +16,7 @@ import Link from "next/link";
 import HotelContactForm from "./HotelContactForm";
 import PropertyMainHeader from "@/app/Common/PropertyMainHeader";
 import NearbyPlaces from "./NearbyPlaces";
+import BookNowForm from "@/app/booking-engine-widget/BookNowForm";
 
 export default function ContactHotelClient({ brandSlug, propertySlug, propertyId }) {
   const [propertyData, setPropertyData] = useState(null);
@@ -105,8 +106,14 @@ setBannerImages(validImageUrls);
         brand_slug={brandSlug}
         id={propertyData.propertyId}
         type={propertyData.propertyType}
+        logo={propertyData.propertyLogo}
         onSubmit={() => {}}
       />
+
+      <section className="booking-form-section booking-form-inner-property-pages">
+                    <BookNowForm />
+                  </section>
+
      <section className="position-relative inner-banner-section-slider d-none">
           {bannerImages.length > 0 ? (
             <Swiper
@@ -161,11 +168,11 @@ setBannerImages(validImageUrls);
       </section>
 
       <section className="main-contactus-section-inner inner-no-banner-sec">
-        <div className="container">
+        <div className="container pt-5">
           <div className="global-heading-sec text-center">
             <div className="row justify-content-center mb-2">
               <div className="col-md-9 md-offset-1">
-                <h2 className="global-heading">{propertyData?.propertyType || ""} Contact in {propertyData?.cityName || ""}</h2>
+                <h1 className="global-heading">{propertyData?.propertyType || ""} Contact in {propertyData?.cityName || ""}</h1>
                 {/* <p className="mb-2">
                   Lorem Ipsum is simply dummy text of the printing and
                   typesetting industry. Lorem Ipsum has been the industry's

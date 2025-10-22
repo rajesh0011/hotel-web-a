@@ -21,17 +21,17 @@ export default function Offerpagesslider({ offers }) {
 const text = rawText.replace(/<[^>]+>/g, "");
 
           return (
-            <div key={offer.propertyOfferId || index} className="col-lg-4 mb-4">
-              <div className="winter-box hotel-box no-image-bg">
+            <div key={offer.propertyOfferId || index} className="col-lg-4">
+              {/* <div className="winter-box hotel-box no-image-bg">
                 <img
                   src={imageUrl}
                   alt={title}
                   className="w-100"
                   style={{ height: 220, objectFit: "cover" }}
                 />
-                </div>
-                <div>
-                <div className="winter-box-content shadow-sm pt-1">
+                </div> */}
+                <div className="h-100">
+                <div className="winter-box-content-box property-offer-card-box property-offreer-box-min-hight">
                   <h3 className="winter-box-heading text-start">{title}</h3>
                   <p className="display-block mt-2">
                     {text.length > 100 ? (

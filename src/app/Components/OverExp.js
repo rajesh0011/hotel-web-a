@@ -3,11 +3,12 @@
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { Swiper, SwiperSlide } from "swiper/react";
-import { Autoplay } from "swiper/modules";
+import { Autoplay, Navigation, Pagination } from "swiper/modules";
 import * as ReactDOM from "react-dom";
 
 import "swiper/css";
 import "swiper/css/autoplay";
+// import { Navigation } from "lucide-react";
 
 export default function OverExp({ propertyId }) {
   const [experiences, setExperiences] = useState([]);
@@ -80,10 +81,11 @@ export default function OverExp({ propertyId }) {
           <div className="row">
             <div className="discover-slider expericence-sliderr">
               <Swiper
-                modules={[Autoplay]}
+                modules={[Autoplay, Navigation]}
                 loop={true}
                 centeredSlides={false}
                 spaceBetween={20}
+                navigation={true}
                 slidesPerView={1}
                 autoplay={{ delay: 3000, disableOnInteraction: false }}
                 speed={600}
@@ -101,7 +103,7 @@ export default function OverExp({ propertyId }) {
 
                   return (
                     <SwiperSlide key={exp.experiancesId}>
-                      <div className="winter-box">
+                      <div className="winter-box h-100">
                         <div className="image-overlay">
                           <Image
                             src={firstImg}

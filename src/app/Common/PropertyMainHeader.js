@@ -3,15 +3,18 @@ import "../Styles/HeaderStyle.css";
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
-import { Tally2, X } from "lucide-react";
+import { Tally2, X, Menu } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { useForm } from "../booking-engine-widget/FormContext";
 
-const PropertyMainHeader = ({ id, type }) => {
+const PropertyMainHeader = ({ id, type, logo }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [open, setOpen] = useState(false);
   const [menuConfig, setMenuConfig] = useState(null);
+    const { isFormOpen, setIsFormOpen } = useForm();
+    const [isRoomMenuOpen, setIsRoomMenuOpen] = useState(false);
   const { propertySlug } = useParams();
   const { user } = useAuth();
   const filterBarRef = useRef(null);
@@ -25,7 +28,6 @@ const PropertyMainHeader = ({ id, type }) => {
           console.warn("Property ID not available yet");
           return;
         }
-
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_CMS_API_Base_URL}/property/menu?propertyId=${id}`
         );
@@ -60,15 +62,31 @@ const PropertyMainHeader = ({ id, type }) => {
       if (firstInput) firstInput.focus();
     }
   };
+   const toggleBookingForm = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsFormOpen(!isFormOpen);
+    if (isRoomMenuOpen) setIsRoomMenuOpen(false);
+  };
 
   return (
     <header className="header-section">
       <nav className={`navbar navbar-expand-lg navbar-light ${isScrolled ? "scrolled" : ""}`}>
         <div className="container">
           <div className="header-display-flex">
+
+            {/* <h1>{logo}</h1> */}
+            
             <Link className="navbar-brand" href="/">
-              <Image
+              {/* <Image
                 src="/img/logo.png"
+                className="header-logo"
+                alt="Amritara Hotels And Resorts"
+                width={300}
+                height={200}
+              /> */}
+              <Image
+                src={logo || "/img/logo.png"}
                 className="header-logo"
                 alt="Amritara Hotels And Resorts"
                 width={300}
@@ -110,17 +128,22 @@ const PropertyMainHeader = ({ id, type }) => {
                 <Link
                   className="me-3 header-btnn-top book-menu-header"
                   href="#"
-                  onClick={handlePropertyBookNow}
+                  // onClick={handlePropertyBookNow}
+                  onClick={toggleBookingForm}
                 >
                   Book Now
                 </Link>
 
-                <button
-                  onClick={toggleSidebar}
-                  className="sidebar-toggle border-0 bg-transparent ms-3"
-                >
-                  <Tally2 size={20} className="toggle-image-s" />
-                </button>
+                {/* <button onClick={toggleSidebar}
+                  className="sidebar-toggle border-0 bg-transparent ms-3">
+                </button> */}
+
+                 <button onClick={toggleSidebar}
+                    className="sidebar-toggle border-0 bg-transparent ms-3">
+                    {/* <Tally2 size={20} className="toggle-image-s" /> */}
+                    <Menu size={20} className="toggle-image-s" />
+                  </button>
+
               </div>
             </div>
           </div>

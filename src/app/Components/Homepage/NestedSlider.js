@@ -154,20 +154,21 @@ export default function NestedSwiper() {
                               <div className="next-boxx-parent-div">
                                 <div className="left-nested-boxx">
                                   {/* <button className="child-sl-btn mt-2">Book Now</button> */}
-
-                                  <button
+<Link href={`https://bookings.amritara.co.in/?chainId=5971&propertyId=${hotel.staahBookingId}&_gl=1*1d9irrh*_gcl_au*MzgxMDEyODcxLjE3NTgyNjIxOTIuNzY2OTMwNzIwLjE3NTkzMTE2MjAuMTc1OTMxMTcyMA..*_ga*NzUyODI0NDE0LjE3NTgyNjIxOTI.*_ga_7XSGQLL96K*czE3NjA0NDUzOTUkbzQ4JGcxJHQxNzYwNDQ2NTA2JGo2MCRsMCRoODE1NTgwNjUw*_ga_DVBE6SS569*czE3NjA0NDUzOTQkbzQ1JGcxJHQxNzYwNDQ1NDY2JGo2MCRsMCRoOTgzMzg5ODY.`}
+target="_blank" className="child-sl-btn mt-2">Book Now</Link>
+                                  {/* <button
   className="child-sl-btn mt-2"
   onClick={() => {
     if (hotel?.staahBookingId) {
       const bookingUrl = `https://bookings.amritara.co.in/?chainId=5971&propertyId=${hotel.staahBookingId}&_gl=1*1d9irrh*_gcl_au*MzgxMDEyODcxLjE3NTgyNjIxOTIuNzY2OTMwNzIwLjE3NTkzMTE2MjAuMTc1OTMxMTcyMA..*_ga*NzUyODI0NDE0LjE3NTgyNjIxOTI.*_ga_7XSGQLL96K*czE3NjA0NDUzOTUkbzQ4JGcxJHQxNzYwNDQ2NTA2JGo2MCRsMCRoODE1NTgwNjUw*_ga_DVBE6SS569*czE3NjA0NDUzOTQkbzQ1JGcxJHQxNzYwNDQ1NDY2JGo2MCRsMCRoOTgzMzg5ODY.`;
-      window.open(bookingUrl, "_blank"); // opens in new tab
+      window.open(bookingUrl, "_blank"); 
     } else {
       alert("Booking not available for this property.");
     }
   }}
 >
   Book Now
-</button>
+</button> */}
 
                                   <Link href={{
                                     pathname: `/${hotel.propertySlug}/${getOverviewSlug(hotel)}`,

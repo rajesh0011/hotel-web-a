@@ -16,6 +16,7 @@ import FilterBar from "@/app/cin_booking_engine/Filterbar";
 import { X } from "lucide-react";
 // import { getUserInfo } from "../../../../utilities/userInfo";
 import PropertyMainHeader from "@/app/Common/PropertyMainHeader";
+import BookNowForm from "@/app/booking-engine-widget/BookNowForm";
 
 export default function GalleryHotelClient({ propertySlug, id }) {
   const [galleryData, setGalleryData] = useState([]);
@@ -23,6 +24,7 @@ export default function GalleryHotelClient({ propertySlug, id }) {
   const [loading, setLoading] = useState(true);
     const [propertyData, setPropertyData] = useState(null);
     const [type, setPropertyType] = useState(null);
+    const [logo, setPropertyLogo] = useState(null);
 
   const [propertyId, setPropertyId] = useState(null);
   const [showFilterBar, setShowFilterBar] = useState(false);
@@ -104,9 +106,11 @@ export default function GalleryHotelClient({ propertySlug, id }) {
       const value = found?.cityId;
       const property_Id = found?.staahPropertyId;
       const type = found?.propertyType;
+      const logo = found?.propertyLogo;
 
       // ✅ City + staah for booking engine
       setPropertyType(type);
+      setPropertyLogo(logo);
       setCityDetails({ label, value, property_Id });
 
       // ✅ Important: set propertyId from actual propertyId
@@ -208,8 +212,11 @@ export default function GalleryHotelClient({ propertySlug, id }) {
         onSubmit={() => {}}
       /> */}
 
-      <PropertyMainHeader id={propertyId} type={type} />
+      <PropertyMainHeader id={propertyId} type={type} logo={logo} />
 
+<section className="booking-form-section booking-form-inner-property-pages">
+              <BookNowForm />
+            </section>
       {/* <h1>proerty id {propertyId}</h1> */}
 
       {/* ✅ Banner Section with Swiper */}
@@ -278,9 +285,9 @@ export default function GalleryHotelClient({ propertySlug, id }) {
       </section>
 
       <section className="inner-no-banner-sec">
-        <div className="container">
+        <div className="container p-5">
           <div className="global-heading-sec text-center">
-            <h2 className="global-heading">Our Gallery</h2>
+            <h1 className="global-heading">Our Gallery</h1>
             {/* <h1>property id {propertyId}</h1> */}
           </div>
           <HotelGallery galleryData={galleryData} />
