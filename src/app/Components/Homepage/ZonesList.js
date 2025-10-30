@@ -7,7 +7,7 @@ async function getZoneList() {
   return response.json();
 }
 
-export default function ZonesList() {
+export default function ZonesList({ onClick }) {
   const [zoneList, setZoneList] = useState(null);
   useEffect(()=>{
     async function fetchData() {
@@ -16,5 +16,5 @@ export default function ZonesList() {
   fetchData();
   },[])
   
-  return <ZoneTabs zones={zoneList?.data || []} />;
+  return <ZoneTabs zones={zoneList?.data || []} onClick={onClick}/>;
 }

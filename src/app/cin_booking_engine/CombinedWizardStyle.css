@@ -98,14 +98,14 @@ body.CombinedWizard1:before {
         margin: 5px;
     padding: 10px 0;
     padding-right: 10px;
-    background-color: #000;
+    background-color: #803525;
     cursor: pointer;
 }
 .SelectedRoomTopInNewWWizard .CheckForSelectedRoomInWizard {
     width: 40px;
     height: 40px;
     border: none;
-    background-color: #000;
+    background-color: #803525;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -209,7 +209,7 @@ font-size: 15px!important;
         position: relative;
         top: -5px;
         right: 0px;
-        background: #000;
+        background: #803525;
         color: #fff;
 }
 
@@ -301,15 +301,15 @@ font-size: 15px!important;
 }
 
 .step-circle.completed {
-  border-color: #000;
-  background-color: #000;
+  border-color: #803525;
+  background-color: #803525;
   color: #fff;
   margin: 0 auto;
 }
 
 .step-line {
   position: absolute;
-  top: 14px; /* middle of circle */
+  top: 12px; /* middle of circle */
   left: 50%;
   width: 100%;
   height: 2px;
@@ -318,7 +318,7 @@ font-size: 15px!important;
 }
 
 .step-line.completed {
-  background: #000;
+  background: #803525;
 }
 
 /*** step css ***/
@@ -338,6 +338,7 @@ font-size: 15px!important;
 
 .repeated-div-property:nth-child(1){
     padding-top: 0 !important;
+    padding-bottom:4rem!important;
 }
 
 .cart-display-desktopss{
@@ -496,7 +497,7 @@ max-width: 100%!important;
     .step-wizard-card-section{
         margin-top: 68px;
         margin-bottom: 0;
-        padding-bottom: 0px;
+        padding-bottom: 6px;
         border-bottom: 1px solid #f4f4f4;
         box-shadow: 3px 3px 2px #ccc;
         border-top: 1px solid #ccc;

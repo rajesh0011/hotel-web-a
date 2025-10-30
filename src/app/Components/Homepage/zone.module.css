@@ -46,7 +46,7 @@
     font-weight: 600;
     border-radius: 0 !important;
     border: 1px solid #ddd !important;
-    border-radius: 8px 8px 0 0 !important;
+    border-radius: 0 !important;
     /* margin: 0 5px; */
 }
 .InActiveTab:hover{
@@ -58,7 +58,7 @@
     background-color: #851d29!important;
     color: #fff!important;
     border-bottom:none!important;
-    border-radius: 8px 8px 0 0 !important;
+    border-radius: 0 !important;
     font-size: 14px;
     padding: 7px 10px;
     text-transform: capitalize;

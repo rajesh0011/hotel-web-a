@@ -226,34 +226,34 @@ export default function Diningpageslider({ dineData = [], cityId = '', propertyI
             return (
               <div className="row align-items-center position-relative mb-4" key={index}>
                 <div
-                  className="pushed-image col-md-6"
+                  className="col-md-12"
                   style={{
                     backgroundImage: `url("${encodeURI(hotel.img || '/amritara-dummy-room.jpeg')}")`,
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
-                    minHeight: '250px',
+                    minHeight: '320px',
                     backgroundColor: '#f0f0f0',
                   }}
                 />
-                <div className="pushed-box col-md-6">
-                  <div className="pushed-header">
-                    <span className="header-1">{hotel.title}</span>
-                    <span className="display-block mt-2">
+                <div className="col-md-12">
+                  <div className="pushed-header text-center">
+                    <span className="header-1 mt-3">{hotel.title}</span>
+                    <span className="display-block d-flex align-content-center justify-content-center mt-2">
                       {cleanText.length > 70 ? (
                         <>
-                          {expandedIndex === index ? cleanText : cleanText.slice(0, 70) + '...'}
-                          <span
+                          {expandedIndex === index ? cleanText : cleanText}
+                          {/* <span
                             onClick={() => setExpandedIndex(expandedIndex === index ? null : index)}
-                            style={{ cursor: 'pointer', color: '#000', fontWeight: '600' }}
+                            style={{cursor: 'pointer', color: '#000', fontWeight: '600' }}
                           >
                             {expandedIndex === index ? ' ❮❮' : ' ❯❯'}
-                          </span>
+                          </span> */}
                         </>
                       ) : (
                         cleanText
                       )}
                     </span>
-                    <div className="flex mt-3 gap-2">
+                    <div className="inline-flex mt-3 gap-2">
                       <button className="box-btn book-now" onClick={() => handleOpenModal(hotel)}>
                         Book a Table
                       </button>

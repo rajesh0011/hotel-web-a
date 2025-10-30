@@ -14,6 +14,7 @@ import { getUserInfo } from "../../utilities/userInfo";
 import FilterBar from "@/app/cin_booking_engine/Filterbar";
 import { BookingEngineProvider } from "@/app/cin_context/BookingEngineContext";
 import MainHeader from "../Common/MainHeader";
+import BookNowForm from "../booking-engine-widget/BookNowForm";
 
 const OurOffers = () => {
   const ImageHeight = {
@@ -27,8 +28,10 @@ const OurOffers = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isOpen, setOpen] = useState(false);
   const [showFilterBar, setShowFilterBar] = useState(false);
-  const filterBarRef = useRef(null);
-
+  const filterBarRef = useRef(null);  
+  const [isOpenFilterBar, openFilterBar] = useState(false);
+  const [staahPropertyId, setStaahPropertyId] = useState(null);
+  const [cityDetails, setCityDetails] = useState(null);
   // 📦 Booking tracking event
   async function postBookingWidged(
     rooms,
@@ -65,21 +68,21 @@ const OurOffers = () => {
       isClose: isClose ? "Y" : "N",
     };
 
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_CMS_BASE_URL}/Api/tracker/BookingWidged`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-        }
-      );
-      await response.json();
-    } catch (err) {
-      console.error("Error posting booking widget:", err);
-    }
+    // try {
+    //   const response = await fetch(
+    //     `${process.env.NEXT_PUBLIC_CMS_BASE_URL}/Api/tracker/BookingWidged`,
+    //     {
+    //       method: "POST",
+    //       headers: {
+    //         "Content-Type": "application/json",
+    //       },
+    //       body: JSON.stringify(payload),
+    //     }
+    //   );
+    //   await response.json();
+    // } catch (err) {
+    //   console.error("Error posting booking widget:", err);
+    // }
   }
 
   // 📍 Open booking widget
@@ -128,9 +131,35 @@ const OurOffers = () => {
     fetchOffers();
   }, []);
 
+  const handleBookNow = async (prperty) => {
+    if(isOpen){
+      postBookingWidged("","", false,"Widget Open");
+    }else{
+      postBookingWidged("","", true,"Widget Closed");
+    }
+    
+    setOpen(!isOpen);
+    setShowFilterBar(!showFilterBar);
+    const label = prperty?.cityName;
+    const value = prperty?.cityId;
+    const property_Id = prperty?.staahPropertyId;
+    setCityDetails({ label, value, property_Id });
+    setStaahPropertyId(prperty?.staahPropertyId);
+    
+    if (filterBarRef.current) {
+      filterBarRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+      const firstInput = filterBarRef.current.querySelector("input, select, button");
+      if (firstInput) firstInput.focus();
+    }
+  };
   return (
     <>
-      <MainHeader onClick={handleBookNowClick} />
+      {/* <MainHeader onClick={handleBookNowClick} /> */}
+      <MainHeader onClick={handleBookNow} />
+
+      {/* <section className="booking-form-section booking-form-inner-property-pages">
+                          <BookNowForm />
+                        </section> */}
 
       {/* HERO SECTION */}
       <section className="hero-section-inner" ref={filterBarRef}>
@@ -146,7 +175,7 @@ const OurOffers = () => {
           Your browser does not support the video tag.
         </video>
 
-        <div className="inner-hero-content">
+        {/* <div className="inner-hero-content">
           <div className="text-center">
             <Link
               href="#"
@@ -176,9 +205,57 @@ const OurOffers = () => {
               </BookingEngineProvider>
             </section>,
             document.body
-          )}
+          )} */}
       </section>
+    <section className="booking-form-section">
+        <div
+          className={`booking-search-bar-btn-div home-page-class`}
+          style={{ zIndex: 10 }}
+        >
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              handleBookNow();
+            }}
+            className="booking-toggle-btn"
+          >
+            {isOpen ? <X size={18} color="black" /> : "Book Now"}
+          </button>
+        </div>
+        {isOpenFilterBar && ReactDOM.createPortal (
+          <BookingEngineProvider>
+            <FilterBar
+              contentData={contentData}
+              tokenKey={tokenKey}
+              selectedProperty={0}
+              openBookingBar={isOpenFilterBar}
+              onClose={() => {
+                openFilterBar(false);
+                setOpen(false);
+              }}
+            />
+          </BookingEngineProvider>,
+          document.body
+        )}
 
+        {showFilterBar && ReactDOM.createPortal (
+          <BookingEngineProvider>
+            <FilterBar
+              selectedProperty={parseInt(staahPropertyId)}
+              cityDetails={cityDetails}
+              openBookingBar={showFilterBar}
+              onClose={(isReload) => {
+                setOpen(false);
+                setShowFilterBar(false);
+                if (isReload) {
+                window.location.reload();
+              }
+              }}
+            />
+          </BookingEngineProvider>,
+          document.body
+        )}
+      </section>
       {/* OFFERS SECTION */}
       <section className="corporate-offers-section section-padding bg-lred">
       <div className={offstyle.mainhotelbox}>
@@ -211,7 +288,7 @@ const OurOffers = () => {
                         height={250}
                         className="offer-image"
                       />
-                    </div> */}
+                    </div> */} 
                     <div className="offer-content">
                       <h4 className="offer-title">
                         {offer.offerTitle || offer.offerName}
@@ -223,7 +300,8 @@ const OurOffers = () => {
                         
                       </p>
                       <div className="winter-box-btn mt-1">
-                        <button className="box-btn book-now">
+                        <button className="box-btn book-now"
+                        onClick={handleBookNow}>
                           Book Now
                         </button>
                         <button

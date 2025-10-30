@@ -101,7 +101,7 @@ export default function ClientOverviewPage({
         // propertySlug={propertySlug}
         id={propertyData.propertyId}
       />
-      <section className="hero-section position-relative overflow-hidden h-full flex items-center justify-center">
+      <section className="hero-section position-relative overflow-hidden h-full items-center justify-center">
 
         <video className="w-100 object-cover for-desktop-video-main"
           autoPlay

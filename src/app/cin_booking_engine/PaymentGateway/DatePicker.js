@@ -19,8 +19,12 @@ const DatePicker = ({ selectedStartDate, selectedEndDate , onClose }) => {
   const { setSelectedDates, selectedPropertyId } = useBookingEngineContext();
   const [pricesMap, setPricesMap] = useState({});
   const dateInputRef = useRef(null);
+    const pricesMapRef = useRef({});
+  const pricesMapRef2 = useRef({});
+ const defaultDesabledDate = useRef(null);
   const loadingRef = useRef(true);
   const flatpickrInstanceRef = useRef(null);
+    const flatpickrRef = useRef(null);
   const fetchedRef = useRef(false);
   const currentDate = useMemo(() => new Date(), []);
   const sixMonthsLater = useMemo(() => {
@@ -41,6 +45,23 @@ const DatePicker = ({ selectedStartDate, selectedEndDate , onClose }) => {
   //   () => formatDateWithOffset(currentDate, 330), // +5:30 = 330 minutes
   //   [currentDate]
   // );
+  
+  const formatDate2 = (date) => {
+  const d = new Date(date); // convert string → Date
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${day}-${month}-${year}`;
+};
+  const fromDateEt = useMemo(
+    () => formatDateWithOffset(currentDate, 330), // +5:30 = 330 minutes
+    [currentDate]
+  );
+  
+  const toDateEt = useMemo(
+    () => formatDateWithOffset(sixMonthsLater, 330),
+    [sixMonthsLater]
+  );
 const fromDate = useMemo(() => {
   const d = new Date();
   d.setHours(0, 0, 0, 0);
@@ -65,6 +86,13 @@ const fromDate = useMemo(() => {
           timestamp,
           secret
         );
+        
+         const body = {
+      selectedPropertyId: selectedPropertyId,
+      fromDate: fromDateEt,
+      toDate: toDateEt
+      // product: "No",
+    };
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_STAAH_BASE_URL}/api/cin-api/rate-et`,
           {
@@ -74,26 +102,37 @@ const fromDate = useMemo(() => {
               "x-timestamp": timestamp,
               "x-signature": signature,
             },
-            body: JSON.stringify({ selectedPropertyId, fromDate, toDate }),
+            body: JSON.stringify(body),
           }
         );
 
         const data = await response.json();
         const dayRate = data?.PropertyList?.[0]?.DayRate || {};
         const prices = {};
+         const prices2 = {};
         for (const date in dayRate) {
           prices[date] = dayRate[date]?.Rate || 0;
+           prices2[formatDate2(date)] = dayRate[date]?.Rate || 0;
         }
         setPricesMap(prices);
+         pricesMapRef.current = prices;
+         pricesMapRef2.current = prices2;
+         const disabledDates = Object.entries(prices2)
+    .filter(([date, price]) => price == "0" || price == 0 || price == "N/A") 
+    .map(([date]) => date);
+    defaultDesabledDate.current = disabledDates;
       } catch (error) {
         console.error("Error fetching prices:", error);
       } finally {
         loadingRef.current = false;
+        if (flatpickrRef?.current) {
+           flatpickrRef?.current?.redraw();
+         }
       }
     };
 
     fetchPrices();
-  }, [selectedPropertyId, fromDate, toDate]);
+  }, [selectedPropertyId, fromDateEt, toDateEt]);
 
   // Init Flatpickr
   useEffect(() => {
@@ -108,6 +147,13 @@ const fromDate = useMemo(() => {
       static: true,
       fixedHeight: true,
       showOutsideDays: false,
+      disable: [
+        function (date) {
+          const formatted = formatDate2(date); // "dd-mm-yyyy"
+          const price = pricesMapRef2.current?.[formatted];
+          return price == "N/A" || price === "0" || price === 0;
+        },
+      ],
       defaultDate:
         selectedStartDate && selectedEndDate
           ? [new Date(selectedStartDate), new Date(selectedEndDate)]
@@ -170,6 +216,36 @@ const fromDate = useMemo(() => {
       setSelectedDates(startDateFormatted, endDateFormatted, priceSum);
     }
   },
+      onDayCreate: (dObj, dStr, fp, dayElem) => {
+        if (!dayElem?.dateObj) return;
+
+        const date = formatDate(dayElem?.dateObj);
+        const priceTag = document.createElement("div");
+        priceTag.className = "flatpickr-price";
+        priceTag.style.fontSize = "10px";
+        priceTag.style.position = "absolute";
+        priceTag.style.bottom = "8px";
+        priceTag.style.left = "50%";
+        priceTag.style.transform = "translateX(-50%)";
+
+        if (loadingRef?.current) {
+          priceTag.innerHTML = `<div class="skeleton-loader"></div>`;
+        } 
+        // else if (pricesMap[date] !== undefined) {
+        //   priceTag.textContent = `${pricesMap[date] == "0" ? "N/A" :pricesMap[date]}`;
+        // }
+      else if (pricesMap[date] !== undefined) {
+        if (pricesMap[date] == "0" || pricesMap[date] === "N/A") {
+          priceTag.innerHTML = `<span class="na-text">N/A</span>`;
+          dayElem.classList.add("flatpickr-disabled");
+          dayElem.style.pointerEvents = "none";
+         // dayElem.style.opacity = "0.4";
+        } else {
+          priceTag.textContent = pricesMap[date];
+        }
+      }
+        dayElem.appendChild(priceTag);
+      },
       onClose: () => {
         if (onClose) onClose();  // ✅ notify parent when closed
       }
@@ -177,6 +253,7 @@ const fromDate = useMemo(() => {
 
     flatpickrInstanceRef.current.open();
 
+    flatpickrRef.current = flatpickrInstanceRef.current;
     return () => {
       flatpickrInstanceRef.current.destroy();
     };
@@ -206,6 +283,23 @@ const fromDate = useMemo(() => {
         priceTag.style.left = "50%";
         priceTag.style.transform = "translateX(-50%)";
         priceTag.textContent = `${price}`;
+        
+        if (loadingRef?.current) {
+          priceTag.innerHTML = `<div class="skeleton-loader"></div>`;
+        } 
+        // else if (pricesMap[date] !== undefined) {
+        //   priceTag.textContent = `${pricesMap[date] == "0" ? "N/A" :pricesMap[date]}`;
+        // }
+else if (pricesMap[date] !== undefined) {
+  if (pricesMap[date] == "0" || pricesMap[date] == 0 || pricesMap[date] === "N/A") {
+    priceTag.innerHTML = `<span class="na-text">N/A</span>`;
+    dayElem.classList.add("flatpickr-disabled");
+    dayElem.style.pointerEvents = "none";
+   // dayElem.style.opacity = "0.4";
+  } else {
+    priceTag.textContent = pricesMap[date];
+  }
+}
         dayElem.appendChild(priceTag);
       }
     });
@@ -219,7 +313,28 @@ const fromDate = useMemo(() => {
   };
 
   return (
-    <div style={styles.input}>
+    <div style={styles.input} className="flatpicker-for-calender-date">
+      
+      <style>
+  {`
+    .skeleton-loader {
+      width: 40px;
+      height: 10px;
+      background: linear-gradient(90deg, #eee 25%, #ddd 50%, #eee 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s linear infinite;
+      border-radius: 4px;
+    }
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+    .na-text {
+      color: red !important;
+      font-weight: 600;
+    }
+  `}
+</style>
       <input
         id="datePicker"
         ref={dateInputRef}

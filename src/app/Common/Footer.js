@@ -1,14 +1,20 @@
 import Link from "next/link";
 import style from "./footer.module.css";
 import Image from "next/image";
-import { MessageCircleCode, FacebookIcon, InstagramIcon, TwitterIcon } from 'lucide-react';
+import { MessageCircleCode, FacebookIcon, InstagramIcon, TwitterIcon, Phone, Mail } from 'lucide-react';
 
 const Footer = () => {
   return (
     <>
-      <footer className={`${style.footer} footer`}>
+      <footer className={`${style.footer} footer footer-section`}>
         <div className="container">
-          <div className="top-inline-list py-4">
+         
+          <div className="row">
+            <div className="col-md-12">
+               <Link className={style.footerLogoD} href="/" >
+                <Image src="/img/amritara-footer-logo.png" alt="Amritara Logo" width={600} height={600} className="footer-logo" />
+              </Link>
+           <div className="top-inline-list py-2">
             <ul className="list-inline mb-0">
               <li className="list-inline-item me-0">
                 <Link href="/about-us" className={style.linkstyle}>
@@ -47,63 +53,66 @@ const Footer = () => {
               </li>
             </ul>
           </div>
-          <div className="row">
-            <div className="col-md-5 mb-3">
-              <h5 className={style.footerHeading}>Amritara Hotels and Resorts Pvt. Ltd.</h5>
-              <Image src="/img/phoneimg.png" alt="Amritara Call" width={200} height={200} className={style.footerLogo} />
-                <p className={`${style.linkstyle2} mb-0`}>Call us at</p>
-
-                <p className={style.fcoldata}>
+             {/* <Image src="/img/phoneimg.png" alt="Amritara Call" width={200} height={200} className={style.footerLogo} /> */}
+               <p className="footer-contact mb-0 pb-0">
                     <Link href="mailto:reservations@amritara.co.in" className={style.linkstyle2}>
-                        reservations@amritara.co.in
+                     Email:- <span>reservations@amritara.co.in</span>
                     </Link>
-                </p>
-                <p className={style.fcoldata}>
-                    <span className={style.linkstyle2}>Wedding & Events:- </span>
+                    <span className="line-footer">|</span>
                     <Link href="tel:011-40752200" className={style.linkstyle2}>
-                        011-40752200
+                      Phone:- 011-40752200
+                    </Link>
+                    <span className="line-footer">|</span>
+                     <Link href="tel:+91-9319296392" className={style.linkstyle2}>
+                      Wedding & Events:- +91-9319296392
                     </Link>
                 </p>
-                
-            </div>
-            <div className="col-md-2 mb-3">
-              <Link className={style.footerLogoD} href="/" >
-                <Image src="/img/amritara-footer-logo.png" alt="Amritara Logo" width={600} height={600} className={style.footerLogo} />
-              </Link>
-            </div>
-            <div className="col-md-5 mb-3">
-              <div className={style.footerContactData}>
-                <h5 className={`${style.footerHeadingR} text-uppercase`}>Connect with us </h5>
-                <div className={style.SocialLinkFooter}>
-                    <Link href="https://www.facebook.com/amritararesorts/" target="_blank" className={style.socialLink} title="Facebook">
-                        <FacebookIcon size={24} className={style.socialIcon} />
+
+                 <p className="footer-contact mt-0 pt-0">
+                    <Link href="#" className={style.linkstyle2}>
+                     Address:- <span className="footer-address">Kausalya Park, Block L1, Padmini Enclave, Hauz Khas, New Delhi, Delhi 110016</span>
                     </Link>
-                    <Link href="https://wa.me/+919319296390?text=Hi Amritara Hotels And Resorts." target="_blank" className={style.socialLink} title="Whatsapp">
-                        <MessageCircleCode size={24} className={style.socialIcon} />
+                </p>
+                {/* <p className={style.fcoldata}>
+                    <Link href="tel:011-40752200" className={style.linkstyle2}>
+                      <Phone size={20} strokeWidth={1.5} color="#000" /> 011-40752200
                     </Link>
-                    <Link href="https://twitter.com/amritararesorts" target="_blank" className={style.socialLink} title="Twitter">
-                        <TwitterIcon size={24} className={style.socialIcon} />
-                    </Link>
-                    <Link href="https://www.instagram.com/amritarahotelsandresorts/" target="_blank" className={style.socialLink} title="Instagram">
-                        <InstagramIcon size={24} className={style.socialIcon} />
-                    </Link>
-                </div>
-                <div className={style.GetLatestUpdate}>
-                    <h5 className={`${style.footerHeading2} text-uppercase`}>Get latest updates</h5>
-                    <form className={style.footerForm}>
-                        <div className={`{style.footerInputContainer} mb-1`}>
-                            <input type="email" placeholder="Enter your Email ID" className={style.footerInput} />
-                            <button type="submit" className={style.footerSButton}>Submit</button>
-                        </div>
-                        <input type="checkbox" className={style.footerCheckbox} />
-                        <span className={style.fCheckText}>Agree to Subscribe newsletter</span>
-                    </form>
-                </div>
+                </p> */}
+
+                 <div className="mt-3">
+                    <h5 className={`${style.footerHeadingR} text-uppercase`}>Connect with us </h5>
+                    <div className={`${style.SocialLinkFooter} justify-content-center mb-0`}>
+                        <Link href="https://www.facebook.com/amritararesorts/" target="_blank" className={style.socialLink} title="Facebook">
+                            <FacebookIcon size={24} className={style.socialIcon} />
+                        </Link>
+                        <Link href="https://wa.me/+919319296390?text=Hi Amritara Hotels And Resorts." target="_blank" className={style.socialLink} title="Whatsapp">
+                            <MessageCircleCode size={24} className={style.socialIcon} />
+                        </Link>
+                        <Link href="https://twitter.com/amritararesorts" target="_blank" className={style.socialLink} title="Twitter">
+                            <TwitterIcon size={24} className={style.socialIcon} />
+                        </Link>
+                        <Link href="https://www.instagram.com/amritarahotelsandresorts/" target="_blank" className={style.socialLink} title="Instagram">
+                            <InstagramIcon size={24} className={style.socialIcon} />
+                        </Link>
+                    </div>
+                    {/* <div className={style.GetLatestUpdate}>
+                        <h5 className={`${style.footerHeading2} text-uppercase`}>Get latest updates</h5>
+                        <form className={style.footerForm}>
+                            <div className={`{style.footerInputContainer} mb-1`}>
+                                <input type="email" placeholder="Enter your Email ID" className={style.footerInput} />
+                                <button type="submit" className={style.footerSButton}>Submit</button>
+                            </div>
+                            <input type="checkbox" className={style.footerCheckbox} />
+                            <span className={style.fCheckText}>Agree to Subscribe newsletter</span>
+                        </form>
+                    </div> */}
                 
               </div>
+                
             </div>
+          
           </div>
-          <div className="text-center mt-5">
+          <div className="footer-bottom text-center mt-2">
            Copyright &copy; {new Date().getFullYear()}, Amritara Hotels and Resorts. All rights reserved. Powered by&nbsp;
             <Link href="https://www.cinuniverse.com/" target="_blank">
                CIN Universe.

@@ -22,6 +22,19 @@ export default function AccommodationSlider({
   const prevRef = useRef(null);
   const nextRef = useRef(null);
 
+  const [parentSwiper, setParentSwiper] = useState(null);
+  const parentPrevRef = useRef(null);
+  const parentNextRef = useRef(null);
+
+  useEffect(() => {
+    if (parentSwiper) {
+      parentSwiper.params.navigation.prevEl = parentPrevRef.current;
+      parentSwiper.params.navigation.nextEl = parentNextRef.current;
+      parentSwiper.navigation.init();
+      parentSwiper.navigation.update();
+    }
+  }, [parentSwiper]);
+
   const [showFilterBar, setShowFilterBar] = useState(false);
   const [cityDetails, setCityDetails] = useState(null);
   const [isOpenFilterBar, openFilterBar] = useState(false);
@@ -77,7 +90,7 @@ export default function AccommodationSlider({
     onSubmit(room);
   }
   return (
-    <section className="mt-3" data-aos="fade-up">
+    <section className="mt-3 position-relative cursor-hideMobile" data-aos="fade-up">
       <div className="global-heading-sec text-center">
         <div className="container">
           <div className="row justify-content-center">
@@ -110,6 +123,23 @@ export default function AccommodationSlider({
         </div>
       </div>
 
+      <div className="parent-control-button p-prev-button Offers-slider-prev">
+        <button
+          ref={parentPrevRef}
+          className="p-3 bg-gray-800 text-white rounded-full shadow-lg"
+        >
+          ❮
+        </button>
+      </div>
+      <div className="parent-control-button p-next-button Offers-slider-next">
+        <button
+          ref={parentNextRef}
+          className="p-3 bg-gray-800 text-white rounded-full shadow-lg"
+        >
+          ❯
+        </button>
+      </div>
+
       {/* <div className="position-absolute bottom-0 start-0 w-100 bg-white shadow">
         
         {showFilterBar && (
@@ -121,18 +151,21 @@ export default function AccommodationSlider({
           </BookingEngineProvider>
         )}
       </div> */}
-      <div className="container-fluid">
+      <div className="container">
         <div className="winter-sec property-room-page-sec">
           <div className="relative px-4 md:px-16 py-12 overflow-hidden roombtn">
             
 
             <Swiper
-              modules={[Navigation]}
+              modules={[Navigation, Pagination]}
               spaceBetween={10}
               slidesPerView={2}
               loop={true}
-              pagination={false}
-              navigation={true}
+              onSwiper={setParentSwiper}
+              pagination={{
+                clickable : true
+              }}
+              navigation={false}
               
               breakpoints={{
                 320: { slidesPerView: 1 },
@@ -159,7 +192,7 @@ export default function AccommodationSlider({
                           <div className="no-image-box">
                              <Image
                             // src="/amritara-dummy-room.jpeg"
-                            src={img.roomImage || "/amritara-dummy-room.jpeg"}
+                            src={encodeURI(img.roomImage) || "/amritara-dummy-room.jpeg"}
                             alt={room.roomName}
                             width={600}
                             height={500}
@@ -193,7 +226,7 @@ export default function AccommodationSlider({
                             INR/Night
                           </span>
                         </p> */}
-                        <div className="d-flex gap-3 mt-3">
+                        <div className="d-flex mt-3">
                           <button
                             className="box-btn know-more"
                             onClick={() => {
@@ -214,8 +247,16 @@ export default function AccommodationSlider({
                             Book Now
                           </Link> */}
 
-                           <Link href={`https://bookings.amritara.co.in/?chainId=5971&propertyId=${BeId}&_gl=1*1d9irrh*_gcl_au*MzgxMDEyODcxLjE3NTgyNjIxOTIuNzY2OTMwNzIwLjE3NTkzMTE2MjAuMTc1OTMxMTcyMA..*_ga*NzUyODI0NDE0LjE3NTgyNjIxOTI.*_ga_7XSGQLL96K*czE3NjA0NDUzOTUkbzQ4JGcxJHQxNzYwNDQ2NTA2JGo2MCRsMCRoODE1NTgwNjUw*_ga_DVBE6SS569*czE3NjA0NDUzOTQkbzQ1JGcxJHQxNzYwNDQ1NDY2JGo2MCRsMCRoOTgzMzg5ODY.`}
-target="_blank" className="box-btn book-now button-secondary">Book Now</Link>
+                           <Link 
+                           href="#"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              handleViewRates(room);
+                            }}
+                          //  href={`https://bookings.amritara.co.in/?chainId=5971&propertyId=${BeId}&_gl=1*1d9irrh*_gcl_au*MzgxMDEyODcxLjE3NTgyNjIxOTIuNzY2OTMwNzIwLjE3NTkzMTE2MjAuMTc1OTMxMTcyMA..*_ga*NzUyODI0NDE0LjE3NTgyNjIxOTI.*_ga_7XSGQLL96K*czE3NjA0NDUzOTUkbzQ4JGcxJHQxNzYwNDQ2NTA2JGo2MCRsMCRoODE1NTgwNjUw*_ga_DVBE6SS569*czE3NjA0NDUzOTQkbzQ1JGcxJHQxNzYwNDQ1NDY2JGo2MCRsMCRoOTgzMzg5ODY.`}
+                          //  target="_blank" 
+                           className="box-btn book-now"
+                           >Book Now</Link>
 
                           {/* <button
   className="box-btn book-now button-secondary"

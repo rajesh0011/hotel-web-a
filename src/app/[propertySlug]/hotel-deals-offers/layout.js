@@ -2,8 +2,14 @@
 export async function generateMetadata({ params }) {
   const { propertySlug } = params;
 
+  // base site URL (set in env). Fallback to a placeholder if not set.
+  const baseUrl =
+    "/";
+
+  // ensure no trailing slash on base and build canonical including current slug
+  const canonicalUrl = `${baseUrl.replace(/\/$/, "")}/${propertySlug}/hotel-deals-offers`;
+
   try {
-   
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_CMS_API_Base_URL}/property/GetPropertyList`,
       { cache: "no-store" }
@@ -33,9 +39,13 @@ export async function generateMetadata({ params }) {
       title,
       description,
       keywords,
+      alternates: {
+        canonical: canonicalUrl,
+      },
       openGraph: {
         title,
         description,
+        url: canonicalUrl,
       },
     };
   } catch (err) {
@@ -43,6 +53,12 @@ export async function generateMetadata({ params }) {
     return {
       title: "Offers | Amritara Hotels",
       description: "Discover exclusive offers and packages at Amritara Hotels.",
+      alternates: {
+        canonical: canonicalUrl,
+      },
+      openGraph: {
+        url: canonicalUrl,
+      },
     };
   }
 }

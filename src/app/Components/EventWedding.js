@@ -32,7 +32,7 @@ const EventWedding = ({ propertyId, hotelName }) => {
     const fetchVenue = async () => {
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_CMS_BASE_URL}/Api/property/GetPropertyVenueBanner?propertyId=${propertyId}`
+          `${process.env.NEXT_PUBLIC_CMS_BASE_URL_AMR}/cmsapi/property/GetPropertyVenueBanner?propertyId=${propertyId}`
         );
         const json = await response.json();
 
@@ -72,7 +72,7 @@ const EventWedding = ({ propertyId, hotelName }) => {
     const fetchPropertyDetails = async () => {
       try {
         const propertyRes = await fetch(
-          `${process.env.NEXT_PUBLIC_CMS_BASE_URL}/Api/property/GetPropertyByFilter?PropertyId=${propertyId}`
+          `${process.env.NEXT_PUBLIC_CMS_BASE_URL_AMR}/cmsapi/property/GetPropertyByFilter?PropertyId=${propertyId}`
         );
         const propertyJson = await propertyRes.json();
 

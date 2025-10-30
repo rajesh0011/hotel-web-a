@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import Image from "next/image";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Navigation, Pagination } from "swiper/modules";
@@ -15,6 +15,20 @@ export default function OverExp({ propertyId }) {
   const [loading, setLoading] = useState(true);
     const [modalContent, setModalContent] = useState({});
     const [isModalOpen, setIsModalOpen] = useState(false);
+
+    const [parentSwiper, setParentSwiper] = useState(null);
+    const parentPrevRef = useRef(null);
+    const parentNextRef = useRef(null);
+  
+    useEffect(() => {
+      if (parentSwiper) {
+        parentSwiper.params.navigation.prevEl = parentPrevRef.current;
+        parentSwiper.params.navigation.nextEl = parentNextRef.current;
+        parentSwiper.navigation.init();
+        parentSwiper.navigation.update();
+      }
+    }, [parentSwiper]);
+  
 
   useEffect(() => {
     if (!propertyId) return;
@@ -64,10 +78,10 @@ export default function OverExp({ propertyId }) {
     return str.replace(/<[^>]*>?/gm, "");
   }
   
-
+ 
   return (
     <>
-    <section className="sec-padding bg-lred" data-aos="fade-up">
+    <section className="sec-padding bg-lred position-relative cursor-hideMobile" data-aos="fade-up">
       <div className="container">
         <div className="global-heading-sec text-center">
           <div className="row justify-content-center mb-0">
@@ -77,16 +91,35 @@ export default function OverExp({ propertyId }) {
           </div>
         </div>
 
+        <div className="parent-control-button p-prev-button untold-stories-prev">
+          <button
+            ref={parentPrevRef}
+            className="p-3 bg-gray-800 text-white rounded-full shadow-lg"
+          >
+            ❮
+          </button>
+        </div>
+        <div className="parent-control-button p-next-button untold-stories-next">
+          <button
+            ref={parentNextRef}
+            className="p-3 bg-gray-800 text-white rounded-full shadow-lg"
+          >
+            ❯
+          </button>
+        </div>
+
         <div className="winter-sec">
           <div className="row">
             <div className="discover-slider expericence-sliderr">
               <Swiper
-                modules={[Autoplay, Navigation]}
+                modules={[Autoplay, Navigation, Pagination]}
                 loop={true}
                 centeredSlides={false}
                 spaceBetween={20}
-                navigation={true}
+                onSwiper={setParentSwiper}
+                navigation={false}
                 slidesPerView={1}
+                pagination={{ clickable: true }}
                 autoplay={{ delay: 3000, disableOnInteraction: false }}
                 speed={600}
                 breakpoints={{
@@ -121,12 +154,12 @@ export default function OverExp({ propertyId }) {
                             </p> */}
 
                             <p className="experience-desc new-exp-desc">
-                              {stripHtmlTags(exp.experiancesDesc.slice(0, 80))}...
+                              {stripHtmlTags(exp.experiancesDesc.slice(0, 68))}...
                             </p>
 
                             
                             
-                            <button className="box-btn know-more mt-3 d-block"
+                            <button className="box-btn book-now ms-0 mt-3 d-block"
                             onClick={() => handleKnowMore(exp)}>
                               Read more
                             </button>

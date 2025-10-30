@@ -51,7 +51,7 @@ export async function generateMetadata({ params }) {
       title,
       description,
       openGraph: { title, description },
-      alternates: { canonical: `/${propertySlug}/dining` },
+      alternates: { canonical: `/${propertySlug}/restaurants` },
     };
   } catch (error) {
     console.error("Error fetching metadata:", error);

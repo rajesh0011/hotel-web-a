@@ -361,7 +361,7 @@ const CombinedWizardSidebar = ({ isVisible, onClose, status, destination }) => {
         );
         //const totalGuests = selected?.adults + selected?.children;
         const extraChildren =
-          selected.children > selected?.applicableChild
+          selected.children > selected?.applicableChild && (selected?.children + selected?.adults) > selected?.applicableGuest
             ? selected?.children - selected?.applicableChild
             : 0;
         const extraChildTaxes = Array.from({ length: extraChildren }, () =>
@@ -764,25 +764,25 @@ const CombinedWizardSidebar = ({ isVisible, onClose, status, destination }) => {
               ></BookingAndPayment>
               <div className="credit-card-images-for-new-wizard">
                 <Image
-                  src="/booking-engine-imgs/img/crds-credit.png"
+                  src="/crds-credit.png"
                   height={50}
                   width={100}
                   alt="Credit Card"
                 />
                 <Image
-                  src="/booking-engine-imgs/img/crds-credit-1.png"
+                  src="/crds-credit-1.png"
                   height={50}
                   width={100}
                   alt="Credit Card"
                 />
                 <Image
-                  src="/booking-engine-imgs/img/crds-credit-2.png"
+                  src="/crds-credit-2.png"
                   height={50}
                   width={100}
                   alt="Credit Card"
                 />
                 <Image
-                  src="/booking-engine-imgs/img/crds-credit-3.png"
+                  src="/crds-credit-3.png"
                   height={50}
                   width={100}
                   alt="Credit Card"
@@ -803,6 +803,7 @@ const CombinedWizardSidebar = ({ isVisible, onClose, status, destination }) => {
                     goNext={goNext}
                     onClose={onClose}
                     onSend={()=> formRef.current.submitForm()}
+                    isVisible ={isVisible}
                   />
                 )}
                 {/* {steps[currentStep]?.title === "AddOns" && (

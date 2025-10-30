@@ -9,9 +9,9 @@ import "swiper/css/navigation";
 import "./nested-slider.css";
 import Link from "next/link";
 
-export default function NestedSwiper() {
+export default function NestedSwiper({onClick}) {
   const [categories, setCategories] = useState([]);
-  const [properties, setProperties] = useState([]);
+  const [properties, setProperties] = useState({});
   const [loading, setLoading] = useState(true);
 
   const [parentSwiper, setParentSwiper] = useState(null);
@@ -27,28 +27,45 @@ export default function NestedSwiper() {
     }
   }, [parentSwiper]);
 
-  // Fetch categories + properties
+  // Fetch categories
   useEffect(() => {
-    async function fetchData() {
+    async function fetchCategories() {
       try {
-        const [catRes, propRes] = await Promise.all([
-          fetch(
-            `${process.env.NEXT_PUBLIC_CMS_API_Base_URL}/property/GetDisplayCategoryList`
-          ),
-          fetch(
-            `${process.env.NEXT_PUBLIC_CMS_API_Base_URL}/property/GetPropertyList`
-          ),
-        ]);
-
+        const catRes = await fetch(
+          `${process.env.NEXT_PUBLIC_CMS_API_Base_URL}/property/GetDisplayCategoryList`
+        );
         const catData = await catRes.json();
-        const propData = await propRes.json();
-
         if (catData.errorCode === "0") {
           setCategories(catData.data);
         }
-        if (propData.errorCode === "0") {
-          setProperties(propData.data);
+      } catch (err) {
+        console.error("API Error:", err);
+      }
+    }
+
+    fetchCategories();
+  }, []);
+
+  // Fetch properties for each category dynamically
+  useEffect(() => {
+    async function fetchProperties() {
+      try {
+        setLoading(true);
+
+        const newProperties = {}; // Store properties by category ID
+        for (const category of categories) {
+          const categoryId = category.displayCategoryId;
+          const propRes = await fetch(
+            `${process.env.NEXT_PUBLIC_CMS_API_Base_URL}/property/GetPropertyByFilter?CategoryId=${categoryId}`
+          );
+          const propData = await propRes.json();
+
+          if (propData.errorCode === "0") {
+            newProperties[categoryId] = propData.data;
+          }
         }
+        
+        setProperties(newProperties); // Update state with properties grouped by category ID
       } catch (err) {
         console.error("API Error:", err);
       } finally {
@@ -56,8 +73,10 @@ export default function NestedSwiper() {
       }
     }
 
-    fetchData();
-  }, []);
+    if (categories.length > 0) {
+      fetchProperties();
+    }
+  }, [categories]);
 
   if (loading) {
     return <p className="text-center py-10">Loading...</p>;
@@ -72,6 +91,9 @@ export default function NestedSwiper() {
     return "property-overview"; // safe fallback
   };
 
+  const handleBookNowSlider = async (dataBookNow) => {
+    onClick(dataBookNow);
+  };
   return (
     <div className="main-nested-slider mx-auto our-collection-section section-padding">
       <div className="container">
@@ -110,10 +132,8 @@ export default function NestedSwiper() {
           className="parent-swiper main-parent-slider main-parent-slider-experience"
         >
           {categories.map((category, index) => {
-            // Filter properties belonging to this category
-            const categoryProperties = properties.filter(
-              (prop) => prop.displayCategoryId === category.displayCategoryId
-            );
+            // Fetch properties for this category from the state
+            const categoryProperties = properties[category.displayCategoryId] || [];
 
             return (
               <SwiperSlide
@@ -153,27 +173,21 @@ export default function NestedSwiper() {
                               <h3 className="child-sl-title">{hotel.propertyName}</h3>
                               <div className="next-boxx-parent-div">
                                 <div className="left-nested-boxx">
-                                  {/* <button className="child-sl-btn mt-2">Book Now</button> */}
-<Link href={`https://bookings.amritara.co.in/?chainId=5971&propertyId=${hotel.staahBookingId}&_gl=1*1d9irrh*_gcl_au*MzgxMDEyODcxLjE3NTgyNjIxOTIuNzY2OTMwNzIwLjE3NTkzMTE2MjAuMTc1OTMxMTcyMA..*_ga*NzUyODI0NDE0LjE3NTgyNjIxOTI.*_ga_7XSGQLL96K*czE3NjA0NDUzOTUkbzQ4JGcxJHQxNzYwNDQ2NTA2JGo2MCRsMCRoODE1NTgwNjUw*_ga_DVBE6SS569*czE3NjA0NDUzOTQkbzQ1JGcxJHQxNzYwNDQ1NDY2JGo2MCRsMCRoOTgzMzg5ODY.`}
-target="_blank" className="child-sl-btn mt-2">Book Now</Link>
-                                  {/* <button
-  className="child-sl-btn mt-2"
-  onClick={() => {
-    if (hotel?.staahBookingId) {
-      const bookingUrl = `https://bookings.amritara.co.in/?chainId=5971&propertyId=${hotel.staahBookingId}&_gl=1*1d9irrh*_gcl_au*MzgxMDEyODcxLjE3NTgyNjIxOTIuNzY2OTMwNzIwLjE3NTkzMTE2MjAuMTc1OTMxMTcyMA..*_ga*NzUyODI0NDE0LjE3NTgyNjIxOTI.*_ga_7XSGQLL96K*czE3NjA0NDUzOTUkbzQ4JGcxJHQxNzYwNDQ2NTA2JGo2MCRsMCRoODE1NTgwNjUw*_ga_DVBE6SS569*czE3NjA0NDUzOTQkbzQ1JGcxJHQxNzYwNDQ1NDY2JGo2MCRsMCRoOTgzMzg5ODY.`;
-      window.open(bookingUrl, "_blank"); 
-    } else {
-      alert("Booking not available for this property.");
-    }
-  }}
->
-  Book Now
-</button> */}
-
-                                  <Link href={{
-                                    pathname: `/${hotel.propertySlug}/${getOverviewSlug(hotel)}`,
-                                    // query: { id: hotel.propertyId, name: hotel.propertyName },
-                                  }} className="visit-hotel-nested">
+                                  <Link
+                                    href="#"
+                                    // href={`https://bookings.amritara.co.in/?chainId=5971&propertyId=${hotel.staahBookingId}&_gl=1*1d9irrh*_gcl_au*MzgxMDEyODcxLjE3NTgyNjIxOTIuNzY2OTMwNzIwLjE3NTkzMTE2MjAuMTc1OTMxMTcyMA..*_ga*NzUyODI0NDE0LjE3NTgyNjIxOTI.*_ga_7XSGQLL96K*czE3NjA0NDUzOTUkbzQ4JGcxJHQxNzYwNDQ2NTA2JGo2MCRsMCRoODE1NTgwNjUw*_ga_DVBE6SS569*czE3NjA0NDUzOTQkbzQ1JGcxJHQxNzYwNDQ1NDY2JGo2MCRsMCRoOTgzMzg5ODY.`}
+                                    // target="_blank"
+                                    className="child-sl-btn"
+                                    onClick={()=>{handleBookNowSlider(hotel)}}
+                                  >
+                                    Book Now
+                                  </Link>
+                                  <Link
+                                    href={{
+                                      pathname: `/${hotel.propertySlug}/${getOverviewSlug(hotel)}`,
+                                    }}
+                                    className="visit-hotel-nested"
+                                  >
                                     Visit Hotel
                                   </Link>
                                 </div>
@@ -185,14 +199,10 @@ target="_blank" className="child-sl-btn mt-2">Book Now</Link>
                                     <p className="child-sl-price">
                                       INR {hotel.staahPropertyPrice ?? "—"}/Night
                                     </p>
-
                                   </div>
                                 </div>
                               </div>
-
                             </div>
-
-
                           </div>
                         </div>
                       </SwiperSlide>
@@ -203,7 +213,6 @@ target="_blank" className="child-sl-btn mt-2">Book Now</Link>
                     </SwiperSlide>
                   )}
                 </Swiper>
-
               </SwiperSlide>
             );
           })}

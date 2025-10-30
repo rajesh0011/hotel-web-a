@@ -19,7 +19,7 @@
 
 .hero-section-inner .inner-hero-image {
   width: 100%;
-  height: 80vh;
+  height: 100vh;
   object-fit: cover;
   position: relative;
   min-width: 100%;

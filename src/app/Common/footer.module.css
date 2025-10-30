@@ -36,7 +36,8 @@
     font-size: 17px;
 }
 .footerLogoD{
-    text-align: center;
+    text-align: center!important;
+    display:inline-block!important;
 }
 
 .footerHeading2{

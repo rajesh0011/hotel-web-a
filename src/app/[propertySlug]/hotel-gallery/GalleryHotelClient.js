@@ -59,17 +59,17 @@ export default function GalleryHotelClient({ propertySlug, id }) {
          isCartClick: "N",
          isClose: isClose ? "Y" : "N",
         }
-           const response = await fetch(
-             `${process.env.NEXT_PUBLIC_CMS_API_Base_URL}/tracker/BookingWidged`,
-             {
-               method: "POST",
-               headers: {
-                 "Content-Type": "application/json",
-               },
-               body: JSON.stringify( payload ),
-             }
-           );
-           const res = await response?.json();
+          //  const response = await fetch(
+          //    `${process.env.NEXT_PUBLIC_CMS_API_Base_URL}/tracker/BookingWidged`,
+          //    {
+          //      method: "POST",
+          //      headers: {
+          //        "Content-Type": "application/json",
+          //      },
+          //      body: JSON.stringify( payload ),
+          //    }
+          //  );
+          //  const res = await response?.json();
      
          //console.log("res BookingWidged",res);
        }
@@ -285,7 +285,7 @@ export default function GalleryHotelClient({ propertySlug, id }) {
       </section>
 
       <section className="inner-no-banner-sec">
-        <div className="container p-5">
+        <div className="container">
           <div className="global-heading-sec text-center">
             <h1 className="global-heading">Our Gallery</h1>
             {/* <h1>property id {propertyId}</h1> */}

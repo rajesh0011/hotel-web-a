@@ -1,6 +1,14 @@
-// app/[propertySlug]/rooms/layout.js
+// app/[propertySlug]/hotel-rooms/layout.js
 export async function generateMetadata({ params }) {
   const { propertySlug } = params;
+
+  // Build canonical base (set NEXT_PUBLIC_BASE_URL in your env, e.g. https://example.com)
+  const base =
+    (process.env.NEXT_PUBLIC_BASE_URL ||
+      process.env.NEXT_PUBLIC_SITE_URL ||
+      "") // fallback to empty string if not set
+      .replace(/\/$/, ""); // remove trailing slash if any
+  const canonical = `${base}/${propertySlug}/hotel-rooms`;
 
   try {
     // Fetch property list
@@ -33,13 +41,16 @@ export async function generateMetadata({ params }) {
       title,
       description,
       keywords,
-      openGraph: { title, description },
+      openGraph: { title, description, url: canonical },
+      alternates: { canonical },
     };
   } catch (err) {
     console.error("Rooms page metadata fetch error:", err);
     return {
       title: "Rooms | Amritara Hotels",
       description: "Explore our rooms and suites.",
+      openGraph: { title: "Rooms | Amritara Hotels", description: "Explore our rooms and suites.", url: canonical },
+      alternates: { canonical },
     };
   }
 }

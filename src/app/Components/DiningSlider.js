@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from "react";
+"use client";
+import React, { useRef, useEffect, useState } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import "swiper/css/navigation";
-import { Navigation } from "swiper/modules";
+import { Navigation, Pagination } from "swiper/modules";
 import Image from "next/image";
 import Link from "next/link";
 import BookTableModal from "./BookTableModal";
@@ -15,12 +16,20 @@ const DiningSlider = ({ propertyId, hotelName, propertyData }) => {
   const [bannerData, setBannerData] = useState({ title: "", desc: "" });
   const [brandSlug, setBrandSlug] = useState("");
   const [propertySlug, setPropertySlug] = useState("");
-  const [showFullText, setShowFullText] = useState(false);
-  const [showFullText1, setShowFullText1] = useState(false);
   const [selectedTitle, setSelectedTitle] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const [parentSwiper, setParentSwiper] = useState(null);
+  const parentPrevRef = useRef(null);
+  const parentNextRef = useRef(null);
 
-
+  useEffect(() => {
+    if (parentSwiper) {
+      parentSwiper.params.navigation.prevEl = parentPrevRef.current;
+      parentSwiper.params.navigation.nextEl = parentNextRef.current;
+      parentSwiper.navigation.init();
+      parentSwiper.navigation.update();
+    }
+  }, [parentSwiper]);
 
   // Fetch propertySlug
   useEffect(() => {
@@ -58,7 +67,6 @@ const DiningSlider = ({ propertyId, hotelName, propertyData }) => {
 
             entry.dineDetails?.forEach((dine) => {
               const dineImageUrl = dine.dineImages?.[0]?.dineImage || "/images/img-5.jpg";
-              console.log("Dine Image URL:", dineImageUrl);
 
               dineItems.push({
                 bg,
@@ -77,9 +85,6 @@ const DiningSlider = ({ propertyId, hotelName, propertyData }) => {
             desc: json.data[0]?.dineBannerDesc || "",
           });
         }
-        // else {
-        //   console.error("API error:", json.errorMessage);
-        // }
       } catch (error) {
         console.error("Failed to fetch:", error);
       } finally {
@@ -90,8 +95,6 @@ const DiningSlider = ({ propertyId, hotelName, propertyData }) => {
     fetchDining();
   }, [propertyId]);
 
-  // if (loading) return <p>Loading...</p>;
-  // if (!slides.length) return null;
   if (slides.length === 0) {
     return null;
   }
@@ -100,47 +103,22 @@ const DiningSlider = ({ propertyId, hotelName, propertyData }) => {
 
   return (
     <>
-      <section data-aos="fade-up" className="bg-lred">
-        <div className="container-fluid">
+      <section data-aos="fade-up" className="bg-lred cursor-hideMobile">
+        <div className="container">
           <div className="row justify-content-center mb-4">
             <div className="col-md-9">
               <div className="global-heading-sec text-center">
                 <h2 className="global-heading pt-5">Dining</h2>
               </div>
-              {/* {bannerData?.title && (
-              <div className="global-heading-sec text-center">
-                <h2 className="global-heading pt-5">{bannerData?.title || "Dining"}</h2>
-                {bannerData.desc && (
-                      <p className="mb-2 whitespace-pre-line">
-                            {bannerData?.desc.length > 150 ? (
-                              <>
-                                {showFullText
-                                  ? bannerData?.desc
-                                  : bannerData?.desc.slice(0, 150) + "..."}
-                                <span
-                                  onClick={() => setShowFullText(!showFullText)}
-                                  style={{
-                                    cursor: "pointer",
-                                    color: "#000",
-                                    fontWeight: "600",
-                                  }}
-                                >
-                                  {showFullText ? " ❮❮" : " ❯❯"}
-                                </span>
-                              </>
-                            ) : (
-                              bannerData?.desc
-                            )}
-                          </p>
-                    )}
-              </div>
-              )} */}
             </div>
+
             <div className="winter-sec">
               <Swiper
                 navigation
-                modules={[Navigation]}
+                modules={[Navigation, Pagination]}
+                pagination={{ clickable: true }}
                 slidesPerView={1}
+                onSwiper={setParentSwiper}
                 className="overv-dine"
               >
                 {slides.map((slide, index) => (
@@ -150,43 +128,29 @@ const DiningSlider = ({ propertyId, hotelName, propertyData }) => {
                         <div className="row">
                           <div
                             className="pushed-image"
-                            style={{ backgroundImage: `url("${encodeURI(slide.thumb || "/amritara-dummy-room.jpeg")}")`, backgroundColor: '#f0f0f0' }}
-
-
+                            style={{
+                              backgroundImage: `url("${encodeURI(
+                                slide.thumb || "/amritara-dummy-room.jpeg"
+                              )}")`,
+                              backgroundColor: "#f0f0f0",
+                              backgroundPosition: "center",
+                            }}
                           ></div>
-                          <div className="pushed-box">
-                            <div className="pushed-header">
-                              <span className="header-1"> {slide.title}</span>
-                              <span className="header-3 d-inline-block">
-                                {/* {slide.description} */}
-                                {stripHtml(slide?.description).length > 150 ? (
-                                  <>
-                                    {showFullText1
-                                      ? stripHtml(slide?.description)
-                                      : stripHtml(slide?.description).slice(0, 150) + "..."}
-                                    <span
-                                      onClick={() => setShowFullText1(!showFullText1)}
-                                      style={{
-                                        cursor: "pointer",
-                                        color: "#000",
-                                        fontWeight: "600",
-                                        display: "inline-block",
-                                      }}
-                                    >
-                                      {showFullText1 ? " ❮❮" : " ❯❯"}
-                                    </span>
-                                  </>
-                                ) : (
-                                  stripHtml(slide?.description)
-                                )}
-                              </span>
+
+                          <div className="pushed-box-content">
+                            <div className="pushed-header text-center mt-3">
+                              <span className="header-1 d-block">{slide.title}</span>
+
+                              {/* ✅ Responsive Description Section */}
+                              <ResponsiveDescription slide={slide} stripHtml={stripHtml} />
+
                               {slide.timing && slide.timing.trim() && (
-                                <span className="header-3 mt-2">
+                                <span className="header-3 mt-2 d-block text-center">
                                   <strong>Timings:</strong> {slide.timing}
                                 </span>
                               )}
 
-                              <div className="flex mt-3 gap-2">
+                              <div className="flex mt-3 gap-2 justify-center">
                                 {brandSlug && propertySlug && (
                                   <Link
                                     href={`/${brandSlug}/${propertySlug}/restaurants`}
@@ -198,8 +162,8 @@ const DiningSlider = ({ propertyId, hotelName, propertyData }) => {
                                 <button
                                   className="box-btn book-now"
                                   onClick={() => {
-                                    setSelectedTitle(slide.title); // Set selectedTitle to the current slide's title
-                                    setShowModal(true); // Show the modal
+                                    setSelectedTitle(slide.title);
+                                    setShowModal(true);
                                   }}
                                 >
                                   BOOK A TABLE
@@ -210,25 +174,96 @@ const DiningSlider = ({ propertyId, hotelName, propertyData }) => {
                         </div>
                       </div>
                     </div>
-
-
                   </SwiperSlide>
                 ))}
               </Swiper>
-
             </div>
           </div>
-
-
         </div>
       </section>
+
+      {/* Book Table Modal */}
       <BookTableModal
         show={showModal}
         onClose={() => setShowModal(false)}
-        hotelName={selectedTitle} // Pass selectedTitle to the modal as hotelName
+        hotelName={selectedTitle}
         propertyData={propertyData}
       />
     </>
+  );
+};
+
+/* ✅ Separate Component: Responsive Description */
+const ResponsiveDescription = ({ slide, stripHtml }) => {
+  const [isMobile, setIsMobile] = useState(false);
+  const [showFull, setShowFull] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const text = stripHtml(slide?.description || "");
+  const shortText = text.slice(0, 150) + "...";
+
+  if (!text) return null;
+
+  return (
+    <div style={{ position: "relative", marginTop: "8px" }}>
+      {!isMobile ? (
+        // Desktop: full text
+        <span className="header-3 d-inline-block text-center">{text}</span>
+      ) : (
+        <>
+          {/* Mobile: truncated + toggle */}
+          <span
+            className="header-3 d-inline-block text-center"
+            style={{
+              marginBottom: "10px",
+              overflow: "hidden",
+              transition: "all 0.3s ease",
+              position: "relative",
+            }}
+          >
+            {showFull ? text : shortText}
+
+            {/* fade-out gradient */}
+            {!showFull && (
+              <span
+                style={{
+                  position: "absolute",
+                  right: 0,
+                  bottom: 0,
+                  width: "60px",
+                  height: "100%",
+                  
+                }}
+              ></span>
+            )}
+          </span>
+
+          {/* toggle arrow */}
+          <span
+            onClick={() => setShowFull(!showFull)}
+            style={{
+              cursor: "pointer",
+              color: "#000",
+              fontWeight: "600",
+              display: "inline-block",
+              marginLeft: "4px",
+              userSelect: "none",
+              transition: "color 0.3s ease",
+            }}
+            onMouseEnter={(e) => (e.target.style.color = "#b76b00")}
+            onMouseLeave={(e) => (e.target.style.color = "#000")}
+          >
+            {showFull ? " ❮❮" : " ❯❯"}
+          </span>
+        </>
+      )}
+    </div>
   );
 };
 

@@ -24,7 +24,7 @@ const filterBarRef = useRef(null);
   // Scroll event for navbar background change
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
+      setIsScrolled(window.scrollY > 1);
     };
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
@@ -34,23 +34,18 @@ const filterBarRef = useRef(null);
     setIsSidebarOpen((prev) => !prev);
   };
 
-  const handlePropertyBookNow = async () => {
-    if (filterBarRef.current) {
-      filterBarRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
-      const firstInput = filterBarRef.current.querySelector("input, select, button");
-      if (firstInput) firstInput.focus();
-    }
-    //handleBookNow();
-    if (typeof onClick === "function") {
-    onClick();
-  }
-  };
 
+  //   const toggleBookingForm = (e) => {
+  //   e.preventDefault();
+  //   e.stopPropagation();
+  //   setIsFormOpen(!isFormOpen);
+  //   if (isRoomMenuOpen) setIsRoomMenuOpen(false);
+  // };
     const toggleBookingForm = (e) => {
     e.preventDefault();
     e.stopPropagation();
     setIsFormOpen(!isFormOpen);
-    if (isRoomMenuOpen) setIsRoomMenuOpen(false);
+    onClick();
   };
   return (
     <>
@@ -74,6 +69,19 @@ const filterBarRef = useRef(null);
             <div className="header-display-flex">
               <div className="navbarnav" id="navbarNav">
                 <div className="display-flex">
+                   <Link
+                    className="me-3 header-btnn-top login-menu-header showOnDesktop-mobile"
+                    href="/"
+                  >
+                    Home
+                  </Link>
+
+                    <Link
+                      className="me-3 header-btnn-top login-menu-header showOnDesktop-mobile"
+                      href="/hotels"
+                    >
+                      Our Hotels
+                    </Link>
                   {isLoggedIn ? (
                     <>
                       <div className="dropdown dropdown-for-logged-in-user">

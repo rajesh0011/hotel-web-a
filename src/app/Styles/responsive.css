@@ -281,7 +281,19 @@
   .navbar-brand {
     margin-left: 0em!important;
 }
-
+.our-hotels-page .hotel-card-body .card-title {
+    font-size: 18px!important;
+  }
+  .about-us-page h4.h5{
+    font-size: 18px!important;
+  }
+  .overview-about-page-sec p{
+    font-size: 14px!important;
+    padding:5px 10px;
+  }
+  .new-type-dine-sec .pushed-box-content .pushed-header{
+        padding: 0px 0px;
+  }
   .navbar {
     height: auto !important;
   }
@@ -296,11 +308,6 @@
 
   #google_translate_element {
     width: 17em;
-  }
-
-  .home-page-class button {
-    bottom: 20em;
-    position: relative;
   }
 
   .react-datepicker__input-container .form-control {
@@ -374,8 +381,17 @@
   }
 
   .global-heading-sec .global-heading {
-    font-size: 21px;
+    font-size: 21px!important;
   }
+  .overview-about-page-sec{
+    padding:3rem 0;
+  }
+  .inner-main-booking-bar-sec .booking-search-bar-btn-div {
+        bottom: 20px !important;
+    }
+    .property-ooffer-sliderr .swiper{
+      padding:0 4px!important;
+    }
 
   img.sidebar-icon-img {
     display: none;
@@ -480,6 +496,28 @@ screen and (device-width: 1024px) and (orientation: portrait) {}
   .hotel-bottom-box-cta-n-content .cta-buttons-box .book-now-btn {
     padding: 5px 5px;
   }
+  .custom-tabs-for-experience .custom-nav-wrapper .custom-next{
+    right: 40%!important;
+  }
+  .custom-tabs-for-experience .custom-nav-wrapper .custom-prev {
+    left: 40%!important;
+  }
+  .custom-tabs-for-experience .custom-nav-wrapper .custom-prev,
+  .custom-tabs-for-experience .custom-nav-wrapper .custom-next{
+   top:30px!important;
+   position:unset!important;
+  }
+  .custom-tabs-for-experience .custom-nav-wrapper {
+    position: relative;
+    z-index: 99;
+    display: flex;
+    padding-top: 2rem;
+    justify-content: center;
+    gap: 5px;
+}
+.custom-tabs-for-experience .winter-box.hotel-box{
+margin-top:0!important;
+}
    .hotel-bottom-box-cta-n-content .cta-buttons-box .explore-more-btn {
     padding: 5px 5px;
   }
@@ -510,9 +548,15 @@ width:100%!important;
 .missing-stays-form form textarea{
 font-size:14px!important
 }
-.inner-gumlet-video {
+/* .inner-gumlet-video {
     margin-top: 7rem!important;
+} */
+
 }
 
-
+@media (max-width: 420px){
+  .home-page-class button {
+    bottom: 0;
+    position: relative;
+  }
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useTransition } from "react";
+import React, { useState, useEffect, useTransition, useRef } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination } from "swiper/modules";
 import "swiper/css";
@@ -11,12 +11,44 @@ import Link from "next/link";
 import { ArrowLeftCircle, ArrowRightCircle } from "lucide-react";
 import styles from "./untold.module.css";
 
-const UntoldStories = () => {
+const UntoldStories = ({onClick}) => {
   const [categories, setCategories] = useState([]);
   const [hotels, setHotels] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isPending, startTransition] = useTransition();
+
+    const [parentSwiper, setParentSwiper] = useState(null);
+    const parentPrevRef = useRef(null);
+    const parentNextRef = useRef(null);
+  
+    useEffect(() => {
+    if (!parentSwiper) return;
+
+    const swiper = parentSwiper;
+
+    const timer = setTimeout(() => {
+      // 🛡 SAFETY CHECKS — prevent crash when swiper or params not ready
+      if (!swiper || !swiper.params) return;
+
+      if (!swiper.params.navigation) {
+        swiper.params.navigation = {};
+      }
+
+      swiper.params.navigation.prevEl = parentPrevRef.current;
+      swiper.params.navigation.nextEl = parentNextRef.current;
+
+      if (swiper.navigation) {
+        swiper.navigation.destroy();
+        swiper.navigation.init();
+        swiper.navigation.update();
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [parentSwiper, selectedCategory]);
+  
+
 
   // ✅ Fetch categories
   const fetchCategories = async () => {
@@ -97,17 +129,37 @@ const UntoldStories = () => {
     return "property-overview";
   };
 
+  const handleBookNowSlider = async (dataBookNow) => {
+    onClick(dataBookNow);
+  };
   return (
     <>
-      <section className={`${styles.UntoldStoriesSec} global-padding bg-lred`}>
+      <section className={`${styles.UntoldStoriesSec} global-padding bg-lred cursor-hideMobile`}>
         <Image
-          src={"/img/story-bg.png"}
+          src={"/img/disk.gif"}
           alt="Untold Stories Background"
-          className={styles.bgStoryImage}
+          className={`${styles.bgStoryImage} disk-gif`}
           width={1920}
           height={1080}
-        />
+        /> 
         <h3 className="main-section-title global-heading">Untold Stories</h3>
+
+        <div className="parent-control-button p-prev-button untold-stories-prev">
+          <button
+            ref={parentPrevRef}
+            className="p-3 bg-gray-800 text-white rounded-full shadow-lg"
+          >
+            ❮
+          </button>
+        </div>
+        <div className="parent-control-button p-next-button untold-stories-next">
+          <button
+            ref={parentNextRef}
+            className="p-3 bg-gray-800 text-white rounded-full shadow-lg"
+          >
+            ❯
+          </button>
+        </div>
 
         {/* ✅ Category Slider */}
         <div className="container mb-4 position-relative custom-tabs-for-experience">
@@ -135,8 +187,8 @@ const UntoldStories = () => {
                 >
                   <button
                     className={`category-btn 
-          ${isActive ? "active" : ""} 
-          ${isAllTab ? "all-tab-btn" : ""}`} // ✅ Add special class
+                    ${isActive ? "active" : ""} 
+                    ${isAllTab ? "all-tab-btn" : ""}`} // ✅ Add special class
                     onClick={() => handleCategoryClick(cat.seasonalCategoryId)}
                   >
                     {cat.seasonalCategory}
@@ -184,22 +236,26 @@ const UntoldStories = () => {
             <p className="text-center py-5">No hotels found in this category.</p>
           ) : (
             <Swiper
-              key={selectedCategory}
-              modules={[Navigation, Pagination]}
-              spaceBetween={10}
-              slidesPerView={1}
-              navigation={true}
-              centeredSlides={hotels.length === 1}
-              pagination={false}
-              breakpoints={{
-                0: { slidesPerView: 1 },
-                640: { slidesPerView: 2 },
-                768: { slidesPerView: 2 },
-                1024: { slidesPerView: 3 },
-                1180: { slidesPerView: 3 },
-              }}
-              className={styles.swiperContainer}
-            >
+                key={selectedCategory}
+                modules={[Navigation, Pagination]}
+                spaceBetween={10}
+                slidesPerView={1}
+                navigation={{
+                  prevEl: parentPrevRef.current,
+                  nextEl: parentNextRef.current,
+                }}
+                onSwiper={setParentSwiper}
+                centeredSlides={hotels.length === 1}
+                pagination={{ clickable: true }}
+                breakpoints={{
+                  0: { slidesPerView: 1 },
+                  640: { slidesPerView: 2 },
+                  768: { slidesPerView: 2 },
+                  1024: { slidesPerView: 3 },
+                  1180: { slidesPerView: 3 },
+                }}
+                className={styles.swiperContainer}
+              >
               {hotels.map((hotel, index) => {
                 const imageUrl =
                   hotel?.images?.[0]?.propertyImage || "/no_img1.jpg";
@@ -227,8 +283,12 @@ const UntoldStories = () => {
                       <div className="winter-box-content main-new-hotel-box">
                         <div className="hotel-box-content hotel-left-side-box">
                           <div className="winter-box-btn">
-                            <Link href={`https://bookings.amritara.co.in/?chainId=5971&propertyId=${hotel.staahBookingId}&_gl=1*1d9irrh*_gcl_au*MzgxMDEyODcxLjE3NTgyNjIxOTIuNzY2OTMwNzIwLjE3NTkzMTE2MjAuMTc1OTMxMTcyMA..*_ga*NzUyODI0NDE0LjE3NTgyNjIxOTI.*_ga_7XSGQLL96K*czE3NjA0NDUzOTUkbzQ4JGcxJHQxNzYwNDQ2NTA2JGo2MCRsMCRoODE1NTgwNjUw*_ga_DVBE6SS569*czE3NjA0NDUzOTQkbzQ1JGcxJHQxNzYwNDQ1NDY2JGo2MCRsMCRoOTgzMzg5ODY.`}
-                              target="_blank" className="box-btn book-now">Book Now</Link>
+                            <Link 
+                              href="#"
+                              onClick={()=>{handleBookNowSlider(hotel)}}
+                              // href={`https://bookings.amritara.co.in/?chainId=5971&propertyId=${hotel.staahBookingId}&_gl=1*1d9irrh*_gcl_au*MzgxMDEyODcxLjE3NTgyNjIxOTIuNzY2OTMwNzIwLjE3NTkzMTE2MjAuMTc1OTMxMTcyMA..*_ga*NzUyODI0NDE0LjE3NTgyNjIxOTI.*_ga_7XSGQLL96K*czE3NjA0NDUzOTUkbzQ4JGcxJHQxNzYwNDQ2NTA2JGo2MCRsMCRoODE1NTgwNjUw*_ga_DVBE6SS569*czE3NjA0NDUzOTQkbzQ1JGcxJHQxNzYwNDQ1NDY2JGo2MCRsMCRoOTgzMzg5ODY.`}
+                              // target="_blank" 
+                              className="box-btn book-now">Book Now</Link>
 
                             <Link
                               href={`/${hotel.propertySlug}/${getOverviewSlug(

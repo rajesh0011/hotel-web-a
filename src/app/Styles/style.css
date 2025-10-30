@@ -83,11 +83,12 @@ box2 {
   left: 10px;
 }
 
-.box-btn {
+/* .box-btn {
   margin-right: 10px;
   font-size: .8rem;
   padding: 4px 10px !important;
-}
+  text-decoration: none !important;
+} */
 .discover-slider .winter-box {
   position: relative;
   overflow: hidden;
@@ -327,7 +328,7 @@ text-transform: none !important;
   top: 40%;
   width: 40px!important;
   height: 40px!important;
-  background: #000 !important;;
+  background: #803525 !important;;
   border-radius: 50%;
 padding: 8px!important;
 }
@@ -355,11 +356,9 @@ padding: 8px!important;
 .images-slider .swiper-button-prev, .images-slider .swiper-button-next{ width:40px; height:40px;}
 .cityexpr1 .accommodation-box-content .acc-price{ font-size: 16px; font-weight:600;}
 .cityexpr1 .accommodation-box-content .winter-box-heading{
-   /* font-family: var(--font-montserrat) !important; */
-   font-family: var(--font-heading), serif !important;
-   font-weight:500!important;
+    font-family: var(--font-montserrat) !important; 
     text-transform:capitalize;
-    font-size:22px!important;
+    margin-bottom: 8px !important;
   }
 .cityexpr1 .winter-box.hotel-box{ border-radius:0px;}
 .winter-box-text { font-size:14px !important; text-transform:none;}
@@ -397,19 +396,20 @@ padding: 8px!important;
     text-align:center;
 }
 .experience-category-slider-tabs .category-btn{
-      outline: none;
+    outline: none;
     border: none;
     background-color: #fff;
     color: #000;
-    font-size: 15px;
-    padding: 10px 10px;
     box-shadow: rgba(0, 0, 0, 0.05) 0px 1px 2px 0px;
+    border-bottom: none !important;
+    border-radius: 0 !important;
+    font-size: 14px;
+    padding: 8px 10px;
     text-transform: capitalize;
     font-weight: 600;
-    border-radius: 9px;
 }
 .experience-category-slider-tabs .category-btn.all-tab-btn{
-    padding: 10px 30px;
+    padding: 7px 25px;
 }
 .experience-category-slider-tabs .category-btn.active{
   background-color:var(--brown);
@@ -482,10 +482,32 @@ text-align:left;
        padding-top:2rem!important;
        }
 
-.testimonial-section-slider-over .testimonial-box .winter-box-heading{
-margin-bottom:1rem;
-text-transform:capitalize;
+    .testimonial-section-slider-over .testimonial-box .winter-box-heading{
+        margin-bottom:1rem;
+        text-transform:capitalize;
+    }
+
+    .left-nested-boxx {
+      display: flex;
+      align-items: center;
+      flex-direction: row-reverse;
+      gap: 10px;
+  }
+  .corporate-offers-section .offer-card{
+    min-height: 155px;
+  }
+.corporate-offers-section .offer-card .offer-content .offer-title {
+    margin-bottom: 4px;
+    min-height: 2.1rem;
 }
+
+  
+  /* .winter-box-btn .box-btn {
+    font-size: 10px;
+    border-radius: 0px;
+    font-weight: var(--secondary-font-weight);
+    margin-right: 5px;
+} */
 
 @media (min-width: 768px) {
   .property-inner-zigzag-section .pushed-wrapper .row:nth-child(even) .pushed-box {
@@ -495,10 +517,12 @@ text-transform:capitalize;
   
 }
 
+
+
 /* property-inner-zigzag-section  */
 
 .bottom-modal-content .property-amenitiess h6 {
-    font-size: 18px!important;
+    font-size: 16px!important;
 
 }
 

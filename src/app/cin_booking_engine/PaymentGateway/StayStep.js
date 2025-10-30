@@ -12,7 +12,7 @@ import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
 //import "react-toastify/dist/ReactToastify.css";
 import Image from "next/image";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useBookingEngineContext } from "../../cin_context/BookingEngineContext";
 import { faEdit, faTrashAlt } from "@fortawesome/free-regular-svg-icons";
 import StayStepRoomManager from "./StayStepRoomManager";
@@ -23,7 +23,7 @@ import { createSignature } from "../../../utilities/signature";
 import { ChevronDown, ChevronUp, ChevronsUp } from "lucide-react";
 import { getUserInfo } from "../../../utilities/userInfo";
 
-const StayStep = ({ goNext, onClose, onSend }) => {
+const StayStep = ({ goNext, onClose, onSend,isVisible }) => {
   const {
     selectedPropertyPhone,
     selectedPropertyName,
@@ -65,7 +65,9 @@ const StayStep = ({ goNext, onClose, onSend }) => {
     cancellationPolicyPackage,
     setCancellationPolicyPackage,
     isInventoryAvailable, setInventoryAvailable,
-    totalTax, setTotalTax
+    totalTax, setTotalTax,
+    isStayStepOpen, setIsStayStepOpen,
+    totalRoomsBasePrice, setTotalRoomsBasePrice
   } = useBookingEngineContext();
 
   const dummyImage = "/no_image.jpg";
@@ -85,6 +87,7 @@ const StayStep = ({ goNext, onClose, onSend }) => {
   const [isMaxCapacityExceeded, isMaxCapacityExceededSet] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [cartDisplayMobile, setCartDisplayMobile] = useState(false);
+  const roomsRef = useRef(null);
 
   const [isRateChange, setIsRateChange] = useState(false);
   const [aisOpen, setaIsOpen] = useState(false);
@@ -201,17 +204,17 @@ function formatDateDMY(date) {
     ApiErrorCode: ApiErrorCode?.toString() ?? "",
     ApiMessage: ApiMessage ?? ""
    }
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_CMS_BASE_URL}/Api/tracker/BookingWidged`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify( payload ),
-        }
-      );
-      const res = await response?.json();
+      // const response = await fetch(
+      //   `${process.env.NEXT_PUBLIC_CMS_BASE_URL}/Api/tracker/BookingWidged`,
+      //   {
+      //     method: "POST",
+      //     headers: {
+      //       "Content-Type": "application/json",
+      //     },
+      //     body: JSON.stringify( payload ),
+      //   }
+      // );
+      // const res = await response?.json();
 
     //console.log("res BookingWidged",res);
   }
@@ -225,14 +228,73 @@ function formatDateDMY(date) {
   };
 
   const numberOfDays = calculateNumberOfDays();
-  const calculateBasePrice = () => {
-    // Sum all selectedRoom's roomRate
-    const totalRoomRate = selectedRoom?.reduce(
-      (sum, room) => sum + (parseFloat(room?.packageRate) || 0),
+  // const calculateBasePrice = () => {
+  //   // Sum all selectedRoom's roomRate
+  //   const totalRoomRate = selectedRoom?.reduce(
+  //     (sum, room) => sum + (parseFloat(room?.packageRate) || 0),
+  //     0
+  //   );
+  //   return totalRoomRate * numberOfDays;
+  // };
+// const calculateBasePrice = () => {
+//   return selectedRoom?.reduce((sum, room) => {
+//     if (!room?.packageRateList) return sum;
+
+//     const roomTotal = Object.values(room.packageRateList).reduce(
+//       (roomSum, dateData) => {
+//         const obp1 = dateData?.OBP?.[room?.adults?.toString()];
+//         return roomSum + (obp1 ? parseFloat(obp1.RateBeforeTax || "0") : 0);
+//       },
+//       0
+//     );
+
+//     return sum + roomTotal;
+//   }, 0);
+// };
+
+const calculateBasePrice = () => {
+  return selectedRoom?.reduce((sum, room) => {
+    if (!room?.packageRateList) return sum;
+
+    const roomTotal = Object.values(room.packageRateList).reduce(
+      (roomSum, dateData) => {
+        let obp1 = dateData?.OBP?.[room?.adults?.toString()];
+
+        // fallback: last entry in OBP if specific adult key not found
+        if (!obp1 && dateData?.OBP) {
+          const keys = Object.keys(dateData.OBP).sort((a, b) => Number(a) - Number(b));
+          const lastKey = keys[keys.length - 1];
+          obp1 = dateData.OBP[parseInt(lastKey)];
+        }
+
+        return roomSum + (obp1 ? Math.round(parseFloat(obp1.RateBeforeTax || "0")) : 0);
+      },
       0
     );
-    return totalRoomRate * numberOfDays;
-  };
+
+    return Math.round(sum + roomTotal);
+  }, 0);
+};
+const calculateTotalSavings = () => {
+  return selectedRoom?.reduce((sum, room) => {
+    if (!room?.packageRateList) return sum;
+
+    const savingsTotal = Object.values(room.packageRateList).reduce((roomSum, dateData) => {
+      let obp1 = dateData?.OBP?.[room?.adults?.toString()];
+
+      // fallback: last entry in OBP if specific adult key not found
+      if (!obp1 && dateData?.OBP) {
+        const keys = Object.keys(dateData.OBP).sort((a, b) => Number(a) - Number(b));
+        const lastKey = keys[keys.length - 1];
+        obp1 = dateData.OBP[parseInt(lastKey)];
+      }
+
+      return roomSum + (obp1 ? parseFloat(obp1.Savings || "0") : 0);
+    }, 0);
+
+    return sum + savingsTotal;
+  }, 0);
+};
 
   const calculateTotalWithTax = () => {
     const basePrice = calculateBasePrice();
@@ -240,19 +302,17 @@ function formatDateDMY(date) {
   };
 
   const basePrice = calculateBasePrice();
+  const totalSavings = calculateTotalSavings();
   const finalAmount = calculateTotalWithTax();
+  
 
   useEffect(()=>{
   setIsSmallScreen(window.innerWidth < 768);
   }, [window.innerWidth])
   const rateUpdate = async () => {
-    // const response = await axios.post("/api/staah-api/rate", {
-    //   selectedPropertyId,
-    //   fromDate,
-    //   toDate,
-    // });
-
-    const dayRate = rateResponse?.Product?.[0]?.Rooms?.flatMap((room) => {
+    
+   // setIsTaxCalculated(false);
+    const dayRate = rateResponse?.Rooms?.flatMap((room) => {
       const newSelectedRooms = selectedRoom.filter(
         (sel) => sel.roomId === room?.RoomId
       );
@@ -265,8 +325,129 @@ function formatDateDMY(date) {
         const firstRateObj = matchedRatePlan
           ? Object.values(matchedRatePlan?.Rates || {})[0]
           : null;
+          
+        const rateList = matchedRatePlan
+          ? matchedRatePlan?.Rates
+          : null;
 
-        // Update packageRate for selectedRoom
+        const rateEntries = Array.isArray(rateList)
+          ? rateList
+          : rateList && typeof rateList === "object"
+          ? Object.values(rateList)
+          : [];
+        const taxesFromRates = rateEntries.flatMap(dateData => {
+        if (!dateData?.OBP) return [];
+
+        // try adult-specific OBP
+        let obp = dateData.OBP[selected.adults];
+
+        // fallback: last available OBP entry
+        if (!obp) {
+          const keys = Object.keys(dateData.OBP).sort((a, b) => Number(a) - Number(b));
+          const lastKey = keys[keys.length - 1];
+          obp = dateData.OBP[parseInt(lastKey)];
+        }
+      
+        return obp?.Tax || [];
+      });
+const { adults, children, applicableAdult, applicableChild, applicableGuest } = selected;
+
+// Step 1: Adjust children to meet minimum adults
+let adjustedAdults = adults;
+let adjustedChildren = children;
+
+if (adults < applicableAdult && children > 0) {
+  const neededAdults = applicableAdult - adults;
+  const childrenToAdults = Math.min(neededAdults, children);
+  adjustedAdults += childrenToAdults;
+  adjustedChildren -= childrenToAdults;
+}
+
+// Step 2: Calculate extra children
+const extraChildren = 
+  adjustedChildren > applicableChild
+    ? Math.min(
+        adjustedChildren - applicableChild, // children beyond allowed
+        Math.max(0, adjustedAdults + adjustedChildren - applicableGuest) // total guests beyond allowed
+      )
+    : 0;
+        const extraChildTaxes = rateEntries.flatMap(dateData => {
+        if (!dateData) return [];
+
+        // try adult-specific OBP
+        let obp1 = dateData.OBP[selected.adults];
+
+        // fallback: last available OBP entry
+        if (!obp1) {
+          const keys = Object.keys(dateData.OBP).sort((a, b) => Number(a) - Number(b));
+          const lastKey = keys[keys.length - 1];
+          obp1 = dateData.OBP[parseInt(lastKey)];
+        }
+        // try adult-specific OBP
+       // let obp = extraChildren >= 1 ? dateData?.ExtraChildRate?.Tax || [] : []
+        let obp = [];
+
+        // fallback: last available OBP entry
+         if (extraChildren >= 1 && obp.length == 0) {
+        const price = (parseFloat(dateData?.ExtraChildRate?.RateBeforeTax * parseInt(extraChildren)) + parseFloat(obp1.RateBeforeTax));
+         obp = [ {
+          "ID": "889723000000001",
+          "Name": "GST",
+          "Amount": price >= 7500 ? Math.round(price * 0.18) : Math.round(price * 0.05)
+          }]
+         }
+      
+        return obp || [];
+      });
+        const packFromRates = rateEntries.flatMap(dateData => {
+        if (!dateData?.OBP) return [];
+
+        // try adult-specific OBP
+        let obp = dateData.OBP[selected.adults];
+
+        // fallback: last available OBP entry
+        if (!obp) {
+          const keys = Object.keys(dateData.OBP).sort((a, b) => Number(a) - Number(b));
+          const lastKey = keys[keys.length - 1];
+          obp = dateData.OBP[parseInt(lastKey)];
+        }
+      
+        return obp;
+      });
+console.log(packFromRates)
+          const primary = packFromRates?.[room?.adults?.toString()]?.RateAfterTax ?? undefined;
+
+        // fallback = last rate in rates object/array
+        let fallback = 0;
+        if (packFromRates) {
+          if (Array.isArray(packFromRates)) {
+            // If rates is an array
+            const last = packFromRates[packFromRates.length - 1];
+            fallback = last?.RateAfterTax ?? 0;
+          } else {
+            // If rates is an object with numeric keys as strings
+            const keys = Object.keys(packFromRates).sort((a, b) => Number(a) - Number(b));
+            const lastKey = keys[keys.length - 1];
+            fallback = packFromRates[lastKey]?.RateAfterTax ?? 0;
+          }
+        }
+
+          const primaryBe = packFromRates?.[room?.adults?.toString()]?.RateBeforeTax ?? undefined;
+
+        // fallback = last rate in rates object/array
+        let fallbackBe = 0;
+        if (packFromRates) {
+          if (Array.isArray(packFromRates)) {
+            // If rates is an array
+            const last = packFromRates[packFromRates.length - 1];
+            fallbackBe = last?.RateBeforeTax ?? 0;
+          } else {
+            // If rates is an object with numeric keys as strings
+            const keys = Object.keys(packFromRates).sort((a, b) => Number(a) - Number(b));
+            const lastKey = keys[keys.length - 1];
+            fallbackBe = packFromRates[lastKey]?.RateBeforeTax ?? 0;
+          }
+        }
         setSelectedRoom((prev) =>
           prev.map((rm) =>
             rm?.adults <= selected.maxAdult &&
@@ -275,9 +456,9 @@ function formatDateDMY(date) {
               ? {
                   ...rm,
                   packageRate:
-                    firstRateObj?.OBP?.[rm.adults.toString()]?.RateBeforeTax,
+                    primaryBe ?? fallbackBe,
                   roomRateWithTax:
-                    firstRateObj?.OBP?.[rm.adults.toString()]?.RateAfterTax,
+                    primary ?? fallback,
                   adultRate:
                     parseFloat(firstRateObj?.ExtraAdultRate?.RateAfterTax) ||
                     0.0,
@@ -288,21 +469,16 @@ function formatDateDMY(date) {
                     parseInt(
                       firstRateObj?.OBP?.[rm.adults.toString()]?.RateAfterTax
                     ) - parseInt(firstRateObj?.OBP?.["1"]?.RateAfterTax),
+                  packageRateList: rateList
                 }
               : rm
           )
         );
-        //const totalGuests = selected?.adults + selected?.children;
-        const extraChildren =
-          selected.children > selected?.applicableChild
-            ? selected?.children - selected?.applicableChild
-            : 0;
-        const extraChildTaxes = Array.from({ length: extraChildren }, () =>
-          extraChildren >= 1 ? firstRateObj?.ExtraChildRate?.Tax || [] : []
-        ).flat();
-
-        const taxArray = [
-          ...(firstRateObj?.OBP?.[selected.adults.toString()]?.Tax || []),
+    //     ];
+    
+        if(extraChildTaxes.length > 0){
+          const taxArray = [
+         // ...taxesFromRates,
           ...extraChildTaxes,
         ];
         const taxObject = {};
@@ -315,10 +491,16 @@ function formatDateDMY(date) {
 
         if (firstRateObj && selected) {
           if (extraChildren > 0) {
-            taxObject["ExtraChildRate"] = parseFloat(
-              (firstRateObj?.ExtraChildRate?.RateBeforeTax || 0.0) *
-                extraChildren
-            );
+            // taxObject["ExtraChildRate"] = parseFloat(
+            //   (firstRateObj?.ExtraChildRate?.RateBeforeTax || 0.0) *
+            //     extraChildren
+            // );
+            
+            const totalExtraChildRate = rateEntries.reduce((sum, dateData) => {
+              const rate = parseFloat(dateData?.ExtraChildRate?.RateBeforeTax || "0");
+              return sum + rate;
+            }, 0);
+          taxObject["ExtraChildRate"] = Math.round(totalExtraChildRate) * extraChildren;
           }
 
           if (
@@ -329,6 +511,12 @@ function formatDateDMY(date) {
               firstRateObj?.ExtraAdultRate?.RateBeforeTax || 0.0
             );
           }
+          if (isMemberRate) {
+            taxObject["GST2"] = Math.round(
+              selected?.packageRate *
+                (selected?.packageRate <= 7500 ? 0.12 : 0.18)
+            );
+          }
         }
         return {
           RoomId: selected?.roomId,
@@ -337,6 +525,58 @@ function formatDateDMY(date) {
           RateAfterTax: parseInt(firstRateObj?.OBP?.["1"]?.RateAfterTax || "0"),
           ...taxObject,
         };
+        }
+        else{
+          
+          const taxArray = [
+         ...taxesFromRates,
+         // ...extraChildTaxes,
+        ];
+        const taxObject = {};
+        taxArray.forEach((t) => {
+          if (t?.Name && t?.Amount != null) {
+            const amount = parseFloat(t.Amount);
+            taxObject[t.Name] = (taxObject[t.Name] || 0) + amount;
+          }
+        });
+
+        if (firstRateObj && selected) {
+          if (extraChildren > 0) {
+            // taxObject["ExtraChildRate"] = parseFloat(
+            //   (firstRateObj?.ExtraChildRate?.RateBeforeTax || 0.0) *
+            //     extraChildren
+            // );
+            
+            const totalExtraChildRate = rateEntries.reduce((sum, dateData) => {
+              const rate = parseFloat(dateData?.ExtraChildRate?.RateBeforeTax || "0");
+              return sum + rate;
+            }, 0);
+          taxObject["ExtraChildRate"] = Math.round(totalExtraChildRate) * extraChildren;
+          }
+
+          if (
+            selected?.adults > selected?.maxAdult &&
+            parseFloat(firstRateObj?.ExtraAdultRate?.RateAfterTax) > 1.0
+          ) {
+            taxObject["ExtraAdultRate"] = parseFloat(
+              firstRateObj?.ExtraAdultRate?.RateBeforeTax || 0.0
+            );
+          }
+          if (isMemberRate) {
+            taxObject["GST2"] = Math.round(
+              selected?.packageRate *
+                (selected?.packageRate <= 7500 ? 0.12 : 0.18)
+            );
+          }
+        }
+        return {
+          RoomId: selected?.roomId,
+          RateId: selected?.rateId,
+          MinInventory: room?.MinInventory,
+          RateAfterTax: parseInt(firstRateObj?.OBP?.["1"]?.RateAfterTax || "0"),
+          ...taxObject,
+        };
+        }
       });
     });
 
@@ -350,7 +590,8 @@ function formatDateDMY(date) {
     //   toDate,
     // });
 
-    let roomsData = "";
+  //setIsTaxCalculated(false);
+  let roomsData = "";
   let mappingData ="";
   let isCloseData = false;
   let apiStatusData = "";
@@ -363,6 +604,7 @@ function formatDateDMY(date) {
       apiNameData,apiUrlData,apiStatusData,apiErrorCodeData,apiMessageData);
 
   try {
+     const guid = crypto.randomUUID();
     const timestamp = Date.now().toString();
     const secret = "ABDEFGHJKLMOPQRSTUVWXYZ123456789";
 
@@ -377,6 +619,7 @@ function formatDateDMY(date) {
       fromDate,
       toDate,
       promoCodeContext ,
+      guId:guid
       // product: "No",
     };
   //  if(promoCode != "" || new Date(fromDate) > cutoffDate)
@@ -423,10 +666,196 @@ function formatDateDMY(date) {
       apiErrorCodeData= "No Rate Plans";;
       apiMessageData= "Success";
       }
-        const firstRateObj = matchedRatePlan
-          ? Object.values(matchedRatePlan?.Rates || {})[0]
+        const firstRateObj = matchedRatePlan ? Object.values(matchedRatePlan?.Rates || {})[0] : null;
+
+        //const rateList = matchedRatePlan ? matchedRatePlan?.Rates : null;
+
+        const rateList = matchedRatePlan
+          ? matchedRatePlan?.Rates
           : null;
 
+        const rateEntries = Array.isArray(rateList)
+          ? rateList
+          : rateList && typeof rateList === "object"
+          ? Object.values(rateList)
+          : [];
+          
+        // const taxesFromRates = rateEntries.flatMap(dateData =>
+        //     dateData?.OBP?.[String(selected.adults)]?.Tax || []
+        //   );
+          
+        //   const primary = rates?.[room?.adults?.toString()]?.RateAfterTax ?? undefined;
+
+        // // fallback = last rate in rates object/array
+        // let fallback = 0;
+        // if (rates) {
+        //   if (Array.isArray(rates)) {
+        //     // If rates is an array
+        //     const last = rates[rates.length - 1];
+        //     fallback = last?.RateAfterTax ?? 0;
+        //   } else {
+        //     // If rates is an object with numeric keys as strings
+        //     const keys = Object.keys(rates).sort((a, b) => Number(a) - Number(b));
+        //     const lastKey = keys[keys.length - 1];
+        //     fallback = rates[lastKey]?.RateAfterTax ?? 0;
+        //   }
+        // }
+        
+        //   const primaryBe = rates?.[room?.adults?.toString()]?.RateBeforeTax ?? undefined;
+
+        // // fallback = last rate in rates object/array
+        // let fallbackBe = 0;
+        // if (rates) {
+        //   if (Array.isArray(rates)) {
+        //     // If rates is an array
+        //     const last = rates[rates.length - 1];
+        //     fallbackBe = last?.RateBeforeTax ?? 0;
+        //   } else {
+        //     // If rates is an object with numeric keys as strings
+        //     const keys = Object.keys(rates).sort((a, b) => Number(a) - Number(b));
+        //     const lastKey = keys[keys.length - 1];
+        //     fallbackBe = rates[lastKey]?.RateBeforeTax ?? 0;
+        //   }
+        // }
+        
+        const taxesFromRates = rateEntries.flatMap(dateData => {
+        if (!dateData?.OBP) return [];
+
+        // try adult-specific OBP
+        let obp = dateData.OBP[selected.adults];
+
+        // fallback: last available OBP entry
+        if (!obp) {
+          const keys = Object.keys(dateData.OBP).sort((a, b) => Number(a) - Number(b));
+          const lastKey = keys[keys.length - 1];
+          obp = dateData.OBP[parseInt(lastKey)];
+        }
+      
+        return obp?.Tax || [];
+      });
+
+        //const totalGuests = selected?.adults + selected?.children;
+        // const extraChildren =
+        //   selected.children > selected?.applicableChild && (selected?.children + selected?.adults) > selected?.applicableGuest
+        //     ? selected?.children - selected?.applicableChild
+        //     : 0;
+        // const extraChildren =
+        //    selected.children > selected?.applicableChild && 
+        //    (selected?.children + selected?.adults) > selected?.applicableGuest 
+        //    && selected?.adults >= selected?.applicableAdult
+        //      ? selected?.children - selected?.applicableChild
+        //      : ((selected?.children + selected?.adults) - selected?.applicableGuest) > selected?.applicableGuest 
+        //      && selected?.adults >= selected?.applicableAdult && selected.children > selected?.applicableChild
+        //      ? ((selected?.children + selected?.adults) - selected?.applicableGuest) : selected?.children || 0;
+        
+
+        const { adults, children, applicableAdult, applicableChild, applicableGuest } = selected;
+
+// Step 1: Adjust children to meet minimum adults
+let adjustedAdults = adults;
+let adjustedChildren = children;
+
+if (adults < applicableAdult && children > 0) {
+  const neededAdults = applicableAdult - adults;
+  const childrenToAdults = Math.min(neededAdults, children);
+  adjustedAdults += childrenToAdults;
+  adjustedChildren -= childrenToAdults;
+}
+
+// Step 2: Calculate extra children
+const extraChildren = 
+  adjustedChildren > applicableChild
+    ? Math.min(
+        adjustedChildren - applicableChild, // children beyond allowed
+        Math.max(0, adjustedAdults + adjustedChildren - applicableGuest) // total guests beyond allowed
+      )
+    : 0;
+
+        const extraChildTaxes = rateEntries.flatMap(dateData => {
+        if (!dateData) return [];
+
+        // try adult-specific OBP
+        let obp1 = dateData.OBP[selected.adults];
+
+        // fallback: last available OBP entry
+        if (!obp1) {
+          const keys = Object.keys(dateData.OBP).sort((a, b) => Number(a) - Number(b));
+          const lastKey = keys[keys.length - 1];
+          obp1 = dateData.OBP[parseInt(lastKey)];
+        }
+        // try adult-specific OBP
+        
+       // let obp = extraChildren >= 1 ? dateData?.ExtraChildRate?.Tax || [] : []
+        let obp = [];
+
+        // fallback: last available OBP entry
+         if (extraChildren >= 1 && obp.length == 0) {
+        //  obp =[ {
+        //   "ID": "889723000000001",
+        //   "Name": "GST",
+        //   "Amount": dateData?.ExtraChildRate?.RateBeforeTax * 0.05
+        //   // "Amount": Math.round((dateData?.ExtraChildRate?.RateBeforeTax || "0") * 0.05)
+        //   }]
+        const price = (parseFloat(dateData?.ExtraChildRate?.RateBeforeTax * parseInt(extraChildren)) + parseFloat(obp1.RateBeforeTax));
+         obp = [ {
+          "ID": "889723000000001",
+          "Name": "GST",
+          "Amount": price >= 7500 ? Math.round(price * 0.18) : Math.round(price * 0.05)
+          }]
+         }
+      
+        return obp || [];
+      });
+
+        const packFromRates = rateEntries.flatMap(dateData => {
+        if (!dateData?.OBP) return [];
+
+        // try adult-specific OBP
+        let obp = dateData.OBP[selected.adults];
+
+        // fallback: last available OBP entry
+        if (!obp) {
+          const keys = Object.keys(dateData.OBP).sort((a, b) => Number(a) - Number(b));
+          const lastKey = keys[keys.length - 1];
+          obp = dateData.OBP[parseInt(lastKey)];
+        }
+      
+        return obp;
+      });
+
+          const primary = packFromRates?.[room?.adults?.toString()]?.RateAfterTax ?? undefined;
+
+        // fallback = last rate in rates object/array
+        let fallback = 0;
+        if (packFromRates) {
+          if (Array.isArray(packFromRates)) {
+            // If rates is an array
+            const last = packFromRates[packFromRates.length - 1];
+            fallback = last?.RateAfterTax ?? 0;
+          } else {
+            // If rates is an object with numeric keys as strings
+            const keys = Object.keys(packFromRates).sort((a, b) => Number(a) - Number(b));
+            const lastKey = keys[keys.length - 1];
+            fallback = packFromRates[lastKey]?.RateAfterTax ?? 0;
+          }
+        }
+
+          const primaryBe = packFromRates?.[room?.adults?.toString()]?.RateBeforeTax ?? undefined;
+
+        // fallback = last rate in rates object/array
+        let fallbackBe = 0;
+        if (packFromRates) {
+          if (Array.isArray(packFromRates)) {
+            // If rates is an array
+            const last = packFromRates[packFromRates.length - 1];
+            fallbackBe = last?.RateBeforeTax ?? 0;
+          } else {
+            // If rates is an object with numeric keys as strings
+            const keys = Object.keys(packFromRates).sort((a, b) => Number(a) - Number(b));
+            const lastKey = keys[keys.length - 1];
+            fallbackBe = packFromRates[lastKey]?.RateBeforeTax ?? 0;
+          }
+        }
         // Update packageRate for selectedRoom
         setSelectedRoom((prev) =>
           prev.map((rm) =>
@@ -440,8 +869,12 @@ function formatDateDMY(date) {
                         firstRateObj?.OBP?.[rm?.adults?.toString()]?.RateBeforeTax
                       ) || 0.0) * 0.9
                     : Math.round(
-                        firstRateObj?.OBP?.[rm?.adults?.toString()]?.RateBeforeTax
+                        // firstRateObj?.OBP?.[rm?.adults?.toString()]?.RateBeforeTax
+                        
+                        primaryBe ??
+                        fallbackBe
                       ) || 0.0,
+                  packageRateList: rateList,
                   roomRateWithTax: isMemberRate
                     ? Math.round(
                         firstRateObj?.OBP?.[rm?.adults?.toString()]?.RateBeforeTax
@@ -459,7 +892,10 @@ function formatDateDMY(date) {
                             : 1.8)
                       )
                     : Math.round(
-                        firstRateObj?.OBP?.[rm?.adults?.toString()]?.RateAfterTax
+                       // firstRateObj?.OBP?.[rm?.adults?.toString()]?.RateAfterTax
+                       
+                        primary ??
+                        fallback
                       ),
                   adultRate:
                     parseFloat(firstRateObj?.ExtraAdultRate?.RateAfterTax) ||
@@ -475,17 +911,10 @@ function formatDateDMY(date) {
               : rm
           )
         );
-        //const totalGuests = selected?.adults + selected?.children;
-        const extraChildren =
-          selected.children > selected?.applicableChild
-            ? selected?.children - selected?.applicableChild
-            : 0;
-        const extraChildTaxes = Array.from({ length: extraChildren }, () =>
-          extraChildren >= 1 ? firstRateObj?.ExtraChildRate?.Tax || [] : []
-        ).flat();
 
-        const taxArray = [
-          ...(firstRateObj?.OBP?.[selected?.adults?.toString()]?.Tax || []),
+        if(extraChildTaxes.length > 0){
+          const taxArray = [
+         // ...taxesFromRates,
           ...extraChildTaxes,
         ];
         const taxObject = {};
@@ -498,10 +927,16 @@ function formatDateDMY(date) {
 
         if (firstRateObj && selected) {
           if (extraChildren > 0) {
-            taxObject["ExtraChildRate"] = parseFloat(
-              (firstRateObj?.ExtraChildRate?.RateBeforeTax || 0.0) *
-                extraChildren
-            );
+            // taxObject["ExtraChildRate"] = parseFloat(
+            //   (firstRateObj?.ExtraChildRate?.RateBeforeTax || 0.0) *
+            //     extraChildren
+            // );
+            
+            const totalExtraChildRate = rateEntries.reduce((sum, dateData) => {
+              const rate = parseFloat(dateData?.ExtraChildRate?.RateBeforeTax || "0");
+              return sum + rate;
+            }, 0);
+          taxObject["ExtraChildRate"] = Math.round(totalExtraChildRate) * extraChildren;
           }
 
           if (
@@ -526,6 +961,58 @@ function formatDateDMY(date) {
           RateAfterTax: parseInt(firstRateObj?.OBP?.["1"]?.RateAfterTax || "0"),
           ...taxObject,
         };
+        }
+        else{
+          
+          const taxArray = [
+         ...taxesFromRates,
+         // ...extraChildTaxes,
+        ];
+        const taxObject = {};
+        taxArray.forEach((t) => {
+          if (t?.Name && t?.Amount != null) {
+            const amount = parseFloat(t.Amount);
+            taxObject[t.Name] = (taxObject[t.Name] || 0) + amount;
+          }
+        });
+
+        if (firstRateObj && selected) {
+          if (extraChildren > 0) {
+            // taxObject["ExtraChildRate"] = parseFloat(
+            //   (firstRateObj?.ExtraChildRate?.RateBeforeTax || 0.0) *
+            //     extraChildren
+            // );
+            
+            const totalExtraChildRate = rateEntries.reduce((sum, dateData) => {
+              const rate = parseFloat(dateData?.ExtraChildRate?.RateBeforeTax || "0");
+              return sum + rate;
+            }, 0);
+          taxObject["ExtraChildRate"] = Math.round(totalExtraChildRate)* extraChildren;
+          }
+
+          if (
+            selected?.adults > selected?.maxAdult &&
+            parseFloat(firstRateObj?.ExtraAdultRate?.RateAfterTax) > 1.0
+          ) {
+            taxObject["ExtraAdultRate"] = parseFloat(
+              firstRateObj?.ExtraAdultRate?.RateBeforeTax || 0.0
+            );
+          }
+          if (isMemberRate) {
+            taxObject["GST2"] = Math.round(
+              selected?.packageRate *
+                (selected?.packageRate <= 7500 ? 0.12 : 0.18)
+            );
+          }
+        }
+        return {
+          RoomId: selected?.roomId,
+          RateId: selected?.rateId,
+          MinInventory: room?.MinInventory,
+          RateAfterTax: parseInt(firstRateObj?.OBP?.["1"]?.RateAfterTax || "0"),
+          ...taxObject,
+        };
+        }
       });
     });
 
@@ -629,176 +1116,302 @@ function formatDateDMY(date) {
   //   fetchAddOns();
   // }, [selectedPropertyId]);
 
-    // useEffect(() => {
-    //   if (finalAmount !== null && !isNaN(finalAmount)) {
-    //     const fetchPrices = async () => {
-    //       if (!selectedPropertyId && currentStep !== 0) return;
+      useEffect(() => {
+        if (finalAmount !== null && !isNaN(finalAmount) && isStayStepOpen) {
+          const fetchPrices = async () => {
+            if (!selectedPropertyId && currentStep !== 0) return;
+            setIsStayStepOpen(false);
+            try {
+              const response = await rateUpdate();
 
-    //       try {
-    //         const response = await rateUpdate();
+              if (selectedRoom?.length > 0) {
+                // const updatedRooms = selectedRoom?.map((sel) => {
+                //   const matchedRate = response?.find(
+                //     (rate) =>
+                //       rate?.RateId === sel?.rateId && rate?.RoomId === sel?.roomId
+                //   );
+                //   return matchedRate ? { ...matchedRate, Id: sel?.id } : null;
+                // });
 
-    //         if (selectedRoom?.length > 0) {
-    //           const updatedRooms = selectedRoom?.map((sel) => {
-    //             const matchedRate = response?.find(
-    //               (rate) =>
-    //                 rate?.RateId === sel?.rateId && rate?.RoomId === sel?.roomId
-    //             );
-    //             return matchedRate ? { ...matchedRate, Id: sel?.id } : null;
-    //           });
-    //           const allTaxKeys = new Set();
-    //           let hasZeroInventory = false;
+                // const updatedRooms = selectedRoom?.map((sel) => {
+                //   const matchedRate = response?.find(
+                //     (rate) => rate?.RateId === sel?.rateId && rate?.RoomId === sel?.roomId
+                //   );
+                
+                //   if (!matchedRate) return null;
+                
+                //   // Clone matchedRate (to avoid shared reference issues)
+                //   const cleanRate = { ...matchedRate };
+                
+                //   // If the current matchedRate doesn't have ExtraChildRate originally,
+                //   // ensure it's not added from previous data
+                //   if (!("ExtraChildRate" in matchedRate)) {
+                //     delete cleanRate.ExtraChildRate;
+                //   }
+                
+                //   // Return merged object with sel.Id
+                //   return { ...cleanRate, Id: sel?.id };
+                // });
+                const updatedRooms = selectedRoom?.map((sel, indx) => {
+                  // Get all matches (could be 2: one with, one without ExtraChildRate)
+                  const matchedRates = response?.filter(
+                    (rate) => rate?.RateId === sel?.rateId && rate?.RoomId === sel?.roomId
+                  );
+                
+                  if (!matchedRates?.length) return null;
+                
+                  // Pick based on whether the room has children or not
+                  let matchedRate;
+                
+                  if(matchedRates?.length > 1){
+                    if (sel.children > 0) {
+                    // Prefer one that has ExtraChildRate
+                    matchedRate =
+                      matchedRates.find((r) => "ExtraChildRate" in r) ||  matchedRates[indx];
+                  } else {
+                    // Prefer one that does NOT have ExtraChildRate
+                    matchedRate = matchedRates[indx];
+                  }
+                }else{
+                if (sel.children > 0) {
+                    // Prefer one that has ExtraChildRate
+                    matchedRate =
+                      matchedRates.find((r) => "ExtraChildRate" in r) ||  matchedRates[0];
+                  } else {
+                    // Prefer one that does NOT have ExtraChildRate
+                    matchedRate = matchedRates[0];
+                  }
+                  }
+                
+                  return { ...matchedRate, Id: sel?.id };
+                });
 
-    //           updatedRooms?.forEach((room) => {
-    //             if (!room) return;
+                const allTaxKeys = new Set();
+                let hasZeroInventory = false;
 
-    //             if (room?.MinInventory === 0) {
-    //               hasZeroInventory = true;
-    //               return;
-    //             }
+                updatedRooms?.forEach((room) => {
+                  if (!room) return;
 
-    //             Object.keys(room).forEach((key) => {
-    //               if (
-    //                 ![
-    //                   "roomId",
-    //                   "RateId",
-    //                   "MinInventory",
-    //                   "RateAfterTax",
-    //                   "Id",
-    //                 ].includes(key) &&
-    //                 typeof room[key] === "number"
-    //               ) {
-    //                 allTaxKeys.add(key);
-    //               }
-    //             });
-    //           });
+                  if (room?.MinInventory === 0) {
+                    hasZeroInventory = true;
+                    return;
+                  }
 
-    //           if (hasZeroInventory) {
-    //             setInventoryAvailable(false);
-    //           } else {
-    //             setInventoryAvailable(true);
-    //           }
-    //           setRoomTaxes(updatedRooms);
-    //           const taxList = {};
-    //           allTaxKeys.forEach((key) => {
-    //             taxList[key] = updatedRooms
-    //               .filter((room) => room !== undefined && room !== null)
-    //               .reduce(
-    //                 (acc, room) => acc + (room[key] * numberOfDays || 0),
-    //                 0
-    //               );
-    //           });
+                  Object.keys(room).forEach((key) => {
+                    if (
+                      ![
+                        "roomId",
+                        "RateId",
+                        "MinInventory",
+                        "RateAfterTax",
+                        "Id",
+                      ].includes(key) &&
+                      typeof room[key] === "number"
+                    ) {
+                      allTaxKeys.add(key);
+                    }
+                  });
+                });
 
-    //           setTaxList(taxList);
-    //           setSelectedTaxList(taxList);
-
-    //           const totalTax = Object.values(taxList).reduce(
-    //             (acc, taxVal) => acc + taxVal,
-    //             0
-    //           );
-    //           setTotalTax(totalTax);
-    //         }
-    //       } catch (error) {
-    //         console.error("Error fetching prices:", error);
-    //       }
-    //     };
-
-    //     fetchPrices();
-    //     setTotalPrice(finalAmount);
-    //   }
-    // }, [
-    //   finalAmount,
-    //   isRoomsChange,
-    //   currentStep,
-    // ]);
-
-  useEffect(() => {
-    if (finalAmount !== null && !isNaN(finalAmount)) {
-      const fetchPrices = async () => {
-        if (!selectedPropertyId && currentStep !== 0) return;
-
-        try {
-          const response = await fetchRateApi();
-
-          if (selectedRoom?.length > 0) {
-            const updatedRooms = selectedRoom?.map((sel) => {
-              const matchedRate = response?.find(
-                (rate) =>
-                  rate?.RateId === sel?.rateId && rate?.RoomId === sel?.roomId
-              );
-              return matchedRate ? { ...matchedRate, Id: sel?.id } : null;
-            });
-            const allTaxKeys = new Set();
-            let hasZeroInventory = false;
-
-            updatedRooms?.forEach((room) => {
-              if (!room) return;
-
-              if (room?.MinInventory === 0) {
-                hasZeroInventory = true;
-                return;
-              }
-
-              Object.keys(room).forEach((key) => {
-                if (
-                  ![
-                    "roomId",
-                    "RateId",
-                    "MinInventory",
-                    "RateAfterTax",
-                    "Id",
-                  ].includes(key) &&
-                  typeof room[key] === "number"
-                ) {
-                  allTaxKeys.add(key);
+                if (hasZeroInventory) {
+                  setInventoryAvailable(false);
+                } else {
+                  setInventoryAvailable(true);
                 }
-              });
-            });
+                setRoomTaxes(updatedRooms);
+                const taxList = {};
+                allTaxKeys.forEach((key) => {
+                  taxList[key] = updatedRooms
+                    .filter((room) => room !== undefined && room !== null)
+                    .reduce(
+                      (acc, room) => acc + (room[key] || 0),
+                      0
+                    );
+                });
 
-            if (hasZeroInventory) {
-              setInventoryAvailable(false);
-            } else {
-              setInventoryAvailable(true);
+                setTaxList(taxList);
+                setSelectedTaxList(taxList);
+
+                const totalTax = Object.values(taxList).reduce(
+                  (acc, taxVal) => acc + taxVal,
+                  0
+                );
+                setTotalTax(totalTax);
+                setIsTaxCalculated(true);
+              }
+            } catch (error) {
+              console.error("Error fetching prices:", error);
             }
-            setRoomTaxes(updatedRooms);
-            const taxList = {};
-            allTaxKeys.forEach((key) => {
-              // Skip GST2 entirely
-              if (isMemberRate && key === "GST2") return;
+          };
 
-              const actualKey = isMemberRate && key === "GST" ? "GST2" : key;
+          fetchPrices();
+          setTotalPrice(finalAmount);
+        //  if(selectedRoomDetails?.isPropertyVisible == true)
+      //  {
 
-              taxList[key] = updatedRooms
-                .filter((room) => room !== undefined && room !== null)
-                .reduce((acc, room) => {
-                  return acc + (room[actualKey] * numberOfDays || 0);
-                }, 0);
-            });
-            setIsTaxCalculated(true);
-            setTaxList(taxList);
-            setSelectedTaxList(taxList);
-
-            const totalTax = Object.values(taxList).reduce(
-              (acc, taxVal) => acc + taxVal,
-              0
-            );
-            setTotalTax(totalTax);
-          }
-        } catch (error) {
-          console.error("Error fetching prices:", error);
+      //  setTotalRoomsBasePrice(basePrice);
+      //  }
+    
+       setTotalRoomsBasePrice(basePrice);
         }
-      };
+      }, [
+        // finalAmount,
+        isRoomsChange,
+        currentStep,
+        isStayStepOpen
+    //  selectedStartDate,
+    //  selectedEndDate,
+      ]);
 
-      fetchPrices();
-      setTotalPrice(finalAmount);
-      
-    }
-  }, [
-    finalAmount,
-    isRoomsChange,
-    currentStep,
-    selectedStartDate,
-    selectedEndDate,
-  ]);
+   useEffect(() => {
+     if (finalAmount !== null && !isNaN(finalAmount) && !isStayStepOpen) {
+       const fetchPrices = async () => {
+         if (!selectedPropertyId && currentStep !== 0) return;
+
+         try {
+           const response = await fetchRateApi();
+
+           if (selectedRoom?.length > 0) {
+            //  const updatedRooms = selectedRoom?.map((sel) => {
+            //    const matchedRate = response?.find(
+            //      (rate) =>
+            //        rate?.RateId === sel?.rateId && rate?.RoomId === sel?.roomId
+            //    );
+            //    return matchedRate ? { ...matchedRate, Id: sel?.id } : null;
+            //  });
+
+            // const updatedRooms = selectedRoom?.map((sel) => {
+            //   const matchedRate = response?.find(
+            //     (rate) => rate?.RateId === sel?.rateId && rate?.RoomId === sel?.roomId
+            //   );
+            
+            //   if (!matchedRate) return null;
+            
+            //   // Clone matchedRate (to avoid shared reference issues)
+            //   const cleanRate = { ...matchedRate };
+            
+            //   // If the current matchedRate doesn't have ExtraChildRate originally,
+            //   // ensure it's not added from previous data
+            //   if (!("ExtraChildRate" in matchedRate)) {
+            //     delete cleanRate.ExtraChildRate;
+            //   }
+            
+            //   // Return merged object with sel.Id
+            //   return { ...cleanRate, Id: sel?.id };
+            // });
+            const updatedRooms = selectedRoom?.map((sel, indx) => {
+              // Get all matches (could be 2: one with, one without ExtraChildRate)
+              const matchedRates = response?.filter(
+                (rate) => rate?.RateId === sel?.rateId && rate?.RoomId === sel?.roomId
+              );
+            
+              if (!matchedRates?.length) return null;
+            
+              // Pick based on whether the room has children or not
+              let matchedRate;
+            
+              
+                  if(matchedRates?.length > 1){
+                    if (sel.children > 0) {
+                    // Prefer one that has ExtraChildRate
+                    matchedRate =
+                      matchedRates.find((r) => "ExtraChildRate" in r) ||  matchedRates[indx];
+                  } else {
+                    // Prefer one that does NOT have ExtraChildRate
+                    matchedRate = matchedRates[indx];
+                  }
+                }else{
+                if (sel.children > 0) {
+                    // Prefer one that has ExtraChildRate
+                    matchedRate =
+                      matchedRates.find((r) => "ExtraChildRate" in r) ||  matchedRates[0];
+                  } else {
+                    // Prefer one that does NOT have ExtraChildRate
+                    matchedRate = matchedRates[0];
+                  }
+                  }
+            
+              return { ...matchedRate, Id: sel?.id };
+            });
+
+             const allTaxKeys = new Set();
+             let hasZeroInventory = false;
+
+             updatedRooms?.forEach((room) => {
+               if (!room) return;
+
+               if (room?.MinInventory === 0) {
+                 hasZeroInventory = true;
+                 return;
+               }
+
+               Object.keys(room).forEach((key) => {
+                 if (
+                   ![
+                     "roomId",
+                     "RateId",
+                     "MinInventory",
+                     "RateAfterTax",
+                     "Id",
+                   ].includes(key) &&
+                   typeof room[key] === "number"
+                 ) {
+                   allTaxKeys.add(key);
+                 }
+               });
+             });
+
+             if (hasZeroInventory) {
+               setInventoryAvailable(false);
+             } else {
+               setInventoryAvailable(true);
+             }
+             setRoomTaxes(updatedRooms);
+             const taxList = {};
+             allTaxKeys.forEach((key) => {
+               // Skip GST2 entirely
+               if (isMemberRate && key === "GST2") return;
+
+               const actualKey = isMemberRate && key === "GST" ? "GST2" : key;
+
+               taxList[key] = updatedRooms
+                 .filter((room) => room !== undefined && room !== null)
+                 .reduce((acc, room) => {
+                   return acc + (room[actualKey] || 0);
+                 }, 0);
+             });
+             setTaxList(taxList);
+             setSelectedTaxList(taxList);
+
+             const totalTax = Object.values(taxList).reduce(
+               (acc, taxVal) => acc + taxVal,
+               0
+             );
+             setTotalTax(totalTax);
+             setIsTaxCalculated(true);
+           }
+         } catch (error) {
+           console.error("Error fetching prices:", error);
+         }
+       };
+
+       fetchPrices();
+       setTotalPrice(finalAmount);
+      //  if(selectedRoomDetails?.isPropertyVisible == true)
+      //  {
+
+      //  setTotalRoomsBasePrice(basePrice);
+      //  }
+    
+       setTotalRoomsBasePrice(basePrice);
+     }
+   }, [
+       finalAmount,
+      // isRoomsChange,
+      // currentStep,
+     selectedStartDate,
+     selectedEndDate,
+   ]);
 
   const openPropertyPage = (id) => {
     setSelectedRoomDetails({ isPropertyVisible: false, id: id });
@@ -830,6 +1443,23 @@ function formatDateDMY(date) {
     setIsRoomsClose(!isRoomsClose);
     setIsRoomsVisible(!isRoomsVisible);
   };
+
+useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (roomsRef.current && !roomsRef.current.contains(event.target)) {
+        setIsRoomsVisible(false);
+      }
+    };
+
+    if (isRoomsVisible) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isRoomsVisible]);
+
   const handleRoomChange = () => {
    // setIsRoomsVisible(!isRoomsVisible);
     
@@ -863,6 +1493,13 @@ function formatDateDMY(date) {
     ) {
       setTotalRoomPrice(finalAmount);
       setBaseRoomPrice(basePrice);
+      //  if(selectedRoomDetails?.isPropertyVisible == true)
+      //  {
+
+      //  setTotalRoomsBasePrice(basePrice);
+      //  }
+    
+       setTotalRoomsBasePrice(basePrice);
       goNext();
     } else if (!isProceed) {
       toast.error("Select your room(s)");
@@ -885,17 +1522,18 @@ function formatDateDMY(date) {
 
   return (
     <>
-      <Toaster position="top-right" />
+     <Toaster position="top-right" />
       <div className="stay-info">
         <div className="wizard-step-global-padding right-card-data">
             <div className="pl-2">
               <h4 className="wizard-title-main cart-display-mobile" onClick={()=>setCartDisplayMobile(!cartDisplayMobile)}>
                 <span className="d-flex w-100 justify-content-between align-items-center">
-                 Booking Details  {cartDisplayMobile ? (<ChevronUp size={20} />) : (<ChevronDown size={20} />)}
+                 Booking Details { Math.round(totalSavings) > 0 && <strong className="amount-in-wizard total-amount-cart text-success"> {" - You Saved INR " } {Math.round(totalSavings)?.toLocaleString()}</strong> }  {cartDisplayMobile ? (<ChevronUp size={20} />) : (<ChevronDown size={20} />)}
                 </span> 
               </h4>  
               <h4 className="wizard-title-main cart-display-desktopss">
-                Booking Details
+                {/* Booking Details {" - Total Savings INR " } {totalSavings} */}
+                 Booking Details {Math.round(totalSavings) > 0 && <strong className="amount-in-wizard total-amount-cart text-success"> {" - You Saved INR " } {Math.round(totalSavings)?.toLocaleString()}</strong>} 
               </h4>  
             </div>
 
@@ -946,7 +1584,7 @@ function formatDateDMY(date) {
                       }}
                       onClick={() => {
                         openPropertyPage(room?.id);
-                        onClose();
+                        onClose(room?.id);
                       }}
                     >
                       <p className="f-12-new mb-0">
@@ -965,7 +1603,7 @@ function formatDateDMY(date) {
                           <div className="col-9 text-end p-0">
                             <button  onClick={() => {
                                 openPropertyPage(room?.id);
-                                onClose();
+                                onClose(room?.id);
                               }}  className="modifytext-new-wizard">
                               <span>Modify</span>
                               <FontAwesomeIcon className="cursor-pointer icons-neww" icon={faEdit} />
@@ -975,12 +1613,12 @@ function formatDateDMY(date) {
                       </div>
                       <div className="package-d-flex-new">
                         <p className="f-12-new">{room?.roomPackage} -</p>
-                        <h6 className="f-14-new">
+                        <h6 className="f-14-new" >
                           {isFinite(room?.packageRate) && room?.packageRate != 0
-                            ?  <>INR{" "} {Math.round(room?.packageRate)}</>
-                            :  <> Sold Out
-                              <span className="small-text-for-today"> (for today)</span>
-                              </>
+                            ?  <>INR{" "} {Math.round(room?.packageRate).toLocaleString()}</>
+                            :  <div className="f-14-new text-danger" > Sold Out
+                              <span className="small-text-for-today text-danger"> (for today)</span>
+                              </div>
                             }
                         </h6>
                       </div>
@@ -1016,11 +1654,12 @@ function formatDateDMY(date) {
               </div>
             )}
             {isRoomsVisible && (
-              <div className="row">
-                <div className=" col-md-12 main-bx-field filter-item me-3 bdr-booking-bottom wizard-room-manager">
-                  <StayStepRoomManager onRoomChange={handleRoomChange} onClose={() => {
-                    setIsRoomsVisible(!isRoomsVisible);
-              }}/>
+              <div className="row" >
+                <div ref={roomsRef} className="col-md-12 main-bx-field filter-item me-3 bdr-booking-bottom wizard-room-manager">
+                  <StayStepRoomManager onRoomChange={handleRoomChange} 
+                  // onClose={() => {setIsRoomsVisible(!isRoomsVisible);}}
+                  onClose={() => setIsRoomsVisible(false)}
+                  />
                 </div>
               </div>
             )}
@@ -1053,7 +1692,7 @@ function formatDateDMY(date) {
 
                   {selectedRoom && (
                     <p className="amount-in-wizard mb-0">
-                      INR {Math.round(basePrice)}{" "}
+                      INR {Math.round(basePrice).toLocaleString()}{" "}
                     </p>
                   )}
                 </div>
@@ -1067,25 +1706,47 @@ function formatDateDMY(date) {
                       ? selectedRoom.map((room, index) => (
                           <div
                             className="accordion-item1 mt-2"
-                            key={room?.id || index}
+                            key={index}
                           >
                             {room?.roomId && room?.roomName ? (
+                              // <>
+                              //   <p className="f-12-new">Room {index + 1}</p>
+                              //   {selectedRoom && (
+                              //     <div className="new-d-flex-for-room-p">
+                              //       <p className="f-12-new mb-0">
+                              //         {formatDate(selectedStartDate)}
+                              //       </p>
+                              //       <h6 className="f-12-new mb-0">
+                              //         INR{" "}
+                              //         {isFinite(room?.packageRate)
+                              //           ? Math.round(room?.packageRate)
+                              //           : 0}
+                              //       </h6>
+                              //     </div>
+                              //   )}
+                              // </>
                               <>
-                                <p className="f-12-new">Room {index + 1}</p>
-                                {selectedRoom && (
-                                  <div className="new-d-flex-for-room-p">
-                                    <p className="f-12-new mb-0">
-                                      {formatDate(selectedStartDate)}
-                                    </p>
-                                    <h6 className="f-12-new mb-0">
-                                      INR{" "}
-                                      {isFinite(room?.packageRate)
-                                        ? Math.round(room?.packageRate)
-                                        : 0}
-                                    </h6>
-                                  </div>
-                                )}
-                              </>
+                              <p className="f-12-new">Room {index + 1}</p>
+                                                        
+                              {room?.packageRateList &&
+                                Object.entries(room.packageRateList).map(([date, dateData]) => {
+                                  const obp = dateData?.OBP?.[String(room.adults)] || {};
+                                  const rate = parseFloat(obp?.RateBeforeTax || "0");
+                                
+                                  return (
+                                    <div
+                                      key={date}
+                                      className="new-d-flex-for-room-p"
+                                    >
+                                      <p className="f-12-new mb-0">{formatDate(date)}</p>
+                                      <h6 className="f-12-new mb-0">
+                                        INR {isFinite(rate).toLocaleString() ? Math.round(rate).toLocaleString() : 0}
+                                      </h6>
+                                    </div>
+                                  );
+                                })}
+                            </>
+
                             ) : null}
                           </div>
                         ))
@@ -1118,7 +1779,7 @@ function formatDateDMY(date) {
 
                             return (
                               <>
-                                {totalTax}
+                                {(totalTax).toLocaleString()}
                               </>
                             );
                           })()}
@@ -1135,18 +1796,55 @@ function formatDateDMY(date) {
                       <div className="accordion-body1">
                         {selectedRoom && (
                           <div className="mt-2">
-                            {taxList &&
-                              Object.entries(taxList).map(
-                                ([taxName, taxValue]) =>
-                                  parseFloat(taxValue) > 0.0 ? (
-                                    <p
-                                      key={taxName}
-                                      className="f-12-new mb-0 taxe-below-txt"
-                                    >
-                                      {taxName}: INR {taxValue}
-                                    </p>
-                                  ) : null
-                              )}
+                            {/* {taxList &&
+                              // Object.entries(taxList).map(
+                              //   ([taxName, taxValue]) =>
+                              //     parseFloat(taxValue) > 0.0 ? (
+                              //       <p
+                              //         key={taxName}
+                              //         className="f-12-new mb-0 taxe-below-txt"
+                              //       >
+                              //         {taxName}: INR {(taxValue).toLocaleString()}
+                              //       </p>
+                              //     ) : null
+                              // )
+                              Object.entries(taxList).map(([taxName, taxValue]) => {
+                                const formattedKey = taxName
+                                    .replace(/([A-Z])/g, " $1")
+                                    .replace(/^./, str => str.toUpperCase())
+                                    .trim()
+                                    .replace(/\bG S T\b/, "GST");
+                                return parseFloat(taxValue) > 0.0 ? (
+                                  <p key={taxName}
+                                     className="f-12-new mb-0 taxe-below-txt">
+                                    {formattedKey}: INR {(taxValue)?.toLocaleString()}
+                                  </p>
+                                ) : null;
+                              })
+                              } */}
+                              <div className="accordion-body1">
+                                {selectedRoom && (
+                                  <div className="mt-2">
+                                    {taxList &&
+                                      Object.entries(taxList).map(([taxName, taxValue]) => {
+                                        // If the key is ALL CAPS, keep as is; else split camel case
+                                        const formattedKey = /^[A-Z]+$/.test(taxName)
+                                          ? taxName
+                                          : taxName
+                                              .replace(/([A-Z])/g, " $1")
+                                              .replace(/^./, (str) => str.toUpperCase())
+                                              .trim();
+                                      
+                                        return (
+                                          <p key={taxName} className="f-12-new mb-0 taxe-below-txt">
+                                            {formattedKey}: {taxValue?.toLocaleString()}
+                                          </p>
+                                        );
+                                      })}
+                                  </div>
+                                )}
+                              </div>
+
                           </div>
                         )}
                       </div>
@@ -1162,7 +1860,7 @@ function formatDateDMY(date) {
                 </div>
               </div>
               <p className="amount-in-wizard total-amount-cart">
-                INR {isFinite(finalAmount) ? Math.round(finalAmount) : 0}
+                INR {isFinite(finalAmount).toLocaleString() ? Math.round(finalAmount).toLocaleString() : 0}
               </p>
             </div>
           </div>
@@ -1211,7 +1909,7 @@ function formatDateDMY(date) {
 
             {isRoomsVisible && (
               <div className="row">
-                <div className=" col-md-12 main-bx-field filter-item me-3 bdr-booking-bottom wizard-room-manager">
+                <div ref={roomsRef} className=" col-md-12 main-bx-field filter-item me-3 bdr-booking-bottom wizard-room-manager">
                   <StayStepRoomManager onRoomChange={handleRoomChange} onClose={() => {
                     setIsRoomsVisible(!isRoomsVisible);
               }}/>
@@ -1235,7 +1933,7 @@ function formatDateDMY(date) {
                 </div>
               </div>
               <p className="amount-in-wizard total-amount-cart text-green-600 cart-amnt-txtsss">
-                INR {isFinite(finalAmount) ? Math.round(finalAmount) : 0}
+                INR {isFinite(finalAmount).toLocaleString() ? Math.round(finalAmount).toLocaleString() : 0}
               </p>
             </div> 
               </div>) :(
@@ -1285,7 +1983,7 @@ function formatDateDMY(date) {
                       }}
                       onClick={() => {
                         openPropertyPage(room?.id);
-                        onClose();
+                        onClose(room?.id);
                       }}
                     >
                       <p className="f-12-new mb-0">
@@ -1304,7 +2002,7 @@ function formatDateDMY(date) {
                           <div className="col-9 text-end p-0">
                             <button  onClick={() => {
                                 openPropertyPage(room?.id);
-                                onClose();
+                                onClose(room?.id);
                               }}  className="modifytext-new-wizard">
                               <span>Modify</span>
                               <FontAwesomeIcon className="cursor-pointer icons-neww" icon={faEdit} />
@@ -1317,10 +2015,10 @@ function formatDateDMY(date) {
                         <h6 className="f-14-new">
                           
                           {isFinite(room?.packageRate) && room?.packageRate != 0
-                            ?  <>INR{" "} {Math.round(room?.packageRate)}</>
-                            :  <> Sold Out
-                              <span className="small-text-for-today"> (for today)</span>
-                              </>
+                            ?  <>INR{" "} {Math.round(room?.packageRate).toLocaleString()}</>
+                            :  <div className="f-14-new text-danger" > Sold Out
+                              <span className="small-text-for-today text-danger"> (for today)</span>
+                              </div>
                             }
                         </h6>
                       </div>
@@ -1358,7 +2056,7 @@ function formatDateDMY(date) {
 
             {isRoomsVisible && (
               <div className="row">
-                <div className=" col-md-12 main-bx-field filter-item me-3 bdr-booking-bottom wizard-room-manager">
+                <div ref={roomsRef} className=" col-md-12 main-bx-field filter-item me-3 bdr-booking-bottom wizard-room-manager">
                   <StayStepRoomManager onRoomChange={handleRoomChange} onClose={() => {
                     setIsRoomsVisible(!isRoomsVisible);
               }}/>
@@ -1394,7 +2092,7 @@ function formatDateDMY(date) {
 
                   {selectedRoom && (
                     <p className="amount-in-wizard mb-0">
-                      INR {Math.round(basePrice)}{" "}
+                      INR {Math.round(basePrice).toLocaleString()}{" "}
                     </p>
                   )}
                 </div>
@@ -1408,25 +2106,47 @@ function formatDateDMY(date) {
                       ? selectedRoom.map((room, index) => (
                           <div
                             className="accordion-item1 mt-2"
-                            key={room?.id || index}
+                            key={index}
                           >
                             {room?.roomId && room?.roomName ? (
+                              // <>
+                              //   <p className="f-12-new">Room {index + 1}</p>
+                              //   {selectedRoom && (
+                              //     <div className="new-d-flex-for-room-p">
+                              //       <p className="f-12-new mb-0">
+                              //         {formatDate(selectedStartDate)}
+                              //       </p>
+                              //       <h6 className="f-12-new mb-0">
+                              //         INR{" "}
+                              //         {isFinite(room?.packageRate).toLocaleString()
+                              //           ? Math.round(room?.packageRate).toLocaleString()
+                              //           : 0}
+                              //       </h6>
+                              //     </div>
+                              //   )}
+                              // </>
+                              
                               <>
-                                <p className="f-12-new">Room {index + 1}</p>
-                                {selectedRoom && (
-                                  <div className="new-d-flex-for-room-p">
-                                    <p className="f-12-new mb-0">
-                                      {formatDate(selectedStartDate)}
-                                    </p>
-                                    <h6 className="f-12-new mb-0">
-                                      INR{" "}
-                                      {isFinite(room?.packageRate)
-                                        ? Math.round(room?.packageRate)
-                                        : 0}
-                                    </h6>
-                                  </div>
-                                )}
-                              </>
+                              <p className="f-12-new">Room {index + 1}</p>
+                                                        
+                              {room?.packageRateList &&
+                                Object.entries(room.packageRateList).map(([date, dateData]) => {
+                                  const obp = dateData?.OBP?.[String(room.adults)] || {};
+                                  const rate = parseFloat(obp?.RateBeforeTax || "0");
+                                
+                                  return (
+                                    <div
+                                      key={date}
+                                      className="new-d-flex-for-room-p"
+                                    >
+                                      <p className="f-12-new mb-0">{formatDate(date)}</p>
+                                      <h6 className="f-12-new mb-0">
+                                        INR {isFinite(rate).toLocaleString() ? Math.round(rate).toLocaleString() : 0}
+                                      </h6>
+                                    </div>
+                                  );
+                                })}
+                            </>
                             ) : null}
                           </div>
                         ))
@@ -1461,7 +2181,7 @@ function formatDateDMY(date) {
 
                             return (
                               <>
-                                {totalTax}
+                                {(totalTax).toLocaleString()}
                               </>
                             );
                           })()}
@@ -1479,18 +2199,55 @@ function formatDateDMY(date) {
                       <div className="accordion-body1">
                         {selectedRoom && (
                           <div className="mt-2">
-                            {taxList &&
-                              Object.entries(taxList).map(
-                                ([taxName, taxValue]) =>
-                                  parseFloat(taxValue) > 0.0 ? (
-                                    <p
-                                      key={taxName}
-                                      className="f-12-new mb-0 taxe-below-txt"
-                                    >
-                                      {taxName}: INR {taxValue}
-                                    </p>
-                                  ) : null
+                            {/* {taxList &&
+                              // Object.entries(taxList).map(
+                              //   ([taxName, taxValue]) =>
+                              //     parseFloat(taxValue) > 0.0 ? (
+                              //       <p
+                              //         key={taxName}
+                              //         className="f-12-new mb-0 taxe-below-txt"
+                              //       >
+                              //         {taxName}: INR {(taxValue).toLocaleString()}
+                              //       </p>
+                              //     ) : null
+                              // )
+                              Object.entries(taxList).map(([taxName, taxValue]) => {
+                                const formattedKey = taxName
+                                    .replace(/([A-Z])/g, " $1")
+                                    .replace(/^./, str => str.toUpperCase())
+                                    .trim()
+                                    .replace(/\bG S T\b/, "GST");
+                                return parseFloat(taxValue) > 0.0 ? (
+                                  <p key={taxName}
+                                     className="f-12-new mb-0 taxe-below-txt">
+                                    {formattedKey}: INR {(taxValue)?.toLocaleString()}
+                                  </p>
+                                ) : null;
+                              })
+                              } */}
+                              <div className="accordion-body1">
+                              {selectedRoom && (
+                                <div className="mt-2">
+                                  {taxList &&
+                                    Object.entries(taxList).map(([taxName, taxValue]) => {
+                                      // If the key is ALL CAPS, keep as is; else split camel case
+                                      const formattedKey = /^[A-Z]+$/.test(taxName)
+                                        ? taxName
+                                        : taxName
+                                            .replace(/([A-Z])/g, " $1")
+                                            .replace(/^./, (str) => str.toUpperCase())
+                                            .trim();
+                                    
+                                      return (
+                                        <p key={taxName} className="f-12-new mb-0 taxe-below-txt">
+                                          {formattedKey}: {taxValue?.toLocaleString()}
+                                        </p>
+                                      );
+                                    })}
+                                </div>
                               )}
+                            </div>
+
                           </div>
                         )}
                       </div>
@@ -1507,7 +2264,7 @@ function formatDateDMY(date) {
               </div>
               <p className="amount-in-wizard total-amount-cart">
                 {isTaxCalculated ? (<>
-                INR {isFinite(finalAmount) ? Math.round(finalAmount) : 0}
+                INR {isFinite(finalAmount).toLocaleString() ? Math.round(finalAmount).toLocaleString() : 0}
                 </>) :(<> ...</>)}
               </p>
             </div>

@@ -1,19 +1,32 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, {useRef, useEffect, useState } from "react";
 import * as ReactDOM from "react-dom";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
-import Image from "next/image";
 import Link from "next/link";
+
 
 export default function LatestOffers({ propertyId, onSubmit, BeId }) {
   const [offers, setOffers] = useState([]);
   const [modalContent, setModalContent] = useState({});
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  const [parentSwiper, setParentSwiper] = useState(null);
+  const parentPrevRef = useRef(null);
+  const parentNextRef = useRef(null);
+
+  useEffect(() => {
+    if (parentSwiper) {
+      parentSwiper.params.navigation.prevEl = parentPrevRef.current;
+      parentSwiper.params.navigation.nextEl = parentNextRef.current;
+      parentSwiper.navigation.init();
+      parentSwiper.navigation.update();
+    }
+  }, [parentSwiper]);
 
   // ✅ Fetch offers by propertyId
   useEffect(() => {
@@ -65,15 +78,34 @@ export default function LatestOffers({ propertyId, onSubmit, BeId }) {
 
   return (
     <>
-      <section className="sec-padding" data-aos="fade-up">
+      <section className="sec-padding position-relative cursor-hideMobile" data-aos="fade-up">
         <div className="container">
           <div className="global-heading-sec text-center">
             <div className="row justify-content-center mb-2">
               <div className="col-md-9 md-offset-1">
-                <h2 className="global-heading">Offers</h2>
+                <h2 className="global-heading">Our Offers</h2>
               </div>
             </div>
-          </div>
+          </div> 
+
+           <div className="parent-control-button p-prev-button untold-stories-prev">
+              <button
+                ref={parentPrevRef}
+                className="p-3 bg-gray-800 text-white rounded-full shadow-lg"
+              >
+                ❮
+              </button>
+            </div>
+            <div className="parent-control-button p-next-button untold-stories-next">
+              <button
+                ref={parentNextRef}
+                className="p-3 bg-gray-800 text-white rounded-full shadow-lg"
+              >
+                ❯
+              </button>
+            </div>
+
+            
           <div className="winter-sec">
             <div className="row">
               <div>
@@ -81,8 +113,9 @@ export default function LatestOffers({ propertyId, onSubmit, BeId }) {
                   modules={[Navigation, Pagination]}
                   spaceBetween={20}
                   slidesPerView={1}
-                  navigation={true}
-                  pagination={false}
+                  onSwiper={setParentSwiper}
+                  navigation={false}
+                  pagination={{clickable: true}}
                   breakpoints={{
                     500: { slidesPerView: 1 },
                     767: { slidesPerView: 2 },
@@ -132,12 +165,7 @@ export default function LatestOffers({ propertyId, onSubmit, BeId }) {
                               </span>
                             </p>
                             <div className="winter-box-btn">
-                              <button
-                                className="box-btn know-more"
-                                onClick={() => handleKnowMore(offer)}
-                              >
-                                Know More
-                              </button>
+                             
                               {/* <button
                                 className="box-btn book-now"
                                 onClick={() => handleBookNow(offer)}
@@ -145,8 +173,20 @@ export default function LatestOffers({ propertyId, onSubmit, BeId }) {
                                 Book Now
                               </button> */}
 
-                              <Link href={`https://bookings.amritara.co.in/?chainId=5971&propertyId=${BeId}&_gl=1*1d9irrh*_gcl_au*MzgxMDEyODcxLjE3NTgyNjIxOTIuNzY2OTMwNzIwLjE3NTkzMTE2MjAuMTc1OTMxMTcyMA..*_ga*NzUyODI0NDE0LjE3NTgyNjIxOTI.*_ga_7XSGQLL96K*czE3NjA0NDUzOTUkbzQ4JGcxJHQxNzYwNDQ2NTA2JGo2MCRsMCRoODE1NTgwNjUw*_ga_DVBE6SS569*czE3NjA0NDUzOTQkbzQ1JGcxJHQxNzYwNDQ1NDY2JGo2MCRsMCRoOTgzMzg5ODY.`}
-target="_blank" className="box-btn book-now py-2">Book Now</Link>
+                              <Link
+                              href="#"
+                              onClick={() => handleBookNow(offer)}
+                              //  href={`https://bookings.amritara.co.in/?chainId=5971&propertyId=${BeId}&_gl=1*1d9irrh*_gcl_au*MzgxMDEyODcxLjE3NTgyNjIxOTIuNzY2OTMwNzIwLjE3NTkzMTE2MjAuMTc1OTMxMTcyMA..*_ga*NzUyODI0NDE0LjE3NTgyNjIxOTI.*_ga_7XSGQLL96K*czE3NjA0NDUzOTUkbzQ4JGcxJHQxNzYwNDQ2NTA2JGo2MCRsMCRoODE1NTgwNjUw*_ga_DVBE6SS569*czE3NjA0NDUzOTQkbzQ1JGcxJHQxNzYwNDQ1NDY2JGo2MCRsMCRoOTgzMzg5ODY.`}
+                              //  target="_blank" 
+                               className="box-btn book-now py-2"
+                               >Book Now</Link>
+
+                              <button
+                                className="box-btn know-more"
+                                onClick={() => handleKnowMore(offer)}
+                              >
+                                Know More
+                              </button>
                             </div>
                           </div>
                         </div>

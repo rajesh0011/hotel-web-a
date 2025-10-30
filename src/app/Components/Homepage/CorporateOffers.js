@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination } from "swiper/modules";
 import "swiper/css";
@@ -9,12 +9,26 @@ import * as ReactDOM from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
 
-export default function CorporateOffers() {
+export default function CorporateOffers({onClick}) {
   const [offers, setOffers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalContent, setModalContent] = useState({});
+
+  const [parentSwiper, setParentSwiper] = useState(null);
+  const parentPrevRef = useRef(null);
+  const parentNextRef = useRef(null);
+
+  useEffect(() => {
+    if (parentSwiper) {
+      parentSwiper.params.navigation.prevEl = parentPrevRef.current;
+      parentSwiper.params.navigation.nextEl = parentNextRef.current;
+      parentSwiper.navigation.init();
+      parentSwiper.navigation.update();
+    }
+  }, [parentSwiper]);
+      
 
   // 📦 Fetch offers data
   useEffect(() => {
@@ -76,20 +90,42 @@ export default function CorporateOffers() {
     );
   }
 
+  // const handleBookNowSlider = async (dataBookNow) => {
+  //   onClick(dataBookNow);
+  // };
   return (
     <>
-      <section className="corporate-offers-section section-padding bg-lred">
+      <section className="corporate-offers-section section-padding bg-lred position-relative cursor-hideMobile">
         <div className="container">
           <div className="global-heading-sec text-center">
             <h2 className="global-heading">Our Offers</h2>
+          </div>
+
+          <div className="parent-control-button p-prev-button Offers-slider-prev">
+            <button
+              ref={parentPrevRef}
+              className="p-3 bg-gray-800 text-white rounded-full shadow-lg"
+            >
+              ❮
+            </button>
+          </div>
+          <div className="parent-control-button p-next-button Offers-slider-next">
+            <button
+              ref={parentNextRef}
+              className="p-3 bg-gray-800 text-white rounded-full shadow-lg"
+            >
+              ❯
+            </button>
           </div>
 
           <Swiper
             modules={[Navigation, Pagination]}
             spaceBetween={10}
             slidesPerView={3}
-            navigation
-            pagination={false}
+            pagination={{
+                clickable : true
+              }}
+            onSwiper={setParentSwiper}
             breakpoints={{
               320: { slidesPerView: 1 },
               768: { slidesPerView: 2 },
@@ -101,44 +137,43 @@ export default function CorporateOffers() {
                 offer.offersImages?.[0]?.offerImages ||
                 "/img/offer-placeholder.jpg";
 
-              return (
+                const plainDesc = offer?.offerDesc
+                ? offer.offerDesc.replace(/<[^>]*>/g, "").trim()
+                : "";
+                return (
                 <SwiperSlide key={offer.propertyOfferId}>
                   <div className="offer-card">
-                    {/* <div className="offer-image-wrapper">
-                      <Image
-                        src={imageUrl}
-                        alt={offer.offerTitle || "Offer Image"}
-                        width={400}
-                        height={250}
-                        className="offer-image"
-                      />
-                    </div> */}
-                    <div className="offer-content">
-                      <h4 className="offer-title">
-                        {offer.offerTitle || offer.offerName}
-                      </h4>
-                      <p className="offer-desc two-line-text">
-                        <span>
-                          {offer?.offerDesc || ""}
-                        </span>
-                        
-                      </p>
-                      <div className="winter-box-btn mt-1">
-                        <button className="box-btn book-now">
-                          Book Now
-                        </button>
-                        <button
-                          className="box-btn know-more"
-                          onClick={() => handleKnowMore(offer)}
-                        >
-                          Know More
-                        </button>
-                        
-                      </div>
+                  {/* <div className="offer-image-wrapper">
+                    <Image
+                    src={imageUrl}
+                    alt={offer.offerTitle || "Offer Image"}
+                    width={400}
+                    height={250}
+                    className="offer-image"
+                    />
+                  </div> */}
+                  <div className="offer-content">
+                    <h4 className="offer-title">
+                    {offer.offerTitle || offer.offerName}
+                    </h4>
+                    <p className="offer-desc one-line-text">
+                    <span>{plainDesc}</span>
+                    </p>
+                    <div className="winter-box-btn mt-1">
+                    <button className="box-btn book-now"
+                    onClick={onClick}
+                    >Book Now</button>
+                    <button
+                      className="box-btn know-more"
+                      onClick={() => handleKnowMore(offer)}
+                    >
+                      Know More
+                    </button>
                     </div>
                   </div>
+                  </div>
                 </SwiperSlide>
-              );
+                );
             })}
           </Swiper>
         </div>
@@ -166,7 +201,7 @@ export default function CorporateOffers() {
                   >
                     x
                   </button>
-                  <p className="p-3">{modalContent.description}</p>
+                  <p className="p-3">{modalContent.description.replace(/<[^>]*>/g, "").trim()}</p>
                 </div>
               </div>
             </div>

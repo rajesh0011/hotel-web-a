@@ -39,10 +39,11 @@ export default function GalleryModal({ showModal, setShowModal, roomData }) {
               loop={true}
               className="images-slider"
             >
+              
               {roomImages?.map((img, idx) => (
                 <SwiperSlide key={idx}>
                   <img
-                    src={img.roomImage}
+                    src={encodeURI(img.roomImage)}
                     alt={`Room Image ${idx + 1}`}
                     className="img-fluid img-thumb"
                   />

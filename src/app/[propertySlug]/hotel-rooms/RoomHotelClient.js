@@ -67,17 +67,17 @@ const [BeId, setBeId] = useState(null);
          isCartClick: "N",
          isClose: isClose ? "Y" : "N",
         }
-           const response = await fetch(
-             `${process.env.NEXT_PUBLIC_CMS_BASE_URL}/Api/tracker/BookingWidged`,
-             {
-               method: "POST",
-               headers: {
-                 "Content-Type": "application/json",
-               },
-               body: JSON.stringify( payload ),
-             }
-           );
-           const res = await response?.json();
+          //  const response = await fetch(
+          //    `${process.env.NEXT_PUBLIC_CMS_BASE_URL}/Api/tracker/BookingWidged`,
+          //    {
+          //      method: "POST",
+          //      headers: {
+          //        "Content-Type": "application/json",
+          //      },
+          //      body: JSON.stringify( payload ),
+          //    }
+          //  );
+          //  const res = await response?.json();
      
          //console.log("res BookingWidged",res);
        }

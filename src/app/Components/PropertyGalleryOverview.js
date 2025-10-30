@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
-import { Autoplay, Grid } from "swiper/modules";
+import { Autoplay, Grid, Pagination } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/grid";
 
@@ -56,13 +56,14 @@ const PropertyGalleryOverview = ({ propertyId }) => {
         </div>
         <Gallery>
           <Swiper
-            modules={[Autoplay, Grid]}
+            modules={[Autoplay, Grid, Pagination]}
             loop={true}
             speed={3000}
             autoplay={{
               delay: 0,
               disableOnInteraction: false,
             }}
+            pagination={false}
             freeMode={true}
             grid={{ rows: 2, fill: "row" }}
             slidesPerView={2}

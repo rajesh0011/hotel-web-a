@@ -12,7 +12,7 @@ import { faMinus, faPlus } from "@fortawesome/free-solid-svg-icons";
 import { X } from "lucide-react";
 
 const RoomManager = () => {
-  const { selectedRooms, setSelectedRooms, setSelectedRoom } =
+  const { selectedRooms, setSelectedRooms, setSelectedRoom ,setSelectedRoomDetails,selectedInitialRoom, setSelectedInitialRoom} =
     useBookingEngineContext();
   const [isToggled, setIsToggled] = useState(false);
   const containerRef = useRef(null);
@@ -24,7 +24,7 @@ const RoomManager = () => {
   useEffect(() => {
     if (rooms.length === 0) {
       const id = uuidv4();
-      setSelectedRooms([{ id: id, adults: 1, children: 0 }]);
+      setSelectedRooms([{ id: id, adults: 2, children: 0 }]);
       setSelectedRoom([
         {
           id: id,
@@ -32,7 +32,7 @@ const RoomManager = () => {
           roomName: "",
           roomRate: "",
           roomImage: {},
-          adults: 1,
+          adults: 2,
           children: 0,
         },
       ]);
@@ -40,9 +40,9 @@ const RoomManager = () => {
   }, [rooms, setSelectedRooms]);
 
   const addRoom = () => {
-    if (rooms.length < 4) {
+    if (rooms.length < 10) {
       const id = uuidv4();
-      setSelectedRooms((prev) => [...prev, { id: id, adults: 1, children: 0 }]);
+      setSelectedRooms((prev) => [...prev, { id: id, adults: 2, children: 0 }]);
       setSelectedRoom((prev) => [
         ...prev,
         {
@@ -51,7 +51,7 @@ const RoomManager = () => {
           roomName: "",
           roomRate: "",
           roomImage: {},
-          adults: 1,
+          adults: 2,
           children: 0,
         },
       ]);
@@ -92,8 +92,10 @@ const RoomManager = () => {
   };
 
   const removeRoom = (roomId) => {
+    setSelectedRoomDetails(null);
     setSelectedRooms((prev) => prev.filter((rooms) => rooms.id !== roomId));
     setSelectedRoom((prev) => prev.filter((room) => room.id !== roomId));
+    
   };
 
   const totalAdults = rooms.reduce((sum, room) => sum + room.adults, 0);
@@ -196,7 +198,7 @@ const RoomManager = () => {
                           onClick={() =>
                             updateRoom(room.id, "adults", room.adults + 1)
                           }
-                          disabled={room.adults >= 3}
+                          disabled={room.adults >= 7}
                         >
                           <FontAwesomeIcon icon={faPlus} />
                         </button>
@@ -234,7 +236,7 @@ const RoomManager = () => {
               <button
                 className="btn btn-link add-room"
                 onClick={addRoom}
-                disabled={rooms.length >= 4}
+                disabled={rooms.length >= 10}
               >
                 + Add Another Room
               </button>

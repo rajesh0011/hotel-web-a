@@ -38,7 +38,26 @@ export const metadata = {
 
 const GTM_ID = 'GTM-P422PMQ';
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+  
+const cityRes = await fetch(
+    `${process.env.NEXT_PUBLIC_CMS_BASE_URL_AMR}/cmsapi/property/GetCityWithProperty`,
+    { cache: "force-cache" }
+  );
+  const res = await cityRes.json();
+  //console.log("CityApi Resp", res);
+  const cityDropDown =
+    res?.data?.map((p) => 
+      ({ label: p.cityName, 
+      value: p.cityId, 
+      propertyData:p.propertyData})) || [];
+      
+      const properties = res.data.flatMap(city => 
+        city.propertyData.map(property => ({
+          ...property,
+          cityId: city.cityId, // keep reference to city
+        }))
+      );
   return (
     <html lang="en" className={`${elsie.variable} ${montserrat.variable}`}>
       <head>
@@ -63,7 +82,7 @@ export default function RootLayout({ children }) {
 height="0" width="0" style={{display:"none", visibility:'hidden'}}></iframe></noscript>
 
 
-        <FormProvider>
+        <FormProvider cityDropDown={cityDropDown} properties={properties}>
         <AuthProvider>
         {/* <VisitTracker /> */}
           {children}

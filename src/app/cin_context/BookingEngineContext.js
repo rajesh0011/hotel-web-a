@@ -59,6 +59,9 @@ export const BookingEngineProvider = ({ children }) => {
       const [totalTax, setTotalTax] = useState(0);
       const [offerTagIndex, setOfferTagIndex] = useState(null);
       const [storedIndex, setStoredIndex] = useState(null);
+      const [isStayStepOpen, setIsStayStepOpen] = useState(false);
+      const [totalRoomsBasePrice, setTotalRoomsBasePrice] = useState(0);
+  const [selectedInitialRoom, setSelectedInitialRoom] = useState(null);
   const [userDetails, setUserDetails] = useState({
     title: "",
     firstName: "",
@@ -190,7 +193,10 @@ export const BookingEngineProvider = ({ children }) => {
         isInventoryAvailable, setInventoryAvailable,
         totalTax, setTotalTax,
         offerTagIndex, setOfferTagIndex,
-      storedIndex, setStoredIndex
+      storedIndex, setStoredIndex,
+      isStayStepOpen, setIsStayStepOpen,
+      totalRoomsBasePrice, setTotalRoomsBasePrice,
+      selectedInitialRoom, setSelectedInitialRoom
       }}
     >
       {children}

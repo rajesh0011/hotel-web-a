@@ -25,7 +25,7 @@ const AboutSec = () => {
           <div className="row g-5 justify-content-center">
             <div className="col-lg-11 text-center">
               <h1 className="about-sec-title mb-4 global-heading">
-                About Amritara Hotels & Resorts
+                Amritara Hotels & Resorts
               </h1>
 
               <p className={`${styles.about_text} mb-4`}>
@@ -36,7 +36,7 @@ const AboutSec = () => {
                     <span className='mt-4 d-block'>{hiddenText}</span>
                   </>
                 )}
-                <a className={`${styles.morelink} ms-2 d-inline-block cursor-pointer`} onClick={toggleReadMore}>
+                <a className={`${styles.morelink} ms-2 d-inline-block cursor-pointer read-more-btn`} onClick={toggleReadMore}>
                   {isExpanded ? 'Read less' : 'Read more'}
                 </a>
               </p>

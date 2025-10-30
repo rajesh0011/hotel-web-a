@@ -112,7 +112,6 @@ const ConfirmStep = ({ onClose, goNext, status }) => {
       "","","","","");
     }, 200);
     
-      console.log("parsed",parsed);
       parsed.result[0].responseJson.partner_id = String(
         parsed?.result?.[0]?.responseJson?.partner_id
       );
@@ -159,16 +158,16 @@ const ConfirmStep = ({ onClose, goNext, status }) => {
               completeResponseObject?.result?.[0]?.bookingDetailsJson
             ),
           };
-          const response = await fetch(
-            `${process.env.NEXT_PUBLIC_CMS_BASE_URL}/Api/booking/BookingResponse`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify(respData),
-            }
-          );
+          // const response = await fetch(
+          //   `${process.env.NEXT_PUBLIC_CMS_BASE_URL}/Api/booking/BookingResponse`,
+          //   {
+          //     method: "POST",
+          //     headers: {
+          //       "Content-Type": "application/json",
+          //     },
+          //     body: JSON.stringify(respData),
+          //   }
+          // );
 
           // if (!response.ok) {
           //   throw new Error("failed to fetch");
@@ -472,7 +471,7 @@ const ConfirmStep = ({ onClose, goNext, status }) => {
                       <div className="brand-top-box">
                         <div className="brand-image">
                           <Image
-                            src="/booking-engine-imgs/img/clarks-logo-white.png"
+                            src="/logo.png"
                             height={100}
                             width={200}
                             alt="brand image"
@@ -482,7 +481,7 @@ const ConfirmStep = ({ onClose, goNext, status }) => {
                       </div>
                       <div className="animated-check-icon text-center py-2">
                         <Image
-                          src="/booking-engine-imgs/images/verified.gif"
+                          src="/verified.gif"
                           height={100}
                           width={100}
                           alt="confirmation"
@@ -687,8 +686,8 @@ const ConfirmStep = ({ onClose, goNext, status }) => {
                 </>
               ) : (
                 <>
-                  <i
-                    className="fa fa-times-circle text-red-600 text-4xl"
+                <div className="text-center py-3 px-4">
+                   <i className="fa fa-times-circle text-red-600 text-4xl"
                     aria-hidden="true"
                   ></i>
                   <h3 className="text-2xl font-bold text-red-600 mt-4">
@@ -698,6 +697,8 @@ const ConfirmStep = ({ onClose, goNext, status }) => {
                     We couldn't confirm your booking. Please try again or
                     contact support.
                   </p>
+                </div>
+                 
                 </>
               )}
 
@@ -740,7 +741,7 @@ const ConfirmStep = ({ onClose, goNext, status }) => {
             <div className="booking-confirmed text-center p-10">
               {reservationStatus === null ? (
                 <p className="text-center mt-4 text-blue-600 font-medium">
-                  Payment successful2! Confirming your room booking...
+                  Payment successful! Confirming your room booking...
                 </p>
               ) : reservationStatus === "success" ? (
                 <>
@@ -749,7 +750,7 @@ const ConfirmStep = ({ onClose, goNext, status }) => {
                       <div className="brand-top-box">
                         <div className="brand-image">
                           <Image
-                            src="/booking-engine-imgs/img/clarks-logo-white.png"
+                            src="/logo.png"
                             height={100}
                             width={200}
                             alt="brand image"
@@ -758,7 +759,7 @@ const ConfirmStep = ({ onClose, goNext, status }) => {
                       </div>
                       <div className="animated-check-icon text-center py-2">
                         <Image
-                          src="/booking-engine-imgs/images/verified.gif"
+                          src="/verified.gif"
                           height={100}
                           width={100}
                           alt="confirmation"
@@ -950,7 +951,8 @@ const ConfirmStep = ({ onClose, goNext, status }) => {
                 </>
               ) : (
                 <>
-                  <i
+                <div className="py-3 px-4 text-center">
+                   <i
                     className="fa fa-times-circle text-red-600 text-4xl"
                     aria-hidden="true"
                   ></i>
@@ -961,6 +963,8 @@ const ConfirmStep = ({ onClose, goNext, status }) => {
                     We couldn't confirm your booking. Please try again or
                     contact support.
                   </p>
+                </div>
+                  
                 </>
               )}
             </div>

@@ -7,8 +7,10 @@ import { Tally2, X, Menu } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useForm } from "../booking-engine-widget/FormContext";
+import { usePathname } from "next/navigation";
 
-const PropertyMainHeader = ({ id, type, logo }) => {
+
+const PropertyMainHeader = ({ id, type, logo, onClick}) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [open, setOpen] = useState(false);
@@ -19,6 +21,8 @@ const PropertyMainHeader = ({ id, type, logo }) => {
   const { user } = useAuth();
   const filterBarRef = useRef(null);
   const isLoggedIn = !!user;
+  const pathname = usePathname();
+  const lastSlug = pathname.split("/").filter(Boolean).pop(); // get last part of URL
 
   // ✅ Fetch menu data when propertyId changes (NOT just propertySlug)
   useEffect(() => {
@@ -62,16 +66,22 @@ const PropertyMainHeader = ({ id, type, logo }) => {
       if (firstInput) firstInput.focus();
     }
   };
-   const toggleBookingForm = (e) => {
+  //  const toggleBookingForm = (e) => {
+  //   e.preventDefault();
+  //   e.stopPropagation();
+  //   setIsFormOpen(!isFormOpen);
+  //   if (isRoomMenuOpen) setIsRoomMenuOpen(false);
+  // };
+
+    const toggleBookingForm = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsFormOpen(!isFormOpen);
-    if (isRoomMenuOpen) setIsRoomMenuOpen(false);
+    
+    onClick();
   };
-
   return (
     <header className="header-section">
-      <nav className={`navbar navbar-expand-lg navbar-light ${isScrolled ? "scrolled" : ""}`}>
+      <nav className={`navbar navbar-expand-lg navbar-light ${lastSlug === "resort-overview" ||  lastSlug === "hotel-overview" ? "" : "innerPageShadow" }  ${isScrolled ? "scrolled" : ""}`}>
         <div className="container">
           <div className="header-display-flex">
 
@@ -91,11 +101,24 @@ const PropertyMainHeader = ({ id, type, logo }) => {
                 alt="Amritara Hotels And Resorts"
                 width={300}
                 height={200}
-              />
+              /> 
             </Link>
 
             <div className="navbarnav" id="navbarNav">
               <div className="display-flex">
+                 <Link
+                  className="me-3 header-btnn-top login-menu-header showOnDesktop-mobile"
+                  href="/"
+                >
+                  Home
+                </Link>
+
+                  <Link
+                    className="me-3 header-btnn-top login-menu-header showOnDesktop-mobile"
+                    href="/hotels"
+                  >
+                    Our Hotels
+                  </Link>
                 {isLoggedIn ? (
                   <div className="dropdown dropdown-for-logged-in-user">
                     <button

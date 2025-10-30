@@ -11,21 +11,37 @@ const NewOfferSlider = dynamic(() => import("./NewOfferSlider"), { ssr: false })
 const ZonesList = dynamic(() => import("./ZonesList"), { ssr: false });
 const UntoldStories = dynamic(() => import("./UntoldStories"), { ssr: false });
 import * as ReactDOM from "react-dom";
+import { X } from "lucide-react";
 import { getUserInfo } from "../../../utilities/userInfo";
 import FilterBar from "@/app/cin_booking_engine/Filterbar";
 import { BookingEngineProvider } from "@/app/cin_context/BookingEngineContext";
-import Link from "next/link";
-import { FacebookIcon, InstagramIcon, Linkedin, Search, X } from 'lucide-react'
 import CorporateOffers from "./CorporateOffers";
 import BookNowForm from "@/app/booking-engine-widget/BookNowForm";
-import { FaWhatsapp } from "react-icons/fa";
-import Image from "next/image";
-import AsideFixed from "../AsideFixed";
 
 export default function HomePage (){
   const [isOpen, setOpen] = useState(false);
   const [showFilterBar, setShowFilterBar] = useState(false);
   const filterBarRef = useRef(null);
+  
+  const [isOpenFilterBar, openFilterBar] = useState(false);
+  const [staahPropertyId, setStaahPropertyId] = useState(null);
+  const [cityDetails, setCityDetails] = useState(null);
+  const handlePropertyBookNow = async (prperty) => {
+    
+    setOpen(!isOpen);
+    setShowFilterBar(!showFilterBar);
+    const label = prperty?.cityName;
+    const value = prperty?.cityId;
+    const property_Id = prperty?.staahPropertyId;
+    setCityDetails({ label, value, property_Id });
+    setStaahPropertyId(prperty?.staahPropertyId);
+    
+    if (filterBarRef.current) {
+      filterBarRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+      const firstInput = filterBarRef.current.querySelector("input, select, button");
+      if (firstInput) firstInput.focus();
+    }
+  };
       async function postBookingWidged(rooms,mapping, isClose,ctaName,selectedPropertyId) {
        const resp = await getUserInfo();
          const sessionId = sessionStorage?.getItem("sessionId");
@@ -51,17 +67,17 @@ export default function HomePage (){
          isCartClick: "N",
          isClose: isClose ? "Y" : "N",
         }
-           const response = await fetch(
-             `${process.env.NEXT_PUBLIC_CMS_BASE_URL}/Api/tracker/BookingWidged`,
-             {
-               method: "POST",
-               headers: {
-                 "Content-Type": "application/json",
-               },
-               body: JSON.stringify( payload ),
-             }
-           );
-           const res = await response?.json();
+          //  const response = await fetch(
+          //    `${process.env.NEXT_PUBLIC_CMS_BASE_URL}/Api/tracker/BookingWidged`,
+          //    {
+          //      method: "POST",
+          //      headers: {
+          //        "Content-Type": "application/json",
+          //      },
+          //      body: JSON.stringify( payload ),
+          //    }
+          //  );
+          //  const res = await response?.json();
      
          //console.log("res BookingWidged",res);
        }
@@ -72,111 +88,94 @@ const handleBookNowClick2 = async () => {
     setOpen(!isOpen);
     setShowFilterBar(!showFilterBar);
   };
+  
   return (
     <>
-
-      <MainHeader onClick={handleBookNowClick2}></MainHeader>
-      {/* <BannerSec  onClick={handleBookNowClick2}></BannerSec> */}
-      <section className="hero-section home-hero-section position-relative vh-100 overflow-hidden h-full flex items-center justify-center">
-      {/* <AsideFixed></AsideFixed> */}
        
-      <video className="w-100 h-[102vh] object-cover for-desktop-video-main"
-      autoPlay
-            muted
-            loop
-            playsInline
-            preload="auto">
-        <source src="/amritara-new-banner-video.mp4" type="video/mp4" />
-      </video>
-      {/* <video src="/amritara-new-banner-video.mp4" autoPlay loop ></video> */}
-       {/* <div className="hero-bottom-part-ab">
-        <Link href="#" onClick={(e) => {
-              e.preventDefault();
-              handleBookNowClick2();
-            }} className="search-icon-banner">
-          {isOpen ? <X /> :<Search />}
-        </Link>
-      </div>  */}
-      
-        {/* <div
-          className={`absolute left-1/2 transform -translate-x-1/2 home-page-class`}
-          style={{ zIndex: 10 }}
-        >
-          <Link href="#" 
-            onClick={(e) => {
-              e.preventDefault();
-              handleBookNowClick2();
-            }}
-            className="p-2 bg-white flex items-center justify-center rounded-full transition-transform duration-300 hover:scale-110 hero-banner-book-now-btn"
-          >
-            {isOpen ? <X /> :<Search />}
-          </Link>
-        </div> */}
-        {showFilterBar && ReactDOM.createPortal(
-                  <section className="filter-bar-hotels-cin">
-                   <BookingEngineProvider>
-              <FilterBar
-                selectedProperty={0}
-                openBookingBar={showFilterBar}
-                onClose={() => {
-                  setShowFilterBar(false);
-                  setOpen(false);
-                }}
-              />
-            </BookingEngineProvider>
-                  </section>,
-                    document.body
-                )}
-    </section>
+      <MainHeader onClick={handlePropertyBookNow}></MainHeader>
+      {/* <section className="hero-section home-hero-section position-relative vh-100 overflow-hidden h-full flex items-center justify-center"> */}
+     
+     <section className="hero-section inner-gumlet-video overview-herosection overflow-hidden h-full items-center justify-center" ref={filterBarRef}>
 
+       <div style={{position:"relative", aspectRatio:"16/9"}} className="home-banner-videeo-desk">
+      <iframe 
+            loading="lazy" title="Gumlet video player"
+            src="https://play.gumlet.io/embed/68fc9a5e609b9e4625f33aae?background=true&autoplay=true&loop=true&disableControls=true"
+            style={{border:"none", position: "absolute", top: "0", left: "0", height: "100%", width: "100%"}}
+          allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; fullscreen;">
+          </iframe>
+    </div>
 
-    <section className="booking-form-section">
-        <BookNowForm />
+    <div style={{position:"relative", aspectRatio:"674/1200"}} className="home-banner-videeo-mob">
+      <iframe 
+            loading="lazy" title="Gumlet video player"
+            src="https://play.gumlet.io/embed/6900a9a55ecad45f6c86b2ac?background=true&autoplay=true&loop=true&disableControls=true"
+            style={{border:"none", position: "absolute", top: "0", left: "0", height: "100%", width: "100%"}}
+          allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; fullscreen;">
+          </iframe>
+    </div>
+
       </section>
 
+    {/* <section className="booking-form-section">
+        <BookNowForm />
+      </section> */}
 
-      <AboutSec></AboutSec>
-      <NestedSwiper></NestedSwiper>
-      <UntoldStories></UntoldStories>
-      <ZonesList></ZonesList>
-      {/* <NewOfferSlider></NewOfferSlider> */}
-      <CorporateOffers></CorporateOffers>
-
-        {/* {showFilterBar && ReactDOM.createPortal (
+      <section className="booking-form-section">
+        <div
+          className={`booking-search-bar-btn-div home-page-class`}
+          style={{ zIndex: 10 }}
+        >
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              handlePropertyBookNow();
+            }}
+            className="booking-toggle-btn"
+          >
+            {isOpen ? <X size={18} color="black" /> : "Book Now"}
+          </button>
+        </div>
+        {isOpenFilterBar && ReactDOM.createPortal (
           <BookingEngineProvider>
             <FilterBar
+              contentData={contentData}
+              tokenKey={tokenKey}
               selectedProperty={0}
-              openBookingBar={showFilterBar}
+              openBookingBar={isOpenFilterBar}
               onClose={() => {
-                setShowFilterBar(false);
+                openFilterBar(false);
                 setOpen(false);
               }}
             />
           </BookingEngineProvider>,
           document.body
-        )} */}
-        
-      {/* <section className="position-relative" ref={filterBarRef}>
-             <div className="position-absolute top-100 start-0 w-100 bg-white shadow" >
-      
-                {showFilterBar && ReactDOM.createPortal(
-                  <section className="filter-bar-hotels-cin">
-                   <BookingEngineProvider>
-              <FilterBar
-                selectedProperty={0}
-                openBookingBar={showFilterBar}
-                onClose={() => {
-                  setShowFilterBar(false);
-                  setOpen(false);
-                }}
-              />
-            </BookingEngineProvider>
-                  </section>,
-                    document.body
-                )}
-                
-              </div>
-              </section> */}
+        )}
+
+        {showFilterBar && ReactDOM.createPortal (
+          <BookingEngineProvider>
+            <FilterBar
+              selectedProperty={parseInt(staahPropertyId)}
+              cityDetails={cityDetails}
+              openBookingBar={showFilterBar}
+              onClose={(isReload) => {
+                setOpen(false);
+                setShowFilterBar(false);
+                if (isReload) {
+                window.location.reload();
+              }
+              }}
+            />
+          </BookingEngineProvider>,
+          document.body
+        )}
+      </section>
+      <AboutSec></AboutSec>
+      <NestedSwiper onClick={handlePropertyBookNow}></NestedSwiper>
+      <UntoldStories onClick={handlePropertyBookNow}></UntoldStories>
+      <ZonesList onClick={handlePropertyBookNow}></ZonesList>
+      {/* <NewOfferSlider></NewOfferSlider> */}
+      <CorporateOffers onClick={handlePropertyBookNow}></CorporateOffers>
     </>
   )
 }

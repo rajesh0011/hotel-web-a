@@ -293,10 +293,12 @@ header .navbar-nav:last-child .nav-item:first-child .nav-link {
 
 .booking-bar .booking-bar-form .search-icon.hotel-search-btn-wrapper button {
     height: 62px;
-    background-color: #000;
+    background-color: #803525;
     color: #fff;
     width: 100%;
     margin-top: 2px;
+    border: none;
+    outline: none;
 }
 
 .booking-bar .booking-bar-form .search-icon.hotel-search-btn-wrapper button span.this-search-for-desk {
@@ -468,7 +470,7 @@ html [type="button"] {
 }
 
 .booking-form-wrapper.visible {
-    z-index: 9999;
+    z-index: 999999;
     position: absolute;
     width: calc(100% - 20px);
     top: auto;
@@ -1401,19 +1403,21 @@ p.hotel-info {
 
 .package-main-box .winter-box-content .offer-footer-part {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    /* justify-content: space-between; */
+    align-items: start;
     margin-bottom: 0;
     background-color: #efefef;
 }
-
+#_rht_toaster{
+    z-index: 999999999999999999999999 !important;
+}
 .slider-btns-arrow {
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
     display: flex;
     z-index: 999;
-    bottom: -10px !important;
+    bottom: 0px !important;
     align-items: center;
     justify-content: center;
 }
@@ -1429,7 +1433,14 @@ p.hotel-info {
 .swiper-slider-package .swiper-button-prev:after,
 .swiper-slider-package .swiper-button-next:after {
     color: #000 !important;
-    font-size: 14px !important;
+    font-size: 18px !important;
+}
+.booking-engine-package .swiper-slider-package  .swiper-button-next,
+.booking-engine-package .swiper-slider-package  .swiper-button-prev
+ {
+    background-color: transparent !important;
+    padding: 0 !important;
+    margin-top: 10px !important;
 }
 
 .swiper-slider-package {
@@ -1438,7 +1449,7 @@ p.hotel-info {
 }
 
 .package-main-box .winter-box-content .offer-footer-part .offer-select-btnn {
-    background-color: var(--bs-black);
+    background-color: #803525;
     padding: 4px 8px;
     font-weight: 600;
     color: var(--bs-white);
@@ -1474,7 +1485,7 @@ p.hotel-info {
 .room-popup-modal-content .images-slider .owl-nav button {
     position: absolute;
     top: 50%;
-    background-color: #000;
+    background-color: #803525;
     color: #fff;
     margin: 0;
     transition: all 0.3s ease-in-out;
@@ -1512,7 +1523,7 @@ p.hotel-info {
 }
 
 .room-popup-modal-content .images-slider .owl-dots button.owl-dot.active {
-    background-color: #fff;
+    background-color: #803525;
     width: 6px;
     height: 6px;
 }
@@ -1640,7 +1651,7 @@ p.hotel-info {
     top: 10px;
     opacity: 1;
     font-size: 9px;
-    background-color: rgb(238, 238, 238);
+    background-color: #803525!important;
     padding: 10px;
     border-radius: 0;
 }
@@ -1874,9 +1885,15 @@ p.hotel-info {
         padding-left: 4px;
     }
 
-    .step-wizard-card-section .mt-2.fw-normal, .step-wizard-card-section .mt-2.fw-bold {
+    .step-wizard-card-section .mt-2.fw-normal, 
+    .step-wizard-card-section .mt-2.fw-bold {
         height: 28px;
-        font-size: 12px;
+        /* font-size: 12px; */
+        font-size: 11px;
+    }
+    .step-wizard-card-section .larger-div-box .mt-2.fw-normal, 
+    .step-wizard-card-section .larger-div-box .mt-2.fw-bold {
+        font-size: 9px;
     }
 
     .filterbar-g-slider .swiper-button-prev, .filterbar-g-slider .swiper-button-next{
@@ -2139,7 +2156,7 @@ p.hotel-info {
     top: 10px;
     opacity: 1;
     font-size: 9px;
-    background-color: rgb(238, 238, 238);
+    background-color: #803525!important;
     padding: 10px;
     border-radius: 0;
 }
@@ -2247,6 +2264,7 @@ p.hotel-info {
 
     .top-head-roomdetails{
         font-weight: 400;
+        font-size:12px;
     }
 
     .CombinedWizard .SelectedRoomTopInNewWWizardCol1 .InWizardSelectedRoomFlex{
@@ -2263,6 +2281,10 @@ p.hotel-info {
         padding: 2px 2px;
         border-radius: 6px;
         padding-left: 10px;
+        width: 82%;
+        text-align: center;
+        justify-content: space-around;
+        margin-left: 10px;
     }
 
 
@@ -2974,19 +2996,19 @@ svg {
 }
 
 .flatpickr-months .flatpickr-month {
-    background: var(--bs-black) !important;
+    background: #803525 !important;
     color: var(--bs-white) !important;
-    fill: var(--bs-black) !important;
+    fill: #803525 !important;
     height: 38px !important;
 }
 
 .flatpickr-current-month .flatpickr-monthDropdown-months .flatpickr-monthDropdown-month {
-    background-color: #000000 !important;
+    background-color: #803525 !important;
     font-size: 14px !important;
 }
 
 .flatpickr-monthDropdown-month:hover {
-    color: var(--bs-black) !important;
+    color: #803525 !important;
     background-color: var(--bs-white) !important;
 }
 
@@ -3050,7 +3072,7 @@ svg {
     bottom: auto;
     width: 40px;
     height: 26px;
-    background-color: var(--bs-bg-color);
+    background-color: #803525;
     color: var(--bs-white);
     line-height: 20px;
     border-radius: 0px;
@@ -3402,7 +3424,7 @@ svg {
 }
 
 span.this-search-for-desk {
-    background-color: #000;
+    background-color: #803525;
     color: #fff;
     padding: 8px;
     font-size: 12px;
@@ -3947,7 +3969,7 @@ input:not([type="image" i], [type="range" i], [type="checkbox" i], [type="radio"
 
 .modal .modal-content .btn-close {
     padding: 0;
-    background-color: #000;
+    background-color: #803525!important;
     color: var(--bs-white);
     border-radius: 0%;
     width: 30px;
@@ -4040,7 +4062,7 @@ input:not([type="image" i], [type="range" i], [type="checkbox" i], [type="radio"
 }
 
 .booking-bar.fullscreen .hide-booking-engine {
-    background-color: #000;
+    background-color: #803525;
     position: fixed;
     right: 0;
     top: -19px;
@@ -4050,14 +4072,14 @@ input:not([type="image" i], [type="range" i], [type="checkbox" i], [type="radio"
     left: 50% !important;
     transform: translateX(-50%) !important;
     width: 30px !important;
-    outline: 1px solid #000;
+    outline: 1px solid #803525;
     color: #fff;
 }
 .CombinedWizard .SelectedRoomTopInNewWWizardCol1 .room-placeholder .f-12-new .span-underline{
-        outline: 1px solid #000;
+        outline: 1px solid #803525;
     padding: 5px;
     text-transform: capitalize;
-    background-color: #000000;
+    background-color: #803525;
     color: #fff;
     text-decoration: none;
 }
@@ -4366,7 +4388,7 @@ input:not([type="image" i], [type="range" i], [type="checkbox" i], [type="radio"
 
 .modal .property-popup-modal-content .btn-close {
     padding: 0;
-    background-color: #000;
+    background-color: #803525;
     color: var(--bs-white);
     border-radius: 0%;
     width: 30px;
@@ -4383,7 +4405,7 @@ input:not([type="image" i], [type="range" i], [type="checkbox" i], [type="radio"
 .room-popup-modal-content button.btn-close {
     position: absolute !important;
     color: #fff !important;
-    background-color: #000 !important;
+    background-color: #803525 !important;
     height: 30px !important;
     width: 30px !important;
     top: 10px !important;
@@ -4413,6 +4435,13 @@ input:not([type="image" i], [type="range" i], [type="checkbox" i], [type="radio"
 
 .make-flex p:last-child span.offer-tag {
     color: red;
+}
+
+.amount-and-taxes .accordion1 .accordion-item1 > p.f-12-new{
+    font-weight:600!important;
+}
+.amount-and-taxes .accordion1 .accordion-item1 .new-d-flex-for-room-p .f-12-new {
+font-size:12px!important;
 }
 
 
@@ -4513,6 +4542,11 @@ input:not([type="image" i], [type="range" i], [type="checkbox" i], [type="radio"
         background-color: #afafaf;
         width: calc(100% - 0px);
         position: fixed !important;
+                overflow-x: hidden;
+        transform: translateX(-50%) scale(1)!important;
+    }
+    .price-detail-right .price-details .property-price-text .sold-out-txt{
+        font-size: 14px!important;
     }
 
     .booking-bar-form [class^="col-"] {
@@ -4536,7 +4570,7 @@ input:not([type="image" i], [type="range" i], [type="checkbox" i], [type="radio"
         display: flex !important;
         align-items: center;
         width: 100%;
-        justify-content: flex-end;
+        justify-content: space-around;
         padding-top: 0;
     }
 
@@ -4911,6 +4945,9 @@ input:not([type="image" i], [type="range" i], [type="checkbox" i], [type="radio"
         padding: 8px 0 !important;
         background: linear-gradient(179deg, #fff 0%, #605f5f00 83%);
     }
+    .booking-search-bar-btn-div {
+    bottom: 180px !important;
+}
 
     #search a span {
         display: block;
@@ -4936,6 +4973,7 @@ input:not([type="image" i], [type="range" i], [type="checkbox" i], [type="radio"
         /* transform: translate(0, 0px) !important; */
         transform: translateY(30px) !important;
         transform: none !important;
+        position: relative !important;
 
     }
 
@@ -4987,7 +5025,8 @@ input:not([type="image" i], [type="range" i], [type="checkbox" i], [type="radio"
         width: calc(100% - 0px) !important;
         left: 0px !important;
         /* top: 30px !important; */
-        overflow-y: scroll;
+        /* overflow-y: scroll; */
+        overflow-y: visible;
         height: 100%;
         border-radius: 0 !important;
     }
@@ -5301,11 +5340,14 @@ input:not([type="image" i], [type="range" i], [type="checkbox" i], [type="radio"
     }
 
 }
-
+.flatpickr-calendar.open {
+        z-index: 9999999 !important;
+    }
 
 @media screen and (max-width:575px) {
     .flatpickr-calendar.static.open {
         width: 100%;
+        z-index: 9999999 !important;
     }
 
     .flatpickr-innerContainer {
@@ -5463,9 +5505,79 @@ section.filter-bar-hotels-cin {
     top: 170px;
     width: 100%;
 }
-
+.final-total-amount-mobile{
+    display:none;
+}
+.final-total-amount-desktop {
+    position: absolute;
+    right: 10%;
+    top: 0px;
+    background-color: #000;
+}
+.final-total-amount-desktop p {
+    color: #fff;
+    padding: 6px 10px;
+    margin-bottom: 0;
+}
+.final-total-amount-desktop p snan{
+    font-weight:600;
+    color:#fff;
+}
 @media (min-width: 767px){
     .book-now-content .accordion-body.mt-3{
         margin-bottom: 65px;
     }
+    
+}
+@media (max-width: 767px){
+    #react-select-7-placeholder{
+font-size:20px !important;
+color:#000 !important;
+    }
+
+    .for-city-selectionn .css-1nmdiq5-menu{
+width:90% !important;
+    }
+    .css-1dimb5e-singleValue{
+        font-size:20px !important;
+    }
+    .booking-engine-package{
+
+    }
+    .final-total-amount-desktop{
+        display:none!important;
+    }
+        .final-total-amount-mobile {
+                     display: flex !important;
+        position: fixed;
+        bottom: 0;
+        height: 60px;
+        color: #fff;
+        background-color: #00a63e;
+        z-index: 9999;
+        width: 100%;
+        left: 0;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 10px;
+    }
+      .final-total-amount-mobile p{
+        color:#fff;
+        font-size:18px;
+        font-weight:700;
+        margin-bottom:0!important;
+      }
+      .final-total-amount-mobile p small{
+            font-size: 12px;
+            display: block;
+            font-weight: 500;
+      }
+}
+.na-text {
+  color: red !important;
+  font-weight: 600;
+}
+strong.amount-in-wizard.total-amount-cart.text-success {
+    color: #00a63e !important;
+    font-weight: 600!important;
 }

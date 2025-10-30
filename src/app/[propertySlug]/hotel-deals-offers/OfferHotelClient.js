@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, {useRef, useEffect, useState } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination, Autoplay } from "swiper/modules";
 
@@ -27,6 +27,20 @@ export default function OfferHotelClient({ propertySlug }) {
   const [isOpenFilterBar, openFilterBar] = useState(false);
   const [isOpen, setOpen] = useState(false);
   const [logo, setPropertyLogo] = useState(null);
+
+    const [parentSwiper, setParentSwiper] = useState(null);
+    const parentPrevRef = useRef(null);
+    const parentNextRef = useRef(null);
+  
+    useEffect(() => {
+      if (parentSwiper) {
+        parentSwiper.params.navigation.prevEl = parentPrevRef.current;
+        parentSwiper.params.navigation.nextEl = parentNextRef.current;
+        parentSwiper.navigation.init();
+        parentSwiper.navigation.update();
+      }
+    }, [parentSwiper]);
+
 
   const handleBookNowClick = async () => {
     setOpen(!isOpen);
@@ -172,7 +186,7 @@ useEffect(() => {
       </section>
 
       {offers.length > 0 ? (
-        <section className="inner-offer-page-sec inner-no-banner-sec">
+        <section className="inner-offer-page-sec inner-no-banner-sec position-relative cursor-hideMobile">
           <div className="container pt-5">
             <div className="global-heading-sec text-center">
               <div className="row justify-content-center mb-2">
@@ -183,10 +197,27 @@ useEffect(() => {
               </div>
             </div>
 
+            <div className="parent-control-button p-prev-button Offers-slider-prev">
+              <button
+                ref={parentPrevRef}
+                className="p-3 bg-gray-800 text-white rounded-full shadow-lg"
+              >
+                ❮
+              </button>
+            </div>
+            <div className="parent-control-button p-next-button Offers-slider-next">
+              <button
+                ref={parentNextRef}
+                className="p-3 bg-gray-800 text-white rounded-full shadow-lg"
+              >
+                ❯
+              </button>
+            </div>
+
             <div className="container">
               <div className="winter-sec">
                 <div className="row">
-                  <Offerpagesslider offers={offers} />
+                  <Offerpagesslider setParentSwiper={setParentSwiper} offers={offers} />
                 </div>
               </div>
             </div>

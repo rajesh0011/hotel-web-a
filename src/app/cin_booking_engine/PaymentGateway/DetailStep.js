@@ -488,17 +488,17 @@ const proceedToPay = (selectedRoom) => {
     ApiErrorCode: ApiErrorCode?.toString() ?? "",
     ApiMessage: ApiMessage?.toString() ?? ""
    }
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_CMS_BASE_URL}/Api/tracker/BookingWidged`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify( payload ),
-        }
-      );
-      const res = await response?.json();
+      // const response = await fetch(
+      //   `${process.env.NEXT_PUBLIC_CMS_BASE_URL}/Api/tracker/BookingWidged`,
+      //   {
+      //     method: "POST",
+      //     headers: {
+      //       "Content-Type": "application/json",
+      //     },
+      //     body: JSON.stringify( payload ),
+      //   }
+      // );
+      // const res = await response?.json();
 
     //console.log("res BookingWidged",res);
   }
@@ -560,7 +560,6 @@ const proceedToPay = (selectedRoom) => {
   };
   
   const getUserEnrollment = async (phone) => {
-    console.log("selectedRoom",selectedRoom);
     //const resp = await getUserInfo();
     let roomsData = ""; 
   let mappingData =""; 
@@ -917,7 +916,7 @@ const proceedToPay = (selectedRoom) => {
             )
             .map(([_, value]) => parseFloat(value) || 0)
         )
-        .reduce((acc, val) => acc + val * parseInt(diff), 0)
+        .reduce((acc, val) => acc + val, 0)
         .toFixed(2); // Final tax sum as a string with 2 decimals
 
       const payload = {
@@ -989,91 +988,197 @@ const proceedToPay = (selectedRoom) => {
                 salutation: formData?.title,
                 first_name: formData?.firstName || "",
                 last_name: formData?.lastName || "",
-                price: getDateRange(selectedStartDate, selectedEndDate).map(
-                  (date) => ({
-                    date,
-                    rate_id: room?.rateId,
-                    rate_name: room?.roomPackage,
-                    amountaftertax: room?.roomRateWithTax?.toString() || "0",
-                    extraGuests: {
-                      extraAdult:
-                        room.adults > room.applicableAdults
-                          ? (room.adults - room.applicableAdults)?.toString()
-                          : "0",
-                      extraChild: (room.children > room?.applicableChild
-                        ? room?.children - room?.applicableChild
-                        : 0
-                      )?.toString(),
-                      extraAdultRate:
-                        room?.adults > room?.applicableGuest
-                          ? room?.adultRate?.toString()
-                          : "0",
-                      extraChildRate:
-                        room?.children - room?.applicableChild > 0
-                          ? room.childRate?.toString()
-                          : "0",
-                    },
-                    fees: [
-                      // {
-                      //   name: "Cleaning Fees",
-                      //   amountaftertax: "300",
-                      //   taxes: [
-                      //     {
-                      //       name: "service charge",
-                      //       value: "2.50",
-                      //     },
-                      //   ],
-                      // },
-                    ],
-                    Addons: selectedAddonList
-                      ?.filter((addon) => {
-                        const isSameRoom =
-                          addon?.roomId === room?.id?.toString();
-                        const isRecurring = addon?.Type === "R";
-                        const isPerGuest = addon?.Applicable === "G";
-                        const isCheckInDay = date === selectedStartDate;
-                        return isSameRoom && (isRecurring || isCheckInDay);
-                      })
-                      ?.map((addon) => ({
-                        AddonId: addon?.AddonId,
-                        AddonName: addon?.AddonName,
-                        AddonType: addon?.Type,
-                        PriceType: addon?.Applicable,
-                        AmountAfterTax: getAddonAmountAfterTax(
-                          addon,
-                          room
-                        ).toFixed(2),
-                        ...(addon?.AdultRate?.length
-                          ? {
-                              Adult: getAddonRateSection(
-                                addon?.AdultRate,
-                                parseInt(
-                                  room.adults * parseInt(addon?.quantity)
-                                )?.toString() || "0"
-                              ),
-                            }
-                          : {}),
-                        ...(room.children > 0 && addon?.ChildRate?.length
-                          ? {
-                              Children: getAddonRateSection(
-                                addon?.ChildRate,
-                                parseInt(
-                                  room.children * parseInt(addon?.quantity)
-                                )?.toString() || "0"
-                              ),
-                            }
-                          : {}),
-                        ...(addon?.Rate?.length
-                          ? {
-                              Base: getAddonRateSection(
-                                addon?.Rate,
-                                addon?.quantity?.toString() || "0"
-                              ),
-                            }
-                          : {}),
-                      })),
-                  })
-                ),
+                // price: getDateRange(selectedStartDate, selectedEndDate).map(
+                //   (date) => ({
+                //     date,
+                //     rate_id: room?.rateId,
+                //     rate_name: room?.roomPackage,
+                //     amountaftertax: room?.roomRateWithTax?.toString() || "0",
+                //     extraGuests: {
+                //       extraAdult:
+                //         room.adults > room.applicableAdults
+                //           ? (room.adults - room.applicableAdults)?.toString()
+                //           : "0",
+                //       extraChild: (room.children > room?.applicableChild
+                //         ? room?.children - room?.applicableChild
+                //         : 0
+                //       )?.toString(),
+                //       extraAdultRate:
+                //         room?.adults > room?.applicableGuest
+                //           ? room?.adultRate?.toString()
+                //           : "0",
+                //       extraChildRate:
+                //         room?.children - room?.applicableChild > 0
+                //           ? room.childRate?.toString()
+                //           : "0",
+                //     },
+                //     fees: [
+                //       // {
+                //       //   name: "Cleaning Fees",
+                //       //   amountaftertax: "300",
+                //       //   taxes: [
+                //       //     {
+                //       //       name: "service charge",
+                //       //       value: "2.50",
+                //       //     },
+                //       //   ],
+                //       // },
+                //     ],
+                //     Addons: selectedAddonList
+                //       ?.filter((addon) => {
+                //         const isSameRoom =
+                //           addon?.roomId === room?.id?.toString();
+                //         const isRecurring = addon?.Type === "R";
+                //         const isPerGuest = addon?.Applicable === "G";
+                //         const isCheckInDay = date === selectedStartDate;
+                //         return isSameRoom && (isRecurring || isCheckInDay);
+                //       })
+                //       ?.map((addon) => ({
+                //         AddonId: addon?.AddonId,
+                //         AddonName: addon?.AddonName,
+                //         AddonType: addon?.Type,
+                //         PriceType: addon?.Applicable,
+                //         AmountAfterTax: getAddonAmountAfterTax(
+                //           addon,
+                //           room
+                //         ).toFixed(2),
+                //         ...(addon?.AdultRate?.length
+                //           ? {
+                //               Adult: getAddonRateSection(
+                //                 addon?.AdultRate,
+                //                 parseInt(
+                //                   room.adults * parseInt(addon?.quantity)
+                //                 )?.toString() || "0"
+                //               ),
+                //             }
+                //           : {}),
+                //         ...(room.children > 0 && addon?.ChildRate?.length
+                //           ? {
+                //               Children: getAddonRateSection(
+                //                 addon?.ChildRate,
+                //                 parseInt(
+                //                   room.children * parseInt(addon?.quantity)
+                //                 )?.toString() || "0"
+                //               ),
+                //             }
+                //           : {}),
+                //         ...(addon?.Rate?.length
+                //           ? {
+                //               Base: getAddonRateSection(
+                //                 addon?.Rate,
+                //                 addon?.quantity?.toString() || "0"
+                //               ),
+                //             }
+                //           : {}),
+                //       })),
+                //   })
+                // ),
+               price: getDateRange(selectedStartDate, selectedEndDate).map((date) => {
+                const dateData = room?.packageRateList?.[date];
+                const obp = dateData?.OBP?.[String(room.adults)];
+                const amountAfterTax = obp ? parseFloat(obp?.RateAfterTax || "0") : 0;
+                const {
+                  adults,
+                  children,
+                  applicableAdult,
+                  applicableChild,
+                  applicableGuest
+                } = room;
+                
+                // --- Step 1: Adjust children if adults are less than applicableAdult ---
+                let adjustedAdults = adults;
+                let adjustedChildren = children;
+                
+                if (adults < applicableAdult && children > 0) {
+                  const neededAdults = applicableAdult - adults;
+                  const childrenToAdults = Math.min(neededAdults, children);
+                  adjustedAdults += childrenToAdults;
+                  adjustedChildren -= childrenToAdults;
+                }     
+                const extraChild =
+                  adjustedChildren > applicableChild
+                    ? Math.min(
+                        adjustedChildren - applicableChild,
+                        Math.max(0, adjustedAdults + adjustedChildren - applicableGuest)
+                      )
+                    : 0;
+                return {
+                  date,
+                  rate_id: room?.rateId,
+                  rate_name: room?.roomPackage,
+                  amountaftertax: amountAfterTax.toString(),
+                  extraGuests: {
+                    extraAdult:
+                      room.adults > room.applicableAdults
+                        ? (room.adults - room.applicableAdults)?.toString()
+                        : "0",
+                    // extraChild: (
+                    //   room.children > room?.applicableChild
+                    //     ? room?.children - room?.applicableChild
+                    //     : 0
+                    // )?.toString(),
+                    extraChild: extraChild.toString(),
+
+                    extraAdultRate:
+                      room?.adults > room?.applicableGuest
+                        ? room?.adultRate?.toString()
+                        : "0",
+                    // extraChildRate:
+                    //   room?.children - room?.applicableChild > 0
+                    //     ? room.childRate?.toString()
+                    //     : "0",
+                    extraChildRate:
+                      extraChild > 0
+                        ? (extraChild * Math.round(room.childRate))?.toString()
+                        : "0",
+                  },
+                  fees: [],
+                  Addons: selectedAddonList
+                    ?.filter((addon) => {
+                      const isSameRoom = addon?.roomId === room?.id?.toString();
+                      const isRecurring = addon?.Type === "R";
+                      const isPerGuest = addon?.Applicable === "G";
+                      const isCheckInDay = date === selectedStartDate;
+                      return isSameRoom && (isRecurring || isCheckInDay);
+                    })
+                    ?.map((addon) => ({
+                      AddonId: addon?.AddonId,
+                      AddonName: addon?.AddonName,
+                      AddonType: addon?.Type,
+                      PriceType: addon?.Applicable,
+                      AmountAfterTax: getAddonAmountAfterTax(addon, room).toFixed(2),
+                      ...(addon?.AdultRate?.length
+                        ? {
+                            Adult: getAddonRateSection(
+                              addon?.AdultRate,
+                              parseInt(
+                                room.adults * parseInt(addon?.quantity)
+                              )?.toString() || "0"
+                            ),
+                          }
+                        : {}),
+                      ...(room.children > 0 && addon?.ChildRate?.length
+                        ? {
+                            Children: getAddonRateSection(
+                              addon?.ChildRate,
+                              parseInt(
+                                room.children * parseInt(addon?.quantity)
+                              )?.toString() || "0"
+                            ),
+                          }
+                        : {}),
+                      ...(addon?.Rate?.length
+                        ? {
+                            Base: getAddonRateSection(
+                              addon?.Rate,
+                              addon?.quantity?.toString() || "0"
+                            ),
+                          }
+                        : {}),
+                    })),
+                };
+              }),
+
                 taxes: roomTaxes?.filter(
                     (tax) => tax?.RateId === room?.rateId && tax?.Id === room?.id
                   )?.flatMap((tax) =>
@@ -1090,68 +1195,151 @@ const proceedToPay = (selectedRoom) => {
                       .map(([key, value]) => ({
                         name: key,
                         value: (
-                          (parseFloat(value) || 0) * parseInt(diff)
+                          (parseFloat(value) || 0)
                         )?.toString(),
                       }))
                   ),
-                amountaftertax: (
-                  (parseFloat(room?.roomRateWithTax || "0") +
-                    (room.children > room?.applicableChild
-                      ? room?.children - room?.applicableChild
-                      : 0) *
-                      room?.childRate) *
-                    parseInt(diff) +
-                  selectedAddonList
-                    ?.filter((addon) => addon?.roomId === room?.id?.toString())
-                    ?.reduce((sum, addon) => {
-                      const isRecurring = addon?.Type === "R";
-                      const isOnoff = addon?.Type === "O";
-                      const isPerGuest = addon?.Applicable === "G";
-                      const isPerQuantity =
-                        addon?.Applicable === "D" || addon?.Applicable == "Q";
-                      const numAdults = room?.adults || 0;
-                      const numChildren = room?.children || 0;
+                // amountaftertax: (
+                //   (parseFloat(room?.roomRateWithTax || "0") +
+                //     (room.children > room?.applicableChild
+                //       ? room?.children - room?.applicableChild
+                //       : 0) *
+                //       room?.childRate) *
+                //     parseInt(diff) +
+                //   selectedAddonList
+                //     ?.filter((addon) => addon?.roomId === room?.id?.toString())
+                //     ?.reduce((sum, addon) => {
+                //       const isRecurring = addon?.Type === "R";
+                //       const isOnoff = addon?.Type === "O";
+                //       const isPerGuest = addon?.Applicable === "G";
+                //       const isPerQuantity =
+                //         addon?.Applicable === "D" || addon?.Applicable == "Q";
+                //       const numAdults = room?.adults || 0;
+                //       const numChildren = room?.children || 0;
 
-                      let adultAddonRate = addon?.AdultRate?.length
-                        ? parseFloat(
-                            addon?.AdultRate?.[0]?.INR?.amountAfterTax || "0"
-                          )
-                        : parseFloat(
-                            addon?.Rate?.[0]?.INR?.amountAfterTax || "0"
-                          );
-                      let childAddonRate =
-                        room?.children > 0 &&
-                        addon?.ChildRate?.[0]?.INR?.amountAfterTax
-                          ? parseFloat(addon?.ChildRate?.[0]?.INR?.amountAfterTax)
-                          : 0;
+                //       let adultAddonRate = addon?.AdultRate?.length
+                //         ? parseFloat(
+                //             addon?.AdultRate?.[0]?.INR?.amountAfterTax || "0"
+                //           )
+                //         : parseFloat(
+                //             addon?.Rate?.[0]?.INR?.amountAfterTax || "0"
+                //           );
+                //       let childAddonRate =
+                //         room?.children > 0 &&
+                //         addon?.ChildRate?.[0]?.INR?.amountAfterTax
+                //           ? parseFloat(addon?.ChildRate?.[0]?.INR?.amountAfterTax)
+                //           : 0;
 
-                      let addonRate = 0;
-                      // If addon is recurring and per guest, multiply by days and guest count
-                      if (isRecurring && isPerGuest) {
-                        addonRate +=
-                          adultAddonRate * parseInt(diff) * numAdults;
-                        addonRate +=
-                          childAddonRate * parseInt(diff) * numChildren;
-                      }
-                      // If addon is recurring but not per guest, just multiply by days
-                      else if (isRecurring && isPerQuantity) {
-                        addonRate +=
-                          adultAddonRate *
-                          (parseInt(diff) * parseInt(addon?.quantity));
-                      }
-                      // If not recurring but per guest (one-time on check-in), multiply by guest count
-                      else if (isOnoff && isPerGuest) {
-                        addonRate +=
-                          adultAddonRate * numAdults * addon.quantity;
-                        addonRate +=
-                          childAddonRate * numChildren * addon.quantity;
-                      } else if (isOnoff && isPerQuantity) {
-                        addonRate += adultAddonRate * parseInt(addon?.quantity);
-                      }
+                //       let addonRate = 0;
+                //       // If addon is recurring and per guest, multiply by days and guest count
+                //       if (isRecurring && isPerGuest) {
+                //         addonRate +=
+                //           adultAddonRate * parseInt(diff) * numAdults;
+                //         addonRate +=
+                //           childAddonRate * parseInt(diff) * numChildren;
+                //       }
+                //       // If addon is recurring but not per guest, just multiply by days
+                //       else if (isRecurring && isPerQuantity) {
+                //         addonRate +=
+                //           adultAddonRate *
+                //           (parseInt(diff) * parseInt(addon?.quantity));
+                //       }
+                //       // If not recurring but per guest (one-time on check-in), multiply by guest count
+                //       else if (isOnoff && isPerGuest) {
+                //         addonRate +=
+                //           adultAddonRate * numAdults * addon.quantity;
+                //         addonRate +=
+                //           childAddonRate * numChildren * addon.quantity;
+                //       } else if (isOnoff && isPerQuantity) {
+                //         addonRate += adultAddonRate * parseInt(addon?.quantity);
+                //       }
 
-                      return sum + addonRate;
-                    }, 0)
-                ).toFixed(2),
+                //       return sum + addonRate;
+                //     }, 0)
+                // ).toFixed(2),
+          amountaftertax: (
+            // Base room rate (sum of RateAfterTax from packageRateList for each date)
+            getDateRange(selectedStartDate, selectedEndDate).reduce((roomSum, date) => {
+              const dateData = room?.packageRateList?.[date];
+              const obp = dateData?.OBP?.[String(room.adults)];
+              const baseRate = obp ? parseFloat(obp?.RateBeforeTax || "0") : 0;
+            const price = (parseFloat(dateData?.ExtraChildRate?.RateBeforeTax) + parseFloat(obp.RateBeforeTax));
+              // Extra children (per date)
+              // const extraChildren =
+              //   room.children > room?.applicableChild && (room?.children + room?.adults) > room?.applicableGuest
+              //     ? room.children - room?.applicableChild
+              //     : 0;
+              const {
+                  adults,
+                  children,
+                  applicableAdult,
+                  applicableChild,
+                  applicableGuest
+                } = room;
+                
+                // --- Step 1: Adjust children if adults are less than applicableAdult ---
+                let adjustedAdults = adults;
+                let adjustedChildren = children;
+                
+                if (adults < applicableAdult && children > 0) {
+                  const neededAdults = applicableAdult - adults;
+                  const childrenToAdults = Math.min(neededAdults, children);
+                  adjustedAdults += childrenToAdults;
+                  adjustedChildren -= childrenToAdults;
+                }     
+                const extraChild =
+                  adjustedChildren > applicableChild
+                    ? Math.min(
+                        adjustedChildren - applicableChild,
+                        Math.max(0, adjustedAdults + adjustedChildren - applicableGuest)
+                      )
+                    : 0;
+              const extraChildRateAndTax = extraChild
+                ? (parseFloat(dateData?.ExtraChildRate?.RateBeforeTax || "0") 
+                + (Math.round(price) >= 7500 ? Math.round(price * 0.18) : Math.round(price * 0.05)) *
+                  extraChild)
+                : (Math.round(obp?.RateBeforeTax) >= 7500 ? Math.round(obp?.RateBeforeTax * 0.18) : Math.round(obp?.RateBeforeTax * 0.05)) || 0;
+            
+              return roomSum + baseRate + extraChildRateAndTax;
+            }, 0) +
+          
+            // Addons total
+            selectedAddonList
+              ?.filter((addon) => addon?.roomId === room?.id?.toString())
+              ?.reduce((sum, addon) => {
+                const isRecurring = addon?.Type === "R";
+                const isOnoff = addon?.Type === "O";
+                const isPerGuest = addon?.Applicable === "G";
+                const isPerQuantity = addon?.Applicable === "D" || addon?.Applicable == "Q";
+                const numAdults = room?.adults || 0;
+                const numChildren = room?.children || 0;
+              
+                let adultAddonRate = addon?.AdultRate?.length
+                  ? parseFloat(addon?.AdultRate?.[0]?.INR?.amountAfterTax || "0")
+                  : parseFloat(addon?.Rate?.[0]?.INR?.amountAfterTax || "0");
+              
+                let childAddonRate =
+                  room?.children > 0 && addon?.ChildRate?.[0]?.INR?.amountAfterTax
+                    ? parseFloat(addon?.ChildRate?.[0]?.INR?.amountAfterTax)
+                    : 0;
+              
+                let addonRate = 0;
+              
+                if (isRecurring && isPerGuest) {
+                  addonRate += adultAddonRate * parseInt(diff) * numAdults;
+                  addonRate += childAddonRate * parseInt(diff) * numChildren;
+                } else if (isRecurring && isPerQuantity) {
+                  addonRate += adultAddonRate * (parseInt(diff) * parseInt(addon?.quantity));
+                } else if (isOnoff && isPerGuest) {
+                  addonRate += adultAddonRate * numAdults * addon.quantity;
+                  addonRate += childAddonRate * numChildren * addon.quantity;
+                } else if (isOnoff && isPerQuantity) {
+                  addonRate += adultAddonRate * parseInt(addon?.quantity);
+                }
+              
+                return sum + addonRate;
+              }, 0)
+          ).toFixed(2),
 
                 remarks: "No Smoking",
                 GuestCount: [

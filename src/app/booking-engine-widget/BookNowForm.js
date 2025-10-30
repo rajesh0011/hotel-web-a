@@ -202,11 +202,23 @@ export default function BookNowForm() {
       <Toaster position="bottom-right" />
 
       <div className={`header_booking_engine_container ${isFormOpen ? "show" : ""} ${isHomePage ? "home-page-class" : ""}`}>
+         <button
+          onClick={toggleBookingForm}
+          className="booking-toggle-btn search-cross-booking"
+          aria-label={isFormOpen ? "Close booking form" : "Open booking form"}
+          id="book-now-header"
+        >
+          {/*<Search size={20} color="white" /> */}
+          {isFormOpen ? <X size={20} color="white" /> :
+           <Search size={20} color="white" />
+          // <span>Book Now</span>
+           }
+        </button>
         <div className="header_booking_engine">
           <div className="row justify-content-center">
             {/* City */}
-            <div className="header-search-select-option col-12 col-md-3">
-              <label htmlFor="city-select">City</label>
+            <div className="booking-input header-search-select-option col-12 col-md-3">
+              {/* <label htmlFor="city-select">City</label> */}
               <Select
                 className="form-control p-0 border-0"
                 id="city-select"
@@ -220,8 +232,8 @@ export default function BookNowForm() {
             </div>
 
             {/* Hotel (depends on City) */}
-            <div className="header-search-select-option col-12 col-md-3">
-              <label htmlFor="hotel-select">Hotel</label>
+            <div className="booking-input header-search-select-option col-12 col-md-3 hotel-depand-city">
+              {/* <label htmlFor="hotel-select">Hotel</label> */}
               <Select
                 className="form-control p-0 border-0"
                 id="hotel-select"
@@ -229,16 +241,16 @@ export default function BookNowForm() {
                 onChange={handleHotelSelect}
                 value={selectedHotel}
                 isDisabled={!selectedCity || loading}
-                placeholder={!selectedCity ? "Select City first" : "Select Hotel"}
-                noOptionsMessage={() => (!selectedCity ? "Select City first" : "No hotels in this city")}
+                placeholder={!selectedCity ? "Select Hotel" : "Select Hotel"}
+                noOptionsMessage={() => (!selectedCity ? "Select Hotel" : "No hotels in this city")}
                 getOptionLabel={(opt) => opt.label}
                 getOptionValue={(opt) => String(opt.value)}
               />
             </div>
 
             {/* Dates (single range field) */}
-            <div className="datepicker-outer col-12 col-md-3">
-              <label htmlFor="date-range">Dates</label>
+            <div className="booking-input datepicker-outer col-12 col-md-2">
+              {/* <label htmlFor="date-range">Dates</label> */}
               <div className="datepicker-container">
                 <DatePicker
                   selectsRange
@@ -260,17 +272,17 @@ export default function BookNowForm() {
                   className="form-control pl-2"
                   ref={dateRangePickerRef}
                 />
-                <span className="calendar-icon" onClick={openDateRange}>
+                {/* <span className="calendar-icon" onClick={openDateRange}>
                   <Calendar size={20} />
-                </span>
+                </span> */}
               </div>
               {/* Optional: show chosen range below on mobile */}
               {/* <small className="text-muted">{dateDisplay}</small> */}
             </div>
 
             {/* Rooms & Guests */}
-            <div className="rooms-child-outer-block col-12 col-md-2 position-relative">
-              <label htmlFor="rooms-childs-input">Rooms & Guests</label>
+            <div className="booking-input rooms-child-outer-block col-12 col-md-2 position-relative">
+              {/* <label htmlFor="rooms-childs-input">Rooms & Guests</label> */}
               <input
                 type="text"
                 id="rooms-childs-input"
@@ -326,6 +338,10 @@ export default function BookNowForm() {
               )}
             </div>
 
+             <div className="booking-input datepicker-outer col-12 col-md-1 promo-code-input">
+                <input type="text" className="rooms-childs-input form-control" placeholder="Promo Code" />   
+             </div>
+
             {/* Submit */}
             <div className="col-12 col-md-1 ps-0 d-flex align-items-end">
               <button className="yellow-btn btn w-100" onClick={handleCheckAvailability} disabled={loading}>
@@ -348,8 +364,8 @@ export default function BookNowForm() {
           id="book-now-header"
         >
           {isFormOpen ? <X size={20} color="white" /> :
-           <Search size={20} color="white" />
-          // <span>Book Now</span>
+           <span>Book Now</span>
+          // <Search size={20} color="white" />
            }
         </button>
       </div>

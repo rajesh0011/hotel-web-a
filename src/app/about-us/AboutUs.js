@@ -20,7 +20,9 @@ const AboutUs = () => {
     const [isOpen, setOpen] = useState(false);
     const [showFilterBar, setShowFilterBar] = useState(false);
     const filterBarRef = useRef(null);
-  
+  const [isOpenFilterBar, openFilterBar] = useState(false);
+  const [staahPropertyId, setStaahPropertyId] = useState(null);
+  const [cityDetails, setCityDetails] = useState(null);
         async function postBookingWidged(rooms,mapping, isClose,ctaName,selectedPropertyId) {
          const resp = await getUserInfo();
            const sessionId = sessionStorage?.getItem("sessionId");
@@ -46,17 +48,17 @@ const AboutUs = () => {
            isCartClick: "N",
            isClose: isClose ? "Y" : "N",
           }
-             const response = await fetch(
-               `${process.env.NEXT_PUBLIC_CMS_BASE_URL}/Api/tracker/BookingWidged`,
-               {
-                 method: "POST",
-                 headers: {
-                   "Content-Type": "application/json",
-                 },
-                 body: JSON.stringify( payload ),
-               }
-             );
-             const res = await response?.json();
+            //  const response = await fetch(
+            //    `${process.env.NEXT_PUBLIC_CMS_BASE_URL}/Api/tracker/BookingWidged`,
+            //    {
+            //      method: "POST",
+            //      headers: {
+            //        "Content-Type": "application/json",
+            //      },
+            //      body: JSON.stringify( payload ),
+            //    }
+            //  );
+            //  const res = await response?.json();
        
            //console.log("res BookingWidged",res);
          }
@@ -68,9 +70,31 @@ const handleBookNowClick = async () => {
     setShowFilterBar(!showFilterBar);
   };
 
+  const handleBookNow = async (prperty) => {
+    if(isOpen){
+      postBookingWidged("","", false,"Widget Open");
+    }else{
+      postBookingWidged("","", true,"Widget Closed");
+    }
+    
+    setOpen(!isOpen);
+    setShowFilterBar(!showFilterBar);
+    const label = prperty?.cityName;
+    const value = prperty?.cityId;
+    const property_Id = prperty?.staahPropertyId;
+    setCityDetails({ label, value, property_Id });
+    setStaahPropertyId(prperty?.staahPropertyId);
+    
+    if (filterBarRef.current) {
+      filterBarRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+      const firstInput = filterBarRef.current.querySelector("input, select, button");
+      if (firstInput) firstInput.focus();
+    }
+  };
   return (
     <>
-    <MainHeader onClick={handleBookNowClick}></MainHeader>
+    {/* <MainHeader onClick={handleBookNowClick}></MainHeader> */}
+    <MainHeader onClick={handleBookNow}></MainHeader>
 
     
     <section className="hero-section-inner" ref={filterBarRef}>
@@ -81,7 +105,7 @@ const handleBookNowClick = async () => {
             Your browser does not support the video tag.
         </video>
         {/* <Image src="/img/popular-1.jpeg" alt="About Us Hero Image" height={500} width={1500} className="w-100 inner-hero-image" /> */}
-        <div className="inner-hero-content d-none">
+        {/* <div className="inner-hero-content d-none">
             <div className="text-center">
                 <Link href="#" onClick={(e) => {
               e.preventDefault();
@@ -90,29 +114,62 @@ const handleBookNowClick = async () => {
           {isOpen ? <X /> :<Search />}
         </Link>
             </div>
-        </div>
-                
-       {showFilterBar && ReactDOM.createPortal(
-        <section className="filter-bar-hotels-cin">
-         <BookingEngineProvider>
-           <FilterBar
-             selectedProperty={0}
-             openBookingBar={showFilterBar}
-             onClose={() => {
-               setShowFilterBar(false);
-               setOpen(false);
-             }}
-           />
-         </BookingEngineProvider>
-        </section>,
-          document.body
-        )}
+        </div> */}
     </section>
 
-    <section className="booking-form-section booking-form-inner-property-pages">
+    {/* <section className="booking-form-section booking-form-inner-property-pages">
                         <BookNowForm />
-                      </section>
+                      </section> */}
         
+    <section className="booking-form-section">
+        <div
+          className={`booking-search-bar-btn-div home-page-class`}
+          style={{ zIndex: 10 }}
+        >
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              handleBookNow();
+            }}
+            className="booking-toggle-btn"
+          >
+            {isOpen ? <X size={18} color="black" /> : "Book Now"}
+          </button>
+        </div>
+        {isOpenFilterBar && ReactDOM.createPortal (
+          <BookingEngineProvider>
+            <FilterBar
+              contentData={contentData}
+              tokenKey={tokenKey}
+              selectedProperty={0}
+              openBookingBar={isOpenFilterBar}
+              onClose={() => {
+                openFilterBar(false);
+                setOpen(false);
+              }}
+            />
+          </BookingEngineProvider>,
+          document.body
+        )}
+
+        {showFilterBar && ReactDOM.createPortal (
+          <BookingEngineProvider>
+            <FilterBar
+              selectedProperty={parseInt(staahPropertyId)}
+              cityDetails={cityDetails}
+              openBookingBar={showFilterBar}
+              onClose={(isReload) => {
+                setOpen(false);
+                setShowFilterBar(false);
+                if (isReload) {
+                window.location.reload();
+              }
+              }}
+            />
+          </BookingEngineProvider>,
+          document.body
+        )}
+      </section>
             <section className="about-us-page section-padding">
                 <div className="container">
                     <div className='heading-style'>

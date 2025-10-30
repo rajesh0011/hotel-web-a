@@ -1,3 +1,7 @@
+@import "tailwindcss";
+/* @tailwind base;
+@tailwind components;
+@tailwind utilities; */
 :root {
   --red: #803525;
   --lred:#f6eeeb;
@@ -7,7 +11,7 @@
   --black: #000;
   --grey: #747474;
   --beige:#fefeed;
-  --font-heading: var(--font-elsie);
+  --font-heading: var(--font-montserrat);
   --font-body: var(--font-montserrat);
    --primary-radius: 15px;
   --primary-shadow: #63636333 0px 2px 8px 0px;
@@ -69,6 +73,15 @@ h6 {
   }
 }
 
+.modal {
+	z-index: 999999999999999999999 !important;
+}
+.home-banner-videeo-desk {
+  display: block;
+}
+.home-banner-videeo-mob {
+  display: none;
+}
 * {
   box-sizing: border-box;
   padding: 0;
@@ -82,7 +95,7 @@ a {
   text-decoration: none;
 }
 p{
-  font-size: 14px!important;
+  font-size: 15px!important;
 }
 .f-12-new{
   font-size: 12px!important
@@ -98,7 +111,7 @@ p{
 .global-heading{
     color: var(--red)!important;
     text-transform: uppercase!important;
-    font-size: 30px !important;
+    font-size: 23px !important;
     font-weight: 600 !important;
 }
 .section-padding{
@@ -220,7 +233,7 @@ font-weight: 300;
   top:90px!important;
 }
 .booking-form-inner-property-pages .header_booking_engine {
-    background: #fff7ed;
+    background: #fff;
 }
 
 .explore-more-btn {
@@ -234,7 +247,7 @@ font-weight: 300;
     color: var(--black);
     border: 1px solid var(--black);
 }
-.book-now-btn {
+/* .book-now-btn {
     font-size: 12px;
     padding: 5px 10px;
     border-radius: 0;
@@ -243,9 +256,8 @@ font-weight: 300;
     text-transform: uppercase;
     background-color: var(--black);
     color: var(--white);
-    border: 1px solid var(--black);
-    
-}
+    border: 1px solid var(--black); 
+} */
 input.form-control,
 input.form-control:focus{
 box-shadow: none!important;
@@ -276,9 +288,91 @@ text-align: justify;
 font-size: 14px;
 }
 
+.read-more-btn{
+    color: #000;
+    text-decoration: underline !important;
+}
+
+.DiscoverSectionForZone .nav-tabs{
+    border: none;
+}
+
+
+.DiscoverSectionForZone .nav-tabs .nav-item{
+    margin-right: 10px;
+}
+
+
+.box-btn.book-now {
+    background: #803525 !important;
+    color: #fff !important;
+    font-size: 10px;
+    padding: 4px 10px !important;
+    margin-left: 10px;
+    font-weight: 600;
+}
+
+.box-btn.know-more {
+    background: white !important;
+    border: 1px solid #ccc !important;
+    font-size: 11px;
+    padding: 5px 10px;
+    font-weight: 600;
+    color: #000;
+}
+
+button.box-btn.book-now {
+    font-size: 10px !important;
+    padding: 4px 10px !important;
+    line-height: 1.5rem;
+    border: none;
+}
+
+.pushed-box-content{
+  text-align: center;
+}
+
+.footer-section *{
+  text-align: center;
+}
+
+.social-icons{
+  border: 1px solid red;
+}
+
+.footer-bottom{
+  font-size: 12px;
+}
+
+.innerPageShadow  .login-menu-header, .innerPageShadow .toggle-image-s{
+  color: #000 !important;
+}
+
+.swiper-pagination {
+  display: block;
+}
+
+
+
+
+
+
+
+
+@media (min-width: 992px) {
+  .swiper-pagination {
+    display: none !important;
+  }
+}
+
+
+
 @media (max-width:767px){
   .global-heading {
-    font-size: 25px !important;
+    font-size: 21px !important;
+}
+.main-parent-slider-experience .experience-category-title {
+    font-size: 20px!important;
 }
 .swiper-slide.swiper-slide-active .child-slider-content {
     opacity: 1!important;
@@ -315,13 +409,37 @@ font-size: 14px;
     margin-top: 1rem!important;
 }
 
+.cursor-hideMobile .parent-control-button{
+  display: none;
+}
+
+.cursor-hideMobile .swiper-pagination {
+    bottom: -2px !important;
+}
+
+.no-shadowMobile{
+  box-shadow: none !important;
+}
+
+.corporate-offers-section .offer-card {
+    margin-bottom: 25px;
+}
+
+.login-menu-header {
+    color: #000 !important;
+}
+
+.sidebar-toggle .toggle-image-s {
+   color: #000000;
+}
+
 }
 
 @media (min-width: 768px) {
 
 	.pushed-image {
-		height: 70vh;
-		width: 60% !important;
+		height: 60vh;
+		width: 100% !important;
 	}
 
 	.pushed-content {
@@ -442,4 +560,14 @@ color:#fff;
 }
 
 
+}
+
+@media (max-width:767px){
+  .home-banner-videeo-desk {
+  display: none;
+}
+.home-banner-videeo-mob {
+  display: block;
+  /* height:100vh!important; */
+}
 }

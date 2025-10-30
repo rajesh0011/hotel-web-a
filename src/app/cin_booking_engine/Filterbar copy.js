@@ -1,4 +1,5 @@
 "use client";
+import axios from "axios";
 import { useBookingEngineContext } from "../cin_context/BookingEngineContext";
 import * as ReactDOM from "react-dom";
 import React, { useState, useRef, useEffect } from "react";
@@ -7,8 +8,13 @@ import toast, { Toaster } from "react-hot-toast";
 import Image from "next/image";
 import "flatpickr/dist/themes/material_green.css";
 import "bootstrap/dist/css/bootstrap.min.css";
-import { Tags } from 'lucide-react';
+import { X, Edit, Pencil, User2Icon } from 'lucide-react';
+import { Check } from "lucide-react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faUser } from "@fortawesome/free-solid-svg-icons";
+import { Tags } from "lucide-react";
+
+
 import {
   faSearch,
   faPlane,
@@ -18,11 +24,13 @@ import {
   faXmark,
   faTrain,
   faMapMarked,
+  faPlus
 } from "@fortawesome/free-solid-svg-icons";
 import RoomManager from "./RoomManager";
 
 import DateRangePicker from "./Flatpicker";
 import WizardSidebar from "./PaymentGateway/WizardForm";
+import "./booking.css";
 import { createSignature } from "../../utilities/signature";
 import { getUserInfo } from "../../utilities/userInfo";
 //import { useForm } from "app/booking-engine-widget/FormContext";
@@ -36,6 +44,10 @@ import "swiper/css/navigation";
 import { Map, MapIcon, Search } from "lucide-react";
 //import { useSearchParams } from "next/navigation";
 import Select from "react-select";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import CombinedWizardSidebar from "./PaymentGateway/CombinedWizard";
+import { useForm } from "../../app/booking-engine-widget/FormContext";
+//import { waitUntilRefTrue } from "../common/waitUntilRefTrue";
 const dummyImage = "/no_image.jpg";
 const baseurl = `#`;
 //import { createPortal } from "react-dom";
@@ -92,9 +104,22 @@ const FilterBar = ({
     selectedRooms,isTokenKey, setTokenKey,
         cancellationPolicyPackage,
         setCancellationPolicyPackage,
+        isDateChanged, setIsDateChanged,
+        offerTagIndex, setOfferTagIndex,
+       storedIndex, setStoredIndex,
+    totalTax, setTotalTax,
+    isStayStepOpen, setIsStayStepOpen,
+    totalRoomsBasePrice, setTotalRoomsBasePrice
   } = useBookingEngineContext();
+const { cityDropDown, properties } = useForm();
+  const totalAdults = selectedRooms.reduce((sum, room) => sum + room.adults, 0);
+  const totalChildren = selectedRooms.reduce(
+    (sum, room) => sum + room.children,
+    0
+  );
+  const totalRooms = selectedRooms.length;
 
-  //const { promoCodeContext, setPromoCodeContext } = useBook();
+const containerPackRef = useRef(null);
   const [filters, setFilters] = useState({
     offer: "",
     query: "",
@@ -107,6 +132,7 @@ const FilterBar = ({
   const [promoCode, setPromoCode] = useState("");
   const [destination, setDestination] = useState("");
   const [filteredProperties, setFilteredProperties] = useState([]);
+  //const [contentProperties, setContentProperties] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
   const [isVisible, setIsVisible] = useState(true);
   const [hasSearched, setHasSearched] = useState(false);
@@ -120,6 +146,7 @@ const FilterBar = ({
   const [isHandleSearched, setHandleSearched] = useState(false);
   const [isCloseWizard, setCloseWizard] = useState(false);
   const inputRef = useRef(null);
+  
   //const { isFormOpen, setIsFormOpen } = useForm();
   const [isOpenSignUp, setIsOpenSignUp] = useState(false);
   const [isOpenLogin, setIsOpenLogin] = useState(false);
@@ -128,12 +155,24 @@ const FilterBar = ({
   const [isRateFetched, setIsRateFetched] = useState(false);
   const [dropUp, setDropUp] = useState(false);
   const [propertyDropDown, setPropertyDropDown] = useState([]);
-  const [cityDropDown, setCityDropDown] = useState([]);
+  //const [cityDropDown, setCityDropDown] = useState([]);
   const [cityName, setCityName] = useState(null);
   const [selectedHotelName, setSelectedHotelName] = useState([]);
   const [cmsPropertyId, setCMSPropertyId] = useState(null);
   const [isHandleBookNow, setHandleBookNow] = useState(false);
   const [newClassRoom, setNewClassRoom] = useState(false);
+  const [initialTime, setInitialTime] = useState(null);
+
+  const [showBookingLoader, setShowBookingLoader] = useState(false);
+  // let roomsData = ""; 
+  // let mappingData =""; 
+  // let isCloseData = false;
+  // let ctaNameData = ""; 
+  // let apiNameData = "";  
+  // let apiUrlData = "";  
+  // let apiStatusData = ""; 
+  // let apiErrorCodeData = "";  
+  // let apiMessageData = "";
 //  const filterBarRef = useRef(null);
 //  const [packageCancellationPolicy, setPackageCancellationPolicy] = useState([]);
   const [userDetails, setUserDetails] = useState({
@@ -167,9 +206,147 @@ const FilterBar = ({
   const [brandMap, setBrandMap] = useState({});
   const [propertyPageUrl, setpropertyPageUrl] = useState(null);
   const [isLoaderOverlay, setLoaderOverlay] = useState(false);
+  const [noProperty, setNoProperty] = useState(false);
+  const [selectedPropertyBookingId, setSelectedPropertyBookingId] = useState(false);
+   const [isPromoCodeChanged, setPromoCodeChanged] = useState(false);
+   const [isEditClicked, setIsEditClicked] = useState(false);
+  const [isCallWizard, isSetCallWizard] = useState(false);
+  const [isSelectLoader, setSelectLoader] = useState(false);
   
-  const [sessionId, setSessionId] = useState(null);
+  const [showFinalCart, setShowFinalCart] = useState(0);
+  const [availableRooms, setAvailableRooms] = useState(0);
+  const [rateGuid, setRateGuid] = useState(0);
+  const [promoError, setPromoError] = useState("");
+  const [toastError, setToastError] = useState("");
+  const [toastMessages, setToastMessages] = useState([]);
+  const propertyValueRef = useRef(null);
+  const contentProperties = useRef(null);
+  const rateDataRef = useRef(null);
+  const bothReadyRef = useRef(false);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const replaceKeys = ["book-now", "select-package", "pay-now", "search"];
+  const collectionProperties = [52676, 53383, 54638, 53537, 24046, 21604, 
+    23394, 21758, 26634, 23795, 7205, 54547, 7840, 55899];
+  
+  const [isTimeOutInventory, setTimeOutInventory] = useState(false);
+  //const [isTimeOutContent, setTimeOutContent] = useState(false);
+  
+  const isTimeOutContent = useRef(false);
+   function getTwoUniqueRandoms(min, max) {
+  const num1 = Math.floor(Math.random() * (max - min + 1)) + min;
+  let num2;
+  do {
+    num2 = Math.floor(Math.random() * (max - min + 1)) + min;
+  } while (num2 === num1);
+  return [num1, num2];
+}
 
+const [number1, number2] = getTwoUniqueRandoms(3, 10);
+
+function replaceAction(newAction) {
+    const params = new URLSearchParams(searchParams.toString());
+    let replaced = false;
+
+    // remove any existing action keys
+    replaceKeys.forEach(key => {
+      if (params.has(key)) {
+        params.delete(key);
+        replaced = true;
+      }
+    });
+
+    // if no params OR replaced → add the new action
+    if ([...params.keys()].length === 0 || replaced) {
+      params.set(newAction, "");
+    } else if (!params.has(newAction)) {
+      // if other queries exist but no action → add it
+      params.set(newAction, "");
+    }
+
+    // cleanup so `action=` becomes just `action`
+    const query = params.toString().replace(/=(&|$)/g, "$1");
+
+    router.replace(`${pathname}?${query}`);
+  }
+  const handleSearchTh = (property) => {
+
+  const baseUrl = "https://www.swiftbook.io/inst/#home";
+ const fixp = "MzU1NEBXZWIyNQ==";
+    function buildRedirectUrl({
+      propertyId,
+      checkIn,
+      checkOut,
+      currency,
+      rooms,
+      source,
+      utm
+    }) {
+      const params = new URLSearchParams({
+        propertyId,
+        JDRN: "Y",
+        checkIn,
+        checkOut,
+        currency,
+        noofrooms: rooms.length.toString(),
+        source,
+        utm_source: utm.source,
+        utm_medium: utm.medium,
+        utm_campaign: utm.campaign,
+        m_currency: currency,
+       //fixp: property ? "" : fixp
+        fixp
+      });
+    
+      // add adults/children for each room
+      rooms.forEach((room, index) => {
+        params.append(`adult${index}`, room.adults);
+        params.append(`child${index}`, room.children);
+      });
+    
+      return `${baseUrl}?${params.toString()}`;
+    }
+    
+    if(selectedRoom?.length >= 1){
+      const rooms = selectedRoom.map(room => ({
+        adults: room.adults,   
+        children: room.children
+      }));
+      const url2Rooms = buildRedirectUrl({
+      propertyId: selectedPropertyBookingId,
+      checkIn: fromDate,
+      checkOut: toDate,
+      currency: "INR",
+      source: "localuniversal",
+      utm: { source: "GoogleListing", medium: "free", campaign: "GoogleListing" },
+      rooms,
+      //fixp: property ? "" : fixp
+      fixp
+    });
+    if(selectedPropertyBookingId > 0){
+    window.location.href = url2Rooms;
+    hideBookingEngine();
+    }
+    else{
+      setNoProperty(true);
+    }
+    }
+    }
+  //const [sessionId, setSessionId] = useState(null);
+  useEffect(() => {
+  if (toastMessages.length > 0) {
+    toast.error(toastMessages?.[0], { position: "top-right", duration: 3000 });
+    setToastMessages([]); // clear after showing
+  }
+}, [toastMessages]);
+useEffect(() => {
+    if (window.location.hash) {
+      router.replace(window.location.pathname);
+      // keeps query params intact if needed
+      // router.replace(window.location.pathname + window.location.search);
+    }
+  }, [router]);
   useEffect(() => {
     function checkScreenSize() {
       setIsSmallScreen(window.innerWidth < 768); // Change 768 to your breakpoint
@@ -184,8 +361,7 @@ const FilterBar = ({
     // Cleanup listener on unmount
     return () => window.removeEventListener('resize', checkScreenSize);
   }, []);
-  
- // const [defaultOffer, setDefaultOffer] = useState(null);
+
   const openGallery = (idx, category) => {
     setActiveCategory(idx);
     setGalleryCategory(category);
@@ -197,7 +373,7 @@ const FilterBar = ({
   }
 
   const formatDate = (date) => {
-    if (!date) return "N/A";
+    if (!date) return;
     return new Date(date).toISOString().split("T")[0];
   };
   const getDateDifferenceInDays = (start, end) => {
@@ -210,105 +386,493 @@ const FilterBar = ({
   const fromDate = formatDate(selectedStartDate);
   const toDate = formatDate(selectedEndDate);
   //const promoCode = "";
-  const numberOfNights = getDateDifferenceInDays(fromDate, toDate);
+  
+const [numberOfNights,setNumberOfNights] = useState(getDateDifferenceInDays(fromDate, toDate));
 
   useEffect(() => {
     if (openBookingBar) {
-      //setLoaderOverlay(true);
       showBookingEngine();
     } else {
       hideBookingEngine();
     }
   }, [openBookingBar]);
 
-   useEffect(() => {
-     if (!isLoaderOverlay && hasSearched) {
-       postBookingWidged();
-     } 
-   }, [isLoaderOverlay]);
-  useEffect(() => {
-    if (selectedProperty > 0 && propertyData) {
-      handleSuggestionClick(propertyData);
-    }
-  }, [propertyData]);
-  
-  // useEffect(() => {
-  //   if (filteredProperties.length > 0) {
-  //     const propertyImages =
-  //       filteredProperties?.[0]?.PropertyData?.Images || [];
-  //     const RoomData = filteredProperties?.[0]?.RoomData || [];
-  //     const categoryImages = {
-  //       hotel: propertyImages.map((img) => ({ src: img, title: "Hotel" })),
-  //       rooms: RoomData.map((room) => ({
-  //         src: room?.Images?.[0]
-  //           ? room?.Images?.[0]
-  //           : "/booking-engine-imgs/images/offer-pp.jpg",
-  //         title: room?.RoomName ? room?.RoomName : "Room",
-  //       })),
-  //       // rooms: [
-  //       //   { src: "/booking-engine-imgs/images/mountain-view.jpg", title: "Deluxe Room" },
-  //       //   { src: "/booking-engine-imgs/images/offer-pp.jpg", title: "Superior Room" },
-  //       // ],
-  //       facilities: [
-  //         {
-  //           src: "/booking-engine-imgs/images/mountain-view.jpg",
-  //           title: "Fitness Centre (GYM)",
-  //         },
-  //         {
-  //           src: "/booking-engine-imgs/images/offer-pp.jpg",
-  //           title: "EV Charging",
-  //         },
-  //       ],
-  //       events: [
-  //         {
-  //           src: "/booking-engine-imgs/images/mountain-view.jpg",
-  //           title: "Event Image 1",
-  //         },
-  //         {
-  //           src: "/booking-engine-imgs/images/offer-pp.jpg",
-  //           title: "Event Image 2",
-  //         },
-  //       ],
-  //       restaurant: [
-  //         {
-  //           src: "/booking-engine-imgs/images/mountain-view.jpg",
-  //           title: "Restaurant",
-  //         },
-  //         {
-  //           src: "/booking-engine-imgs/images/offer-pp.jpg",
-  //           title: "Restaurant",
-  //         },
-  //       ],
-  //     };
-  //     setCategoryImages(categoryImages);
-  //     setCategories(Object.keys(categoryImages));
-  //     // const categories = Object.keys(categoryImages);
-  //   }
-  // }, [filteredProperties]);
+useEffect(() => {
+  if (!availableRooms || availableRooms.length === 0) return;
 
-  // const fetchPropertyImages = async (property_Id) => {
-  //   try {
-  //     const response = await fetch(
-  //       `https://clarkscms.cinuniverse.com/Api/property/GetPropertyByFilter?propertyId=${parseInt(
-  //         property_Id
-  //       )}`,
-  //       {
-  //         method: "GET",
-  //         headers: {
-  //           "Content-Type": "application/json",
-  //         },
-  //       }
-  //     );
-  //     const res = await response.json();
-  //     setPropertyImages(res.data);
-  //   } catch (error) {
-  //     console.error("Error fetching data:", error);
-  //   }
-  // };
+  const calculateFinalCart = async () => {
+const roomWithMinRate = availableRooms?.reduce((lowest, current) => {
+  const ratePlan = current?.RatePlans?.[0];
+  if (!ratePlan) return lowest;
+
+  const firstRateKey = Object.keys(ratePlan?.Rates || {})[0];
+  const currentRate = parseFloat(
+    ratePlan?.Rates?.[firstRateKey]?.OBP?.["1"]?.RateAfterTax || "0"
+  );
+
+  if (!lowest) {
+    return { room: current, rate: currentRate };
+  }
+
+  return currentRate < lowest.rate
+    ? { room: current, rate: currentRate }
+    : lowest;
+}, null);
+
+    const calculateNumberOfDays = () => {
+      if (!selectedStartDate || !selectedEndDate) return 1;
+      const start = new Date(selectedStartDate);
+      const end = new Date(selectedEndDate);
+      const diffTime = Math.abs(end - start);
+      return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    };
+
+    const numberOfDays = calculateNumberOfDays();
+
+    const calculateBasePrice = () => {
+      const totalRoomRate = (() => {
+        if (!selectedRoom || selectedRoom.length === 0) return 0;
+
+        const rates = selectedRoom.map((r) => parseFloat(r?.packageRate) || null);
+        const filledRates = [];
+        let lastKnownRate = null;
+
+        for (let i = 0; i < rates.length; i++) {
+          let currentRate = rates[i];
+          if (currentRate) {
+            lastKnownRate = currentRate;
+            filledRates.push(currentRate);
+          } else {
+            if (i === 0) {
+              const firstRate = rates.find((r) => r !== null);
+              filledRates.push(firstRate || 0);
+              lastKnownRate = firstRate || 0;
+            } else {
+              filledRates.push(lastKnownRate || 0);
+            }
+          }
+        }
+
+        let sum = filledRates.reduce((sum, r) => sum + r, 0);
+        if (sum === 0 && roomWithMinRate?.rate) {
+          sum = roomWithMinRate.rate * selectedRoom.length;
+        }
+        return sum;
+      })();
+
+      return totalRoomRate * numberOfDays;
+    };
+
+    const calculateTotalWithTax = () => {
+      const basePrice = calculateBasePrice();
+      return totalTax + (basePrice || 0);
+    };
+
+    const finalAmount = calculateTotalWithTax();
+    setShowFinalCart(finalAmount);
+  };
+
+  calculateFinalCart();
+}, [availableRooms, selectedRoom, selectedStartDate, selectedEndDate, totalTax]);
+
+const checkIfBothReady = async (propertyId,guid,response, data ) =>{
+   if(propertyId == "ECONNABORTED"){
+  
+       isTimeOutContent.current = true;
+   }
+  let roomsData = "";
+  let mappingData = "";
+  let isCloseData = false;
+  let apiStatusData = "";
+  let apiErrorCodeData = "";
+  let apiMessageData = guid;
+  let apiNameData = "rate";
+  let apiUrlData = `${process.env.NEXT_PUBLIC_STAAH_BASE_URL}/api/cin-api/rate`;
+  if (contentProperties.current && rateDataRef.current && !bothReadyRef.current) {
+        bothReadyRef.current = true;
+     // rateDataRef.current = product?.Rooms || [];
+     // const rooms = rateDataRef.current?.Rooms || [];
+  const dayRate = rateDataRef.current?.map((room) => {
+  const updatedRatePlans = (room?.RatePlans || []).map((plan) => {
+    const updatedRates = {};
+
+    for (const [dateKey, rateValue] of Object.entries(plan.Rates || {})) {
+  const updatedOBP = [];
+
+  // Loop through each selectedRoom for this room
+  for (const sel of selectedRoom || []) {
+    if (sel.roomId === room.RoomId) continue; // only process same room
+
+    // find mapping for this rateId
+    const mapping = contentProperties.current?.[0]?.Mapping?.find(
+      (m) => m.RateId === plan.RateId
+    );
+    const adults = sel.adults || 0;
+    const children = sel.children || 0;
+    const applicableAdult = mapping?.ApplicableAdult || 0;
+    const applicableChild = mapping?.ApplicableChild || 0;
+    const applicableGuest = mapping?.ApplicableGuest || 0;
+    const maxAdult = mapping?.MaxAdult || 0;
+
+    let adjustedAdults = adults;
+    let adjustedChildren = children;
+
+    // Step 1: Adjust children to meet minimum adults
+    if (adults < applicableAdult && children > 0) {
+      const neededAdults = applicableAdult - adults;
+      const childrenToAdults = Math.min(neededAdults, children);
+      adjustedAdults += childrenToAdults;
+      adjustedChildren -= childrenToAdults;
+    }
+
+    // Step 2: Extra children beyond applicableChild & guest limit
+    const extraChildren =
+      adjustedChildren > applicableChild
+        ? Math.min(
+            adjustedChildren - applicableChild,
+            Math.max(0, adjustedAdults + adjustedChildren - applicableGuest)
+          )
+        : 0;
+
+    // Step 3: Extra adults beyond maxAdult
+    const extraAdults = Math.max(0, adults - maxAdult);
+
+    // Step 4: Compute base + extra rates + taxes
+    // let guestRate ={};
+    // //guestRate = rateValue.OBP?.[adults.toString()] ||rateValue.OBP?.[(rateValue.OBP?.length -1).toString()] || {};
+    // if( adults < rateValue.OBP?.length){
+
+    // guestRate = rateValue.OBP?.[adults.toString()] || {};
+    // }
+    // else{
+      
+    // // guestRate = rateValue?.OBP?.[(rateValue.OBP?.length -1).toString()] || {};
+    // guestRate = rateValue?.OBP?.[Object.keys(rateValue.OBP || {}).pop()] || {};
+    // }
+    let guestRate = {};
+const obpKeys = Object.keys(rateValue.OBP || {});
+const obpLength = obpKeys.length;
+
+if (adults < obpLength) {
+  guestRate = rateValue.OBP?.[adults.toString()] || {};
+} else {
+  guestRate = rateValue.OBP?.[obpKeys[obpLength - 1]] || {};
+}
+    const baseRate = parseFloat(guestRate?.RateBeforeTax || 0);
+    const perChildRate = parseFloat(rateValue?.ExtraChildRate?.RateBeforeTax || 0);
+    //const perAdultExtraRate = parseFloat(rateValue?.ExtraAdultRate?.RateBeforeTax || 0);
+
+    const guestTaxTotal = Array.isArray(guestRate?.Tax)
+      ? guestRate.Tax.reduce((s, t) => s + parseFloat(t?.Amount || 0), 0)
+      : 0;
+
+    // const extraChildTaxTotal = extraChildren
+    //   ? (rateValue?.ExtraChildRate?.Tax || []).reduce((s, t) => s + parseFloat(t?.Amount || 0), 0) * extraChildren
+    //   : 0;
+    let extraChildTaxTotal = 0
+    let obp = extraChildren >= 1 ? rateValue?.ExtraChildRate?.Tax || [] : []
+     if (extraChildren >= 1 && obp.length == 0) {
+        const price = (parseFloat(rateValue?.ExtraChildRate?.RateBeforeTax * parseInt(extraChildren)) + parseFloat(baseRate));
+         
+          extraChildTaxTotal = price >= 7500 ? Math.round(price * 0.18) : Math.round(price * 0.05)
+      }
+
+    const totalRate =
+      baseRate +
+      perChildRate * extraChildren +
+      (extraChildTaxTotal == 0 ? guestTaxTotal : 0) +
+      extraChildTaxTotal;
+    const totalMemberRate =
+      baseRate +
+      perChildRate * extraChildren +
+      (extraChildTaxTotal == 0 ? guestTaxTotal : 0) +
+      extraChildTaxTotal;
+
+    // Push to array instead of object
+    updatedOBP.push({
+      ...rateValue.OBP,
+      rateId: sel.rateId,
+      TotalRate: Math.round(totalRate).toString(),
+      TotalMemberRate: Math.round(totalMemberRate * 0.2).toString(),
+    });
+  }
+
+  updatedRates[dateKey] = {
+    ...rateValue,
+    OBP: updatedOBP, // ✅ Now it's an array
+    ExtraAdultRate: rateValue?.ExtraAdultRate || {},
+    ExtraChildRate: rateValue?.ExtraChildRate || {},
+  };
+}
+
+
+    return {
+      ...plan,
+      Rates: updatedRates,
+    };
+  });
+
+  // Compute room-level total by summing TotalRate from all selectedRoom entries
+  const roomLevelTotal = (selectedRoom || [])
+    .filter((s) => s.roomId === room.RoomId)
+    .reduce(
+      (sum, s) =>
+        sum +
+        parseFloat(
+          updatedRatePlans[0].Rates?.[Object.keys(updatedRatePlans[0].Rates)[0]]?.OBP?.[s.rateId]?.TotalRate || 0
+        ),
+      0
+    );
+
+  return {
+    RoomId: room?.RoomId,
+    MinInventory: room?.MinInventory ?? 0,
+    RestrictionTitle: room?.RestrictionTitle ?? "",
+    RateBeforeTax:
+      room?.RatePlans?.[0]?.Rates?.[Object.keys(room?.RatePlans?.[0]?.Rates || {})[0]]?.OBP?.["1"]?.RateBeforeTax || "0",
+    RateAfterTax:
+      room?.RatePlans?.[0]?.Rates?.[Object.keys(room?.RatePlans?.[0]?.Rates || {})[0]]?.OBP?.["1"]?.RateAfterTax || "0",
+    RatePlans: updatedRatePlans,
+    TotalRate: Math.round(roomLevelTotal).toString(),
+  };
+});
+
+      if (contentProperties.current?.[0]?.RoomData && dayRate?.length > 0) {
+        const isSoldOut = dayRate.every((rate) => rate.MinInventory == 0);
+
+        if (isSoldOut) {
+          apiStatusData = data?.message;
+          apiErrorCodeData = data?.TrackingID;
+          apiMessageData = "Sold Out";
+          setTimeout(() => {
+            postBookingWidged(
+              propertyId,
+              roomsData,
+              mappingData,
+              isCloseData,
+              "Sold Out",
+              apiNameData,
+              apiUrlData,
+              apiStatusData,
+              apiErrorCodeData,
+              guid
+            );
+          }, 200);
+        }
+
+        contentProperties.current[0].RoomData =
+          contentProperties.current?.[0]?.RoomData?.map((room) => {
+            const matched = dayRate.find((r) => r.RoomId == room?.RoomId);
+            setCancellationPolicyPackage(dayRate?.[0]?.RatePlans);
+            return {
+              ...room,
+              RackRate: matched?.RateBeforeTax
+                ? parseFloat(matched?.RateBeforeTax)
+                : room?.RackRate,
+              MinInventory: matched?.MinInventory ?? 0,
+              RestrictionTitle: matched?.RestrictionTitle ?? "",
+              // ensure we assign the updated RatePlans (with TotalRate inside)
+              RatePlans: matched?.RatePlans || [],
+              TotalRate: matched?.TotalRate ?? 0,
+            };
+          });
+
+        if (
+          parseInt(contentProperties.current?.[0]?.PropertyData?.PropertyId) ===
+          parseInt(propertyId)
+        ) {
+          setFilteredProperties(contentProperties.current);
+          handleBookNow(
+            contentProperties.current?.[0]?.PropertyData?.PropertyId,
+            contentProperties.current?.[0]?.PropertyData?.PropertyName,
+            contentProperties.current?.[0]?.PropertyData?.Address.Phone
+          );
+
+          const availableRooms =
+            contentProperties.current?.[0]?.RoomData?.filter(
+              (room) => room.MinInventory > 0
+            );
+
+          apiStatusData = response?.status;
+          apiErrorCodeData = response?.status;
+          apiMessageData = guid;
+
+          setTimeout(() => {
+            setAvailableRooms(availableRooms);
+          }, 200);
+        } else {
+          
+          setFilteredProperties([]);
+          setTimeout(() => {
+            postBookingWidged(
+              propertyId,
+              roomsData,
+              mappingData,
+              isCloseData,
+              "No rate plan found",
+              apiNameData,
+              apiUrlData,
+              "No rate plan found",
+              "No rate plan found",
+              guid
+            );
+          }, 200);
+        }
+      } else {
+        setTimeout(() => {
+          postBookingWidged(
+            propertyId,
+            roomsData,
+            mappingData,
+            isCloseData,
+            "No rate plan found",
+            apiNameData,
+            apiUrlData,
+            "No rate plan found",
+            "No rate plan found",
+            guid
+          );
+        }, 200);
+        setFilteredProperties([]);
+      }
+    }
+}
+  const fetchContentApi = async (value) => {
+  let roomsData = ""; 
+  let mappingData =""; 
+  let isCloseData = false;
+  let apiStatusData = ""; 
+  let apiErrorCodeData = "";  
+  let apiMessageData = "";
+  let ctaNameData = ""; 
+  let apiNameData = "GetRoomsRates";  
+  let propId = value; 
+  let apiUrlData = `${process.env.NEXT_PUBLIC_CMS_BASE_URL_ROOM_RATES}/staah/rates/GetRoomsRates?RequestType=bedata&PropertyId=${value}&Product=yes&CheckInDate=${fromDate}&CheckOutDate=${toDate}&PromoCode=${promoCodeContext || encodeBase64(defaultOffer)}`;  
+   if(!value){
+   // setFilteredProperties([]);
+   if(parseInt(selectedProperty) > 0 || parseInt(selectedPropertyId) > 0) 
+  // if(parseInt(selectedPropertyId) > 0) 
+    // {
+    //   setIsClassAddedBook(true);
+    //   setIsRateFetched(true);
+    // }
+      setTimeout(() => {
+      postBookingWidged("0",roomsData,mappingData, isCloseData,"Property not found", 
+      apiNameData,apiUrlData,apiStatusData,apiErrorCodeData,"Property not found");
+    }, 200);
+     return
+   }
+  try{
+      const url = `${process.env.NEXT_PUBLIC_CMS_BASE_URL_ROOM_RATES}/staah/rates/GetRoomsRates?RequestType=bedata&PropertyId=${value}&Product=yes&CheckInDate=${fromDate}&CheckOutDate=${toDate}&PromoCode=${promoCodeContext || encodeBase64(defaultOffer)}`;
+
+        // const response = await fetch(url, {
+        //   method: "GET",
+        //   headers: {
+        //     "Content-Type": "application/json",
+        //     "x-api-key": process.env.NEXT_PUBLIC_API_KEY_GETRATE,
+        //   },
+        // });
+      
+      const response = await axios.get(url, {
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": process.env.NEXT_PUBLIC_API_KEY_GETRATE,
+        },
+        timeout: 15000, // 13 seconds timeout
+      })
+
+    //  if (!response.ok) {
+    //    ctaNameData ="Property not found"
+    //    apiStatusData= response?.status;
+    //    apiErrorCodeData= response?.status;
+    //    apiMessageData= "Property not found";
+
+    //  }
+    
+     if (response.status !== 200 && response.data) {
+       ctaNameData ="Property not found"
+       apiStatusData= response?.status;
+       apiErrorCodeData= response?.status;
+       apiMessageData= "Property not found";
+     //  throw new Error("Failed - Rate not found.");
+
+     }
+    else{
+      // const data = await response?.json();
+       const data = await response?.data;
+     //setFilteredProperties(data?.PropertyList);
+    if(data) {
+      //setContentProperties(data?.PropertyList);
+      contentProperties.current = data?.PropertyList;
+     // setFilteredProperties(data?.PropertyList);
+      ctaNameData ="Property found"
+      apiStatusData= response?.status;
+      apiErrorCodeData= data?.TrackingID;
+      apiMessageData= "Success";
+      setIsEditClicked(false);
+     await checkIfBothReady(value);
+     }}
+
+    //const data = await response.json();
+  }catch (error) {
+    //setTimeOutInventory(error.code == "ECONNABORTED" ? true : false);
+    //  ctaNameData = error.code == "ECONNABORTED" ? "Time out" : "Property not found"
+     if(error.code == "ECONNABORTED" ){
+      // setLoaderOverlay(false);
+      // isTimeOutContent.current = true;
+       await checkIfBothReady(error.code);
+     }
+    //setTimeOutContent(error.code == "ECONNABORTED" ? true : false);
+      ctaNameData ="Property not found"
+      apiStatusData= error;
+      apiErrorCodeData= "1166";
+      apiMessageData=  error;
+      //console.error("Error fetching data:", error);
+    }finally {
+        if(bothReadyRef.current || isTimeOutContent.current){
+       setLoaderOverlay(false);
+       }
+  //     await Promise.race([
+  //   waitUntilRefTrue(isTimeOutContent), 
+  //   waitUntilRefTrue(bothReadyRef)
+  // ]);
+
+ // setLoaderOverlay(false);
+    // setLoaderOverlay(false);
+    // await Promise.race([
+    //   waitUntilRefTrue(isTimeOutContent),
+    //   waitUntilRefTrue(bothReadyRef),
+    // ]);
+    // const ready = await Promise.race([
+    //   waitUntilRefTrue(isTimeOutContent.current, 100, 10000), // 10 sec max wait
+    //   waitUntilRefTrue(bothReadyRef.current, 100, 10000),
+    // ]);
+
+    // // Only hide loader if something became ready or timed out
+    // if (ready) {
+    //   setLoaderOverlay(false);
+    // }
+      setTimeout(() => {
+      postBookingWidged(propId,roomsData,mappingData, isCloseData,ctaNameData, 
+      apiNameData,apiUrlData,apiStatusData,apiErrorCodeData,apiMessageData);
+    }, 200);
+
+    }
+  };
   const fetchGalleryImages = async (property_Id) => {
+    
+    let roomsData = ""; 
+  let mappingData =""; 
+  let isCloseData = false;
+  let apiStatusData = ""; 
+  let apiErrorCodeData = "";  
+  let apiMessageData = "";
+  let ctaNameData = "Fetch Gallery Images"; 
+  let apiNameData = "GetGalleryByProperty";  
+  let apiUrlData = `${process.env.NEXT_PUBLIC_CMS_BASE_URL}/Api/gallery/GetGalleryByProperty`;  
     try {
       const response = await fetch(
-        `https://clarkscms.cinuniverse.com/Api/gallery/GetGalleryByProperty?propertyId=${parseInt(
+        `${process.env.NEXT_PUBLIC_CMS_BASE_URL}/Api/gallery/GetGalleryByProperty?propertyId=${parseInt(
           property_Id
         )}`,
         {
@@ -318,101 +882,34 @@ const FilterBar = ({
           },
         }
       );
+      if (!response.ok) {
+      apiStatusData= response?.status;
+      apiErrorCodeData= response?.status;
+      apiMessageData= "Data not found";
+      
+    }
       const res = await response.json();
       setCategoryImages(res?.data);
-
       setCategories(Object.keys(res?.data));
       
+      apiStatusData= response?.status;
+      apiErrorCodeData= "0";
+      apiMessageData= "Success";
+
     } catch (error) {
-      console.error("Error fetching data:", error);
-    }
-  };
-  const fetchContentData = async (propertyDropDown) => {
-    try {
-      //const prop = 22651;
-      const prop = propertyDropDown
-        .map((item) => item?.value) // get only the value
-        .filter((v) => v != null) // remove null/undefined
-        .join(",");
       
-      const timestamp = Date.now().toString();
-      const secret = "ABDEFGHJKLMOPQRSTUVWXYZ123456789";
-      const signature = await createSignature(
-        JSON.stringify(prop),
-        timestamp,
-        secret
-      );
+      apiStatusData= error;
+      apiErrorCodeData= "1166";
+      apiMessageData=  error;
+     // console.error("Error fetching data:", error);
+    }finally {
+      setTimeout(() => {
+      postBookingWidged(property_Id,roomsData,mappingData, isCloseData,ctaNameData, 
+      apiNameData,apiUrlData,apiStatusData,apiErrorCodeData,apiMessageData);
+    }, 200);
 
-      const response = await fetch(
-        "https://cinbe.cinuniverse.com/api/cin-api/content",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-timestamp": timestamp,
-            "x-signature": signature,
-          },
-          body: JSON.stringify({ selectedPropertyId: prop }),
-        }
-      );
-      const res = await response?.json();
-      setPropertyList(res?.PropertyList);
-    } catch (error) {
-      console.error("Error fetching data:", error);
     }
   };
-  //Add this on click of search_started booking engine widget 2nd step
-  // const handleGetDetailsClick = (rooms) => {
-
-  //   const totalAdults = selectedRoom?.reduce((sum, room) => sum + (room.adults || 0), 0);
-  //   const totalChildren = selectedRoom?.reduce((sum, room) => sum + (room.children || 0), 0);
-  //   const totalRooms = selectedRoom?.length;
-
-  //   const hotelName = document.querySelector('.hotel-title')?.textContent.trim() || 'Unknown Hotel';
-  //   const rackRate = document.querySelector('.room-price')?.textContent.replace(/[^\d]/g, '') || '0';
-  //   const roomName = document.querySelector('.room-name')?.textContent.trim() || 'Unknown Room';
-  //   const roomId = document.querySelector('.room-id')?.textContent.trim() || 'Unknown Room';
-  //   const data = (() => {
-  //     const ratePlans = rooms?.RatePlans || [];
-  //     let minRate = Infinity;
-
-  //     ratePlans.forEach(plan => {
-  //       const firstRateKey = Object.keys(plan?.Rates || {})[0];
-  //       const rate = parseFloat(
-  //         plan?.Rates?.[firstRateKey]?.OBP?.["1"]?.RateBeforeTax || "0"
-  //       );
-  //       if (!isNaN(rate) && rate < minRate) {
-  //         minRate = rate;
-  //       }
-  //     });
-
-  //     return isFinite(minRate) ? parseInt(minRate) : 0;
-  //   })();
-
-  //   window.dataLayer = window.dataLayer || [];
-
-  //   window.dataLayer.push({
-  //     event: 'room_category_selected',
-
-  //     // Property info
-  //     propertyName: hotelName,               // e.g., 'Hotel Name'
-
-  //     // Room info
-  //     RoomId: rooms.RoomId,                  // e.g., 'DELUXE123'
-  //     RoomName: rooms.RoomName,              // e.g., 'Deluxe Room Twin Bed with Balcony'
-  //     minRate: data,                // e.g., 3431
-  //     RateBeforeTax: 0,    // e.g., 5999
-  //     currency: 'INR',                          // Currency code (ISO 4217 standard)
-
-  //     // Search context
-  //     selectedStartDate: selectedStartDate,     // e.g., '2025-07-10'
-  //     selectedEndDate: selectedEndDate,         // e.g., '2025-07-12'
-  //     totalAdults: totalAdults,
-  //     totalChildren: totalChildren,
-  //     totalRooms: totalRooms,
-  //     promoCode: promoCode || null              // Optional
-  //   });
-  // };
   const handleGetDetailsClick = (rooms) => {
     const INR = "INR";
     const totalAdults = selectedRoom?.reduce(
@@ -827,6 +1324,16 @@ const FilterBar = ({
     //console.log(window.dataLayer);
   };
   const verifyGuidToken = async () => {
+  
+  let roomsData = ""; 
+  let mappingData =""; 
+  let isCloseData = false;
+  let apiStatusData = ""; 
+  let apiErrorCodeData = "";  
+  let apiMessageData = "";
+  let ctaNameData = "Verify GuidToken"; 
+  let apiNameData = "verify-token";  
+  let apiUrlData = `${process.env.NEXT_PUBLIC_STAAH_BASE_URL}/api/verify-token`; 
     try {
       const respTokenKey = tokenKey;
       const timestamp = Date.now().toString();
@@ -837,7 +1344,7 @@ const FilterBar = ({
         secret
       );
       const res = await fetch(
-        "https://cinbe.cinuniverse.com/api/verify-token",
+        `${process.env.NEXT_PUBLIC_STAAH_BASE_URL}/api/verify-token`,
         {
           method: "POST",
           headers: {
@@ -849,140 +1356,432 @@ const FilterBar = ({
         }
       );
 
+          if (!res.ok) {
+           apiStatusData= res?.status;
+           apiErrorCodeData= res?.status;
+           apiMessageData= "Data not found";
+            //throw new Error("failed - token not found");
+          }
       const data = await res.json();
+           apiStatusData= res?.status;
+           apiErrorCodeData= res?.status;
+           apiMessageData= "Success";
       return data;
     } catch (error) {
-      console.error("API call failed:", error); // Will now show in console
+      
+       apiStatusData= error;
+       apiErrorCodeData= "1166";
+       apiMessageData= error;
+      //console.error("API call failed:", error); // Will now show in console
+    }finally {
+      setTimeout(() => {
+      postBookingWidged("0",roomsData,mappingData, isCloseData,ctaNameData, 
+      apiNameData,apiUrlData,apiStatusData,apiErrorCodeData,apiMessageData);
+    }, 200);
+
     }
   };
-  // const fetchRatePrices = async (propertyId, defaultOffer) => {
-  //   if (!propertyId) {
-  //     setFilteredProperties([]);
-  //     setLoaderOverlay(false);
-  //   setHasSearched(true);
-  //     return;
-  //   } else {
-  //     try {
-  //       setLoaderOverlay(true);
-  //       // const prop = 22651;
-  //       const timestamp = Date.now().toString();
-  //       const secret = "ABDEFGHJKLMOPQRSTUVWXYZ123456789";
-  //       const signature = await createSignature(
-  //         // JSON.stringify(selectedPropertyId),
-  //         JSON.stringify(propertyId),
-  //         timestamp,
-  //         secret
-  //       );
-  //       const response = await fetch(
-  //         "https://cinbe.cinuniverse.com/api/cin-api/rate",
-  //         {
-  //           method: "POST",
-  //           headers: {
-  //             "Content-Type": "application/json",
-  //             "x-timestamp": timestamp,
-  //             "x-signature": signature,
-  //           },
-  //           body: JSON.stringify({
-  //             selectedPropertyId: propertyId,
-  //             fromDate,
-  //             toDate,
-  //             promoCodeContext: promoCodeContext ? promoCodeContext: encodeBase64(defaultOffer),
-  //             // promoCodeContext: loggedin
-  //             //   ? encodeBase64("test")
-  //             //   : promoCodeContext,
-  //           }),
-  //         }
-  //       );
-
-  //       if (!response.ok) {
-  //         setFilteredProperties([]);
-  //         throw new Error("failed - Rate not found.");
-  //       }
-
-  //       const data = await response.json();
-  //        if (defaultOffer && (promoCodeContext == null || promoCodeContext == "")) {
-  //          const encoded = encodeBase64(defaultOffer);
-  //          setPromoCodeContext(encoded);
-  //        }
-  //       setRateResponse(data);
-  //       setHandleSearched(false);
-  //       const dayRate =
-  //         Array.isArray(data?.Product) && data?.Product.length > 0
-  //           ? data.Product?.[0]?.Rooms?.map((room) => ({
-  //               RoomId: room?.RoomId,
-  //               MinInventory: room?.MinInventory,
-  //               RestrictionTitle: room?.RestrictionTitle,
-  //               RateBeforeTax:
-  //                 Object.values(room?.RatePlans?.[0]?.Rates || {})[0]?.OBP?.[
-  //                   "1"
-  //                 ]?.RateBeforeTax || "0",
-  //               RateAfterTax:
-  //                 Object.values(room?.RatePlans?.[0]?.Rates || {})[0]?.OBP?.[
-  //                   "1"
-  //                 ]?.RateAfterTax || "0",
-  //               RatePlans: room?.RatePlans,
-  //             }))
-  //           : [];
-
-  //       if (data.PropertyList?.[0]?.RoomData && dayRate) {
-  //         data.PropertyList[0].RoomData = data.PropertyList?.[0]?.RoomData.map(
-  //           (room) => {
-  //             const matchedRate = dayRate.find(
-  //               (rate) => rate?.RoomId == room?.RoomId
-  //             );
-  //             return {
-  //               ...room,
-  //               RackRate: matchedRate?.RateBeforeTax
-  //                 ? parseFloat(matchedRate?.RateBeforeTax)
-  //                 : room.RackRate,
-  //               MinInventory: matchedRate?.MinInventory
-  //                 ? parseFloat(matchedRate?.MinInventory)
-  //                 : 0,
-  //               RestrictionTitle: matchedRate?.RestrictionTitle,
-  //               RatePlans: matchedRate?.RatePlans ? matchedRate?.RatePlans : [],
-  //             };
-  //           }
-  //         );
-  //         if (
-  //           parseInt(data.PropertyList?.[0].PropertyData.PropertyId) ==
-  //           parseInt(propertyId)
-  //         ) {
-  //           setFilteredProperties(data?.PropertyList);
-  //           setHasSearched(true);
-  //           setIsRateFetched(true);
-  //           setLoaderOverlay(false);
-  //         }
-  //         else {
-  //           setFilteredProperties([]);
-  //           setHasSearched(true);
-  //           setIsRateFetched(true);
-  //           setLoaderOverlay(false);
-  //         }
-  //       }
-  //     } catch (error) {
-  //       setFilteredProperties([]);
-  //   setHasSearched(true);
-  //       setIsRateFetched(true);
-  //       setLoaderOverlay(false);
-  //       console.error("Error fetching prices:", error);
-  //     }
-  //   }
-  // };
-
   const handleOnEdit = ()=>{
-    setShowDropDown(!showDropDown)
-    setShowDownDiv(!showDownDiv)
+    setIsEditClicked(true);
+    setIsRateFetched(false);
+    setShowDropDown(false);
+    setShowDownDiv(true);
     setFilteredProperties([])
   }
 
+// const fetchRatePrices = async (propertyId, defaultOffer) => {
+//   setLoaderOverlay(true);
+//   const guid = crypto.randomUUID();
+//   setRateGuid(guid);
+//   setInitialTime(performance.now());
+
+//   let roomsData = "";
+//   let mappingData = "";
+//   let isCloseData = false;
+//   let apiStatusData = "";
+//   let apiErrorCodeData = "";
+//   let apiMessageData = guid;
+//   let apiNameData = "rate";
+//   let apiUrlData = `${process.env.NEXT_PUBLIC_STAAH_BASE_URL}/api/cin-api/rate`;
+
+//   if (!propertyId) {
+//     setFilteredProperties([]);
+//     setIsRateFetched(true);
+//     setLoaderOverlay(false);
+//     setHasSearched(true);
+//     setTimeout(() => {
+//       postBookingWidged(
+//         propertyId,
+//         "",
+//         "",
+//         false,
+//         "Property not found",
+//         apiNameData,
+//         apiUrlData,
+//         "",
+//         "",
+//         guid
+//       );
+//     }, 5000);
+//     return;
+//   }
+
+//   try {
+//     const timestamp = Date.now().toString();
+//     const secret = "ABDEFGHJKLMOPQRSTUVWXYZ123456789";
+
+//     const signature = await createSignature(
+//       JSON.stringify(propertyId),
+//       timestamp,
+//       secret
+//     );
+
+//     const body = {
+//       selectedPropertyId: propertyId,
+//       fromDate,
+//       toDate,
+//       promoCodeContext: promoCodeContext || encodeBase64(defaultOffer),
+//       guId: guid,
+//     };
+
+//     const response = await axios.post(
+//       `${process.env.NEXT_PUBLIC_STAAH_BASE_URL}/api/cin-api/inventory`,
+//       body,
+//       {
+//         headers: {
+//           "Content-Type": "application/json",
+//           "x-timestamp": timestamp,
+//           "x-signature": signature,
+//         },
+//         timeout: 15000, // 15 seconds timeout
+//       }
+//     );
+
+//     const data = response.data;
+
+//     if (defaultOffer && !promoCodeContext) {
+//       setPromoCodeContext(encodeBase64(defaultOffer));
+//     }
+//     if(data?.errtype == "promocode"){
+//     setPromoError(data?.message);
+//     setFilteredProperties([]);
+//     setIsRateFetched(true);
+//     setLoaderOverlay(false);
+//     setHasSearched(true);
+//     setTimeout(() => {
+//       postBookingWidged(
+//         propertyId,
+//         "",
+//         "",
+//         false,
+//         "Invalid Promocode",
+//         apiNameData,
+//         apiUrlData,
+//         data?.message,
+//         data?.TrackingID,
+//         guid
+//       );
+//     }, 5000);
+//     return;
+//     }
+//     const product = Array.isArray(data?.Product) ? data?.Product[0] : null;
+//     setPromoError("");
+//     if (!product) {
+//       setTimeout(() => {
+//         postBookingWidged(
+//           propertyId,
+//           "",
+//           "",
+//           false,
+//           "No rate plan found",
+//           apiNameData,
+//           apiUrlData,
+//           data?.message,
+//           data?.TrackingID,
+//           guid
+//         );
+//       }, 5000);
+//     } else {
+//       const rooms = product?.Rooms || [];
+//       const dayRate = rooms?.map((room) => {
+//         const rateObj =
+//           Object.values(room?.RatePlans?.[0]?.Rates || {})[0]?.OBP?.["1"] || {};
+
+          
+//         // ✅ Add TotalRate field to each RatePlan
+//         // ✅ Add TotalRate field to each RatePlan — now inside each OBP guest rate
+// const updatedRatePlans = (room?.RatePlans || []).map((plan) => {
+//   const updatedRates = {};
+
+//   for (const [dateKey, rateValue] of Object.entries(plan.Rates || {})) {
+//     const updatedOBP = {};
+
+//     // Loop through each guest combination (1, 2, etc.)
+//     for (const [guestKey, guestRate] of Object.entries(rateValue.OBP || {})) {
+//       // base rate
+//       const baseRate = parseFloat(guestRate?.RateBeforeTax || "0");
+
+//       // sum of all taxes
+//       const taxTotal = Array.isArray(guestRate?.Tax)
+//         ? guestRate.Tax.reduce(
+//             (sum, t) => sum + parseFloat(t?.Amount || 0),
+//             0
+//           )
+//         : 0;
+
+//       // add Extra Child and Extra Adult rates if they exist
+//       const extraChildRate = parseFloat(
+//         rateValue?.ExtraChildRate?.RateBeforeTax || "0"
+//       );
+//       const extraAdultRate = parseFloat(
+//         rateValue?.ExtraAdultRate?.RateBeforeTax || "0"
+//       );
+
+//       // compute total
+//       const totalRate =
+//         baseRate + extraChildRate + extraAdultRate + taxTotal;
+
+//       updatedOBP[guestKey] = {
+//         ...guestRate,
+//         TotalRate: Math.round(totalRate).toString(), // ✅ new field
+//       };
+//     }
+
+//     // Also attach TotalRate to ExtraAdultRate / ExtraChildRate individually
+//     const updatedExtraAdult = rateValue?.ExtraAdultRate
+//       ? {
+//           ...rateValue.ExtraAdultRate,
+//           TotalRate: rateValue.ExtraAdultRate?.RateBeforeTax
+//             ? parseFloat(rateValue.ExtraAdultRate.RateBeforeTax)
+//             : 0,
+//         }
+//       : {};
+
+//     const updatedExtraChild = rateValue?.ExtraChildRate
+//       ? {
+//           ...rateValue.ExtraChildRate,
+//           TotalRate: rateValue.ExtraChildRate?.RateBeforeTax
+//             ? parseFloat(rateValue.ExtraChildRate.RateBeforeTax)
+//             : 0,
+//         }
+//       : {};
+
+//     updatedRates[dateKey] = {
+//       ...rateValue,
+//       OBP: updatedOBP,
+//       ExtraAdultRate: updatedExtraAdult,
+//       ExtraChildRate: updatedExtraChild,
+//     };
+//   }
+
+//   return {
+//     ...plan,
+//     Rates: updatedRates,
+//   };
+// });
+
+
+//         // ✅ Compute total rate (base + extra child/adult + taxes)
+//         const firstRateObj =
+//           room?.RatePlans?.[0]?.Rates &&
+//           Object.values(room.RatePlans[0].Rates || {})[0];
+//         const baseRate =
+//           firstRateObj?.OBP?.["1"]?.RateBeforeTax || rateObj?.RateBeforeTax || "0";
+//         const extraChildRate =
+//           firstRateObj?.ExtraChildRate?.RateBeforeTax || "0";
+//         const extraAdultRate =
+//           firstRateObj?.ExtraAdultRate?.RateBeforerTax || "0";
+
+//         // taxes
+//         const taxes = firstRateObj?.OBP?.["1"]?.Tax || [];
+//         const taxTotal = taxes.reduce(
+//           (sum, t) => sum + parseFloat(t.Amount || 0),
+//           0
+//         );
+
+//         const totalRate =
+//           parseFloat(baseRate) +
+//           parseFloat(extraChildRate) +
+//           parseFloat(extraAdultRate) +
+//           taxTotal;
+          
+//         return {
+//           RoomId: room?.RoomId,
+//           MinInventory: room?.MinInventory ?? 0,
+//           RestrictionTitle: room?.RestrictionTitle ?? "",
+//           RateBeforeTax: rateObj?.RateBeforeTax || "0",
+//           RateAfterTax: rateObj?.RateAfterTax || "0",
+//          // RatePlans: room?.RatePlans || [],
+//           RatePlans: updatedRatePlans || [],
+//           TotalRate: Math.round(totalRate).toString(),
+//         };
+//       });
+
+//       if (contentProperties.current?.[0]?.RoomData && dayRate?.length > 0) {
+//         const isSoldOut = dayRate.every((rate) => rate.MinInventory == 0);
+
+//         if (isSoldOut) {
+//           apiStatusData = data?.message;
+//           apiErrorCodeData = data?.TrackingID;
+//           apiMessageData = "Sold Out";
+//           setTimeout(() => {
+//             postBookingWidged(
+//               propertyId,
+//               roomsData,
+//               mappingData,
+//               isCloseData,
+//               "Sold Out",
+//               apiNameData,
+//               apiUrlData,
+//               apiStatusData,
+//               apiErrorCodeData,
+//               guid
+//             );
+//           }, 200);
+//         }
+
+//         contentProperties.current[0].RoomData =
+//           contentProperties.current?.[0]?.RoomData?.map((room) => {
+//             const matched = dayRate.find((r) => r.RoomId == room?.RoomId);
+//             setCancellationPolicyPackage(dayRate?.[0]?.RatePlans);
+//             return {
+//               ...room,
+//               RackRate: matched?.RateBeforeTax
+//                 ? parseFloat(matched?.RateBeforeTax)
+//                 : room?.RackRate,
+//               MinInventory: matched?.MinInventory ?? 0,
+//               RestrictionTitle: matched?.RestrictionTitle ?? "",
+//               RatePlans: matched?.RatePlans || [],
+//               TotalRate: matched?.TotalRate ?? 0,
+//             };
+//           });
+
+//         if (
+//           parseInt(contentProperties.current?.[0]?.PropertyData?.PropertyId) ===
+//           parseInt(propertyId)
+//         ) {
+//           setFilteredProperties(contentProperties.current);
+//           handleBookNow(
+//             contentProperties.current?.[0]?.PropertyData?.PropertyId,
+//             contentProperties.current?.[0]?.PropertyData?.PropertyName,
+//             contentProperties.current?.[0]?.PropertyData?.Address.Phone
+//           );
+
+//           const availableRooms =
+//             contentProperties.current?.[0]?.RoomData?.filter(
+//               (room) => room.MinInventory > 0
+//             );
+
+//           apiStatusData = response?.status;
+//           apiErrorCodeData = response?.status;
+//           apiMessageData = guid;
+
+//           setTimeout(() => {
+//             setAvailableRooms(availableRooms);
+//           }, 200);
+//         } else {
+//           setFilteredProperties([]);
+//           setTimeout(() => {
+//             postBookingWidged(
+//               propertyId,
+//               roomsData,
+//               mappingData,
+//               isCloseData,
+//               "No rate plan found",
+//               apiNameData,
+//               apiUrlData,
+//               "No rate plan found",
+//               "No rate plan found",
+//               guid
+//             );
+//           }, 200);
+//         }
+//       } else {
+//         setTimeout(() => {
+//           postBookingWidged(
+//             propertyId,
+//             roomsData,
+//             mappingData,
+//             isCloseData,
+//             "No rate plan found",
+//             apiNameData,
+//             apiUrlData,
+//             "No rate plan found",
+//             "No rate plan found",
+//             guid
+//           );
+//         }, 200);
+//         setFilteredProperties([]);
+//       }
+//     }
+
+//     setRateResponse(data?.Product?.[0]);
+//     setIsRateFetched(true);
+//     setHasSearched(true);
+//     setLoaderOverlay(false);
+//   } catch (error) {
+//     //console.error("Error fetching prices:", error?.message || error);
+//     setFilteredProperties([]);
+//     setIsRateFetched(true);
+//     setHasSearched(true);
+//     setLoaderOverlay(false);
+//     setTimeout(() => {
+//       setTimeOutInventory(error.code == "ECONNABORTED" ? true : false);
+//       postBookingWidged(
+//         propertyId,
+//         roomsData,
+//         mappingData,
+//         isCloseData,
+//         // error.code == "ECONNABORTED" ? "Time out" : 
+//         "Rate not found",
+//         apiNameData,
+//         apiUrlData,
+//         error?.message || error,
+//         "1166",
+//         guid
+//       );
+//     }, 200);
+//   } finally {
+//     setIsRateFetched(true);
+//     setHasSearched(true);
+//     setLoaderOverlay(false);
+//   }
+// };
+
 const fetchRatePrices = async (propertyId, defaultOffer) => {
   setLoaderOverlay(true);
-  const cutoffDate = new Date("2025-09-01");
+  const guid = crypto.randomUUID();
+  setRateGuid(guid);
+  setInitialTime(performance.now());
+
+  let roomsData = "";
+  let mappingData = "";
+  let isCloseData = false;
+  let apiStatusData = "";
+  let apiErrorCodeData = "";
+  let apiMessageData = guid;
+  let apiNameData = "rate";
+  let apiUrlData = `${process.env.NEXT_PUBLIC_STAAH_BASE_URL}/api/cin-api/rate`;
 
   if (!propertyId) {
     setFilteredProperties([]);
+    setIsRateFetched(true);
     setLoaderOverlay(false);
     setHasSearched(true);
+    setTimeout(() => {
+      postBookingWidged(
+        propertyId,
+        "",
+        "",
+        false,
+        "Property not found",
+        apiNameData,
+        apiUrlData,
+        "",
+        "",
+        guid
+      );
+    }, 5000);
     return;
   }
 
@@ -1000,168 +1799,131 @@ const fetchRatePrices = async (propertyId, defaultOffer) => {
       selectedPropertyId: propertyId,
       fromDate,
       toDate,
-      promoCodeContext: promoCodeContext || encodeBase64(defaultOffer),
+      guId: guid,
+      promoCodeContext: promoCodeContext || "",
+      //promoCodeContext: promoCodeContext || encodeBase64(defaultOffer),,
     };
-    if(promoCode != "" || new Date(fromDate) > cutoffDate)
-    {
-      const response = await fetch("https://cinbe.cinuniverse.com/api/cin-api/rate", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-timestamp": timestamp,
-        "x-signature": signature,
-      },
-      body: JSON.stringify(body),
-    });
 
-    if (!response.ok) throw new Error("Failed - Rate not found.");
-
-    const data = await response.json();
-
-    if (defaultOffer && !promoCodeContext) {
-      setPromoCodeContext(encodeBase64(defaultOffer));
-    }
-
-      const product = Array.isArray(data?.Product) ? data?.Product[0] : null;
-      const rooms = product?.Rooms || [];
-    const dayRate = rooms?.map((room) => {
-          const rateObj =
-            Object.values(room?.RatePlans?.[0]?.Rates || {})[0]?.OBP?.["1"] || {};
-          return {
-            RoomId: room?.RoomId,
-            MinInventory: room?.MinInventory ?? 0,
-            RestrictionTitle: room?.RestrictionTitle ?? "",
-            RateBeforeTax: rateObj?.RateBeforeTax || "0",
-            RateAfterTax: rateObj?.RateAfterTax || "0",
-            RatePlans: room?.RatePlans || [],
-          };
-        });
-
-    if (data?.PropertyList?.[0]?.RoomData && dayRate?.length > 0) {
-      data.PropertyList[0].RoomData = data?.PropertyList?.[0]?.RoomData?.map((room) => {
-        const matched = dayRate.find((r) => r.RoomId == room?.RoomId);
-        setCancellationPolicyPackage(dayRate?.[0]?.RatePlans);
-        return {
-          ...room,
-          RackRate: matched?.RateBeforeTax ? parseFloat(matched?.RateBeforeTax) : room?.RackRate,
-          MinInventory: matched?.MinInventory ?? 0,
-          RestrictionTitle: matched?.RestrictionTitle ?? "",
-          RatePlans: matched?.RatePlans || [],
-        };
-      });
-      if (parseInt(data?.PropertyList?.[0]?.PropertyData?.PropertyId) === parseInt(propertyId)) {
-        setFilteredProperties(data?.PropertyList);
-        handleBookNow(data?.PropertyList?.[0]?.PropertyData?.PropertyId,
-                       data?.PropertyList?.[0]?.PropertyData?.PropertyName,
-                       data?.PropertyList?.[0]?.PropertyData?.Address.Phone)
-      } else {
-        setFilteredProperties([]);
+    const response = await axios.post(
+      `${process.env.NEXT_PUBLIC_STAAH_BASE_URL}/api/cin-api/inventory`,
+      body,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "x-timestamp": timestamp,
+          "x-signature": signature,
+        },
+        timeout: 15000, // 15 seconds timeout
       }
+    );
+
+    const data = response.data;
+
+     if (defaultOffer && !promoCodeContext) {
+       setPromoCodeContext(encodeBase64(defaultOffer));
+     }
+      if (data?.errtype == "promocode") {
+        setPromoError(data?.message);
+        setFilteredProperties([]);
+        setIsRateFetched(true);
+        setLoaderOverlay(false);
+        setHasSearched(true);
+        setTimeout(() => {
+          postBookingWidged(
+            propertyId,
+            "",
+            "",
+            false,
+            "Invalid Promocode",
+            apiNameData,
+            apiUrlData,
+            data?.message,
+            data?.TrackingID,
+            guid
+          );
+        }, 5000);
+        return;
+      }
+    const product = Array.isArray(data?.Product) ? data?.Product[0] : null;
+    setPromoError("");
+    if (!product) {
+      setTimeout(() => {
+        postBookingWidged(
+          propertyId,
+          "",
+          "",
+          false,
+          "No rate plan found",
+          apiNameData,
+          apiUrlData,
+          data?.message,
+          data?.TrackingID,
+          guid
+        );
+      }, 5000);
     } else {
-      setFilteredProperties([]);
-    }
-
-    setHasSearched(true);
-    setLoaderOverlay(false);
-    
-    setRateResponse(data?.Product?.[0]);
-    setIsRateFetched(true);
-  }
-  else{
-    const url = `https://clarkscms.cinuniverse.com/staah/rates/GetRoomsRates?RequestType=bedata&PropertyId=${selectedPropertyId}&Product=yes&CheckInDate=${fromDate}&CheckOutDate=${toDate}&PromoCode=${promoCodeContext || encodeBase64(defaultOffer)}`;
-    
-const response = await fetch(url, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": process.env.NEXT_PUBLIC_API_KEY_GETRATE,
-      },
-    });
-    if (!response.ok) throw new Error("Failed - Rate not found.");
-
-    const data = await response?.json();
-  //  const data = JSON.parse(response);
-
-    if (defaultOffer && !promoCodeContext) {
-      setPromoCodeContext(encodeBase64(defaultOffer));
-    }
-
-      // const product = Array.isArray(data?.Product) ? data?.Product : null;
-      // const rooms = data?.Product?.Rooms || [];
+      rateDataRef.current = product?.Rooms || [];
+      const rooms = product?.Rooms || [];
+     await checkIfBothReady(propertyId,guid,response, data );
       
-      const product = Array.isArray(data?.Product) ? data?.Product[0] : null;
-      const rooms = product?.Rooms || [];
-    const dayRate = rooms?.map((room) => {
-          const rateObj =
-            Object.values(room?.RatePlans?.[0]?.Rates || {})[0]?.OBP?.["1"] || {};
-          return {
-            RoomId: room?.RoomId,
-            MinInventory: room?.MinInventory ?? 0,
-            RestrictionTitle: room?.RestrictionTitle ?? "",
-            RateBeforeTax: rateObj?.RateBeforeTax || "0",
-            RateAfterTax: rateObj?.RateAfterTax || "0",
-            RatePlans: room?.RatePlans || [],
-          };
-        });
-
-    if (data?.PropertyList?.[0]?.RoomData && dayRate.length > 0) {
-      data.PropertyList[0].RoomData = data?.PropertyList?.[0]?.RoomData?.map((room) => {
-        
-        setCancellationPolicyPackage(dayRate?.[0]?.RatePlans);
-        const matched = dayRate.find((r) => r.RoomId == room?.RoomId);
-        return {
-          ...room,
-          RackRate: matched?.RateBeforeTax ? parseFloat(matched.RateBeforeTax) : room?.RackRate,
-          MinInventory: matched?.MinInventory ?? 0,
-          RestrictionTitle: matched?.RestrictionTitle ?? "",
-          RatePlans: matched?.RatePlans || [],
-        };
-      });
-      if (parseInt(data?.PropertyList?.[0]?.PropertyData?.PropertyId) === parseInt(propertyId)) {
-        setFilteredProperties(data?.PropertyList);
-        handleBookNow(data?.PropertyList?.[0]?.PropertyData?.PropertyId,
-                       data?.PropertyList?.[0]?.PropertyData?.PropertyName,
-                       data?.PropertyList?.[0]?.PropertyData?.Address.Phone)
-      } else {
-        setFilteredProperties([]);
-      }
-    } else {
-      setFilteredProperties([]);
     }
 
-    setHasSearched(true);
-    setLoaderOverlay(false);
-    
-    // setRateResponse(data?.Product);
     setRateResponse(data?.Product?.[0]);
     setIsRateFetched(true);
-  }
-    //postBookingWidged();
-
-  } catch (error) {
-    console.error("Error fetching prices:", error);
-    setFilteredProperties([]);
     setHasSearched(true);
-    setIsRateFetched(true);
     setLoaderOverlay(false);
+  } catch (error) {
+    //console.error("Error fetching prices:", error?.message || error);
+    setTimeOutInventory(error.code == "ECONNABORTED" ? true : false);
+    setFilteredProperties([]);
+    setIsRateFetched(true);
+    setHasSearched(true);
+    setLoaderOverlay(false);
+    setTimeout(() => {
+      postBookingWidged(
+        propertyId,
+        roomsData,
+        mappingData,
+        isCloseData,
+        // error.code == "ECONNABORTED" ? "Time out" : 
+        "Rate not found",
+        apiNameData,
+        apiUrlData,
+        error?.message || error,
+        "1166",
+        guid
+      );
+    }, 200);
+  } finally {
+    setIsRateFetched(true);
+    setHasSearched(true);
+       if(bothReadyRef.current || isTimeOutContent.current){
+       setLoaderOverlay(false);
+       }
+  //       await Promise.race([
+  //   waitUntilRefTrue(isTimeOutContent), 
+  //   waitUntilRefTrue(bothReadyRef)
+  // ]);
+  
+  // setLoaderOverlay(false);
   }
 };
 
-  // useEffect(() => {
-  //   const content = JSON.parse(sessionStorage?.getItem("contentData") || "[]");
-  //   if (Array.isArray(content.PropertyList)) {
-  //     console.log("content1234", content.PropertyList);
-  //     setPropertyList(content.PropertyList);
-
-  //   } else {
-  //     console.error("Invalid Property");
-  //   }
-  // }, []);
-
-  useEffect(() => {
+ useEffect(() => {
+  if(!tokenKey) { 
+    let roomsData = ""; 
+  let mappingData =""; 
+  let apiStatusData = ""; 
+  let apiErrorCodeData = "";  
+  let apiMessageData = "";
+  let isClose = false;
+  let ctaName = "Fetch Brand List"; 
+  let apiName = "GetBrandList";  
+  let apiUrl = `${process.env.NEXT_PUBLIC_CMS_BASE_URL}/Api/property/GetBrandList`; 
     const storedData = sessionStorage?.getItem("paymentResponse");
     if (storedData) {
-      setCurrentStep(4);
+       setCurrentStep(4);
+      //setCurrentStep(2);
       setIsWizardVisible(true);
     }
     if (!storedData) {
@@ -1171,10 +1933,13 @@ const response = await fetch(url, {
       setPropertyList(contentData?.PropertyList);
     }
 
-    fetch("https://clarkscms.cinuniverse.com/Api/property/GetBrandList")
+    fetch(`${process.env.NEXT_PUBLIC_CMS_BASE_URL}/Api/property/GetBrandList`)
       .then((res) => res.json())
       .then((data) => {
         if (data.errorCode === "0") {
+           apiStatusData= "0";
+           apiErrorCodeData= "0";
+           apiMessageData= "Success";
           const map = {};
           data.data.forEach((brand) => {
             map[brand.hotelBrandId] = brand.hotelBrand
@@ -1184,7 +1949,28 @@ const response = await fetch(url, {
           setBrandMap(map);
         }
       })
-      .catch((err) => console.error("Error fetching brands:", err));
+      .catch((err) => {
+           apiStatusData= err;
+           apiErrorCodeData= "1166";
+           apiMessageData= err;
+      })
+    .finally(() => {
+      if(storedIndex == null){
+
+      const storedInd = sessionStorage.getItem("offerTagIndex");
+      setStoredIndex(storedInd);
+      if (storedInd !== null) {
+        setOfferTagIndex(parseInt(storedInd, 10));
+      } else {
+        setOfferTagIndex(Math.floor(Math.random() * 2)); // 0 or 1
+        //sessionStorage.setItem(sessionKey, offerTagIndex);
+      }
+      }
+      setTimeout(() => {
+      postBookingWidged("0",roomsData,mappingData, isClose,ctaName, 
+      apiName,apiUrl,apiStatusData,apiErrorCodeData,apiMessageData);
+    }, 200);
+    });}
 
   }, []);
 
@@ -1193,26 +1979,23 @@ const response = await fetch(url, {
       setTokenKey(true);
       async function fetchData() {
         const paymentResponse = await verifyGuidToken();
-        
+
         sessionStorage.setItem(
           "paymentResponse",
           JSON.stringify(paymentResponse)
         );
         setIsWizardVisible(true);
-        setCurrentStep(4);
+         setCurrentStep(4);
+      //setCurrentStep(2);
       }
       fetchData();
     }
   }, [tokenKey]);
 
   useEffect(() => {
-    if (selectedProperty > 0 && destination !== "" && !isSmallScreen) {
-      handleSearch();
+    if (selectedProperty > 0 && destination !== "") {
       if (roomDetails?.staahRoomsId > 0) {
-       // handleBookNow(selectedProperty.toString(), "", "0909");
-        //const result = propertyList.filter((property) => property.RoomData.map((room) => room.RoomId === roomId));
-        let matchingRoom = null;
-
+       let matchingRoom = null;
         for (const property of propertyList) {
           for (const room of property?.RoomData) {
             if (room?.RoomId == roomDetails?.staahRoomsId) {
@@ -1237,11 +2020,6 @@ const response = await fetch(url, {
         const nextDate = formatingDate(tomorrow);
         setSelectedStartDate(currentDate);
         setSelectedEndDate(nextDate);
-        if(hasSearched)
-          {
-            handleGetDetails(matchingRoom, propertyList?.[0]?.PropertyData);
-          }
-        
       }
     }
   }, [destination,selectedStartDate, selectedEndDate]);
@@ -1269,55 +2047,17 @@ const response = await fetch(url, {
     }
   }, [selectedStartDate, selectedEndDate]);
 
-  // useEffect(() => {
-  //   const fetchAddOns = async () => {
-  //     try {
-  //       if (selectedPropertyId != null) {
-  //         const timestamp = Date.now().toString();
-  //         const secret = "ABDEFGHJKLMOPQRSTUVWXYZ123456789";
-  //         const signature = await createSignature(
-  //           selectedPropertyId?.toString(),
-  //           timestamp,
-  //           secret
-  //         );
-
-  //         const response = await fetch(
-  //           "https://cinbe.cinuniverse.com/api/cin-api/add-ons",
-  //           {
-  //             method: "POST",
-  //             headers: {
-  //               "Content-Type": "application/json",
-  //               "x-timestamp": timestamp,
-  //               "x-signature": signature,
-  //             },
-  //             body: JSON.stringify({
-  //               selectedPropertyId: selectedPropertyId?.toString(),
-  //             }),
-  //           }
-  //         );
-
-  //         if (!response.ok) {
-  //           throw new Error("failed - Add-Ons not found");
-  //         }
-  //         const data = await response?.json();
-  //         setAddOnsResponse(data);
-  //         const properties = data;
-  //         if (Array.isArray(properties)) {
-  //           setAddonList(properties?.[0]?.ExtrasData || []);
-  //           if (properties?.[0]?.ExtrasData?.length > 0) {
-  //             setIsAddOnns(true);
-  //           }
-  //         }
-  //       }
-  //     } catch (error) {
-  //       console.error("Error fetching properties:", error);
-  //     }
-  //   };
-
-  //   fetchAddOns();
-  // }, [selectedPropertyId]);
-
   const fetchAddOns = async () => {
+  
+    let roomsData = ""; 
+  let mappingData =""; 
+  let isCloseData = false;
+  let apiStatusData = ""; 
+  let apiErrorCodeData = "";  
+  let apiMessageData = "";
+  let ctaNameData = "Fetch AddOns"; 
+  let apiNameData = "add-ons";  
+  let apiUrlData = `${process.env.NEXT_PUBLIC_STAAH_BASE_URL}/api/cin-api/add-ons`;  
       try {
         if (selectedPropertyId != null) {
           const timestamp = Date.now().toString();
@@ -1329,7 +2069,7 @@ const response = await fetch(url, {
           );
 
           const response = await fetch(
-            "https://cinbe.cinuniverse.com/api/cin-api/add-ons",
+            `${process.env.NEXT_PUBLIC_STAAH_BASE_URL}/api/cin-api/add-ons`,
             {
               method: "POST",
               headers: {
@@ -1338,15 +2078,18 @@ const response = await fetch(url, {
                 "x-signature": signature,
               },
               body: JSON.stringify({
-                selectedPropertyId: selectedPropertyId?.toString(),
+                selectedPropertyId: selectedPropertyId.toString(),
               }),
             }
           );
 
           if (!response.ok) {
-            throw new Error("failed - Add-Ons not found");
+           apiStatusData= response?.status;
+           apiErrorCodeData= response?.status;
+           apiMessageData= "Data not found";
+           // throw new Error("failed - Add-Ons not found");
           }
-          const data = await response?.json();
+         else {const data = await response?.json();
           setAddOnsResponse(data);
           const properties = data;
           if (Array.isArray(properties)) {
@@ -1355,13 +2098,24 @@ const response = await fetch(url, {
               setIsAddOnns(true);
             }
           }
-          //  else {
-          //   console.error("Invalid Property:", properties);
-          // }
+          
+           apiStatusData= response?.status;
+           apiErrorCodeData= response?.status;
+           apiMessageData= "Success";
+          }
         }
       } catch (error) {
-        console.error("Error fetching properties:", error);
-      }
+        //console.error("Error fetching properties:", error);
+            apiStatusData= error;
+            apiErrorCodeData= "1166";
+            apiMessageData= error;
+      }finally {
+      setTimeout(() => {
+      postBookingWidged(selectedPropertyId,roomsData,mappingData, isCloseData,ctaNameData, 
+      apiNameData,apiUrlData,apiStatusData,apiErrorCodeData,apiMessageData);
+    }, 200);
+
+    }
     };
   function handleBlur() {
     setTimeout(() => {
@@ -1392,76 +2146,113 @@ const response = await fetch(url, {
   };
 
   useEffect(() => {
+  //  console.log(cityDropDown);
+  let roomsData = ""; 
+  let mappingData =""; 
+  let isCloseData = false;
+  let apiStatusData = ""; 
+  let apiErrorCodeData = "";  
+  let apiMessageData = "";
+  let ctaNameData = "Fetch Property"; 
+  let apiNameData = "GetCityWithProperty";  
+  let apiUrlData = `${process.env.NEXT_PUBLIC_CMS_BASE_URL}/Api/property/GetCityWithProperty?CityId=${parseInt(
+              cityName?.value
+            )}`; 
     const fetchProperty = async () => {
       try {
-        if (cityName?.value) {
-          const response = await fetch(
-            `https://clarkscms.cinuniverse.com/Api/property/GetCityWithProperty?CityId=${parseInt(
-              cityName?.value
-            )}`,
-            {
-              method: "GET",
-              headers: {
-                "Content-Type": "application/json",
-              },
-            }
-          );
-          const res = await response.json();
-          // setProperties(data);
-          // setSelectedProperty("");
 
           const propertyDropDown = [];
-
-          res?.data?.[0]?.propertyData?.forEach((property) => {
-            const label = property?.propertyName;
-            const offerCode = property?.offerCode;
-            const value = property?.staahPropertyId;
-            const property_Id = property?.propertyId;
-            const hotelBrandId = property?.hotelBrandId;
-            const propertySlug = property?.propertySlug;
-            const propData = {
-              label,
-              value,
-              offerCode,
-              property_Id,
-              hotelBrandId,
-              propertySlug,
-            };
+          properties?.forEach((property ) => {
+            if (property.cityId === cityName?.value) { // <-- only for selected city
+              const propData = {
+                label: property?.propertyName,
+                value: property?.staahPropertyId,
+                offerCode: property?.offerCode,
+                property_Id: property?.propertyId,
+                hotelBrandId: property?.hotelBrandId,
+                propertySlug: property?.propertySlug,
+                staahBookingId: property?.staahBookingId,
+              };
             propertyDropDown.push(propData);
             setPropertyDropDown(propertyDropDown);
-            if (parseInt(value) == parseInt(cityName?.property_Id)) {
-              setPropertyData(propData);
-            }
+          }
           });
-          const firstList = {
-              label:res?.data?.[0]?.propertyData?.[0]?.propertyName,
-              value:res?.data?.[0]?.propertyData?.[0]?.staahPropertyId,
-              offerCode:res?.data?.[0]?.propertyData?.[0]?.offerCode,
-              property_Id:res?.data?.[0]?.propertyData?.[0]?.propertyId,
-              hotelBrandId:res?.data?.[0]?.propertyData?.[0]?.hotelBrandId,
-              propertySlug:res?.data?.[0]?.propertyData?.[0]?.propertySlug,
-            }
-            if(parseInt(selectedProperty) == 0)
-            {
+          if (selectedProperty > 0) {
+    const propertyList = properties || [];
+  
+    const matched = propertyList.find(
+      (p) => p?.staahPropertyId == selectedProperty
+    );
+  
+    if (matched) {
+      //fetchContentApi(matched?.staahPropertyId);
+      const firstList = {
+        label: matched?.propertyName,
+        value: matched?.staahPropertyId,
+        offerCode: matched?.offerCode,
+        property_Id: matched?.propertyId,
+        hotelBrandId: matched?.hotelBrandId,
+        propertySlug: matched?.propertySlug,
+        staahBookingId:matched?.staahBookingId
+      };
+      handleSuggestionClick(firstList);
+    }else { 
+          
+          const firstList = properties
+          .filter(prop => prop.cityId === cityName?.value)
+          .map(prop => ({
+            label: prop.propertyName,
+            value: prop.staahPropertyId,
+            offerCode: prop.offerCode,
+            property_Id: prop.propertyId,
+            hotelBrandId: prop.hotelBrandId,
+            propertySlug: prop.propertySlug,
+            staahBookingId: prop.staahBookingId,
+          }))[0] || null;
+      //fetchContentApi(firstList?.value);
+              // propertyValueRef.current =  res?.data?.[0]?.propertyData?.[0]?.staahPropertyId;
               handleSuggestionClick(firstList);
             }
-         // fetchContentData(propertyDropDown);
-        } else {
-          setPropertyDropDown([]);
-        }
+          }
+
+        else { 
+          const firstList = properties
+          .filter(prop => prop.cityId === cityName?.value)
+          .map(prop => ({
+            label: prop.propertyName,
+            value: prop.staahPropertyId,
+            offerCode: prop.offerCode,
+            property_Id: prop.propertyId,
+            hotelBrandId: prop.hotelBrandId,
+            propertySlug: prop.propertySlug,
+            staahBookingId: prop.staahBookingId,
+          }))[0] || null;
+     // fetchContentApi(firstList?.value);
+              handleSuggestionClick(firstList);
+            }
       } catch (error) {
-        console.error("Error fetching properties:", error);
-      }
+       // console.error("Error fetching properties:", error);
+        apiStatusData= error;
+        apiErrorCodeData= "1166";
+        apiMessageData= error;
+      }finally {
+      setTimeout(() => {
+      postBookingWidged("0",roomsData,mappingData, isCloseData,ctaNameData, 
+      apiNameData,apiUrlData,apiStatusData,apiErrorCodeData,apiMessageData);
+    }, 200);
+
+    }
     };
+     if (cityName?.value) {
     fetchProperty();
+     }
   }, [cityName]);
 
- async function postBookingWidged(rooms,mapping, isClose) {
+ async function postBookingWidged(propId,rooms,mapping, isClose,ctaName, 
+  ApiName,ApiUrl,ApiStatus,ApiErrorCode,ApiMessage) {
   const resp = await getUserInfo();
-  //console.log("resp",resp);
-  if(!sessionId){
-   setSessionId(resp?.guid);
-  }
+
+    const sessionId = sessionStorage?.getItem("sessionId");
     const totalAdults = selectedRoom?.reduce(
       (sum, room) => sum + (room?.adults || 0),
       0
@@ -1474,29 +2265,35 @@ const response = await fetch(url, {
     const data = window.location.pathname;
     //console.log("data pathname",data)
     const payload = {
-    ctaName: "Main Widget",
+    ctaName: ctaName,
     urls: window.location.href,
-    cityId: parseInt(cityName?.value),
-    propertyId: parseInt(selectedPropertyId),
-    checkIn: fromDate,
-    checkOut: toDate,
-    adults: totalAdults,
-    children: totalChildren,
-    rooms: totalRooms,
-    promoCode: promoCode,
+    cityId: cityName?.value ? cityName?.value?.toString() : "0",
+   // propertyId: propId?.toString() || selectedPropertyId?.toString() || "0",
+    propertyId: propId?.toString() || "0",
+    checkIn: fromDate ?? "" ,
+    checkOut: toDate ?? "" ,
+    adults: totalAdults?.toString() ?? "0",
+    children: totalChildren?.toString() ?? "0",
+    rooms: totalRooms?.toString() ?? "0",
+    promoCode: promoCode ?? "",
     ip: resp?.ip,
-    sessionId: sessionId ?? resp?.guid,
+    sessionId: sessionId,
     deviceName: resp?.deviceInfo?.deviceName,
     deviceType: resp?.deviceInfo?.deviceOS == "Unknown" ? resp?.deviceInfo?.platform : resp?.deviceInfo?.deviceOS,
     roomsName: rooms?.RoomName,
-    packageName: mapping?.MappingName,
+    packageName: mapping?.MappingName ,
     isCartOpen: mapping?.MappingName ? "Y": "N",
     isCartEdit: "N",
     isCartClick: "N",
     isClose: isClose ? "Y" : "N",
+    ApiName: ApiName ?? "",
+    ApiUrl: ApiUrl ?? "",
+    ApiStatus: ApiStatus?.toString() ?? "",
+    ApiErrorCode: ApiErrorCode?.toString() ?? "",
+    ApiMessage: ApiMessage ?? ""
    }
       const response = await fetch(
-        "https://clarkscms.cinuniverse.com/Api/tracker/BookingWidged",
+        `${process.env.NEXT_PUBLIC_CMS_BASE_URL}/Api/tracker/BookingWidged`,
         {
           method: "POST",
           headers: {
@@ -1506,20 +2303,16 @@ const response = await fetch(url, {
         }
       );
       const res = await response?.json();
-      
-    //console.log("res BookingWidged",res);
+
   }
-  // Handle destination input change
   const handleCityChange = async (e) => {
     const input = e.target.value;
-    // setIsFocused(true);
-    // setDestination(input);
     setCityName(input);
 
     if (input) {
       try {
         const response = await fetch(
-          `https://clarkscms.cinuniverse.com/Api/property/GetCityWithProperty?CityId=${parseInt(
+          `${process.env.NEXT_PUBLIC_CMS_BASE_URL}/Api/property/GetCityWithProperty?CityId=${parseInt(
             input
           )}`,
           {
@@ -1537,13 +2330,13 @@ const response = await fetch(url, {
           const label = property?.propertyName;
           const value = property?.staahPropertyId;
           const property_Id = property?.propertyId;
-
           propertyDropDown.push({ label, value, property_Id });
 
-          // setPropertyDropDown(propertyDropDown);
+          
+
         });
       } catch (error) {
-        console.error("Error fetching suggestions:", error);
+       // console.error("Error fetching suggestions:", error);
         setSuggestions([]);
       }
     } else {
@@ -1574,7 +2367,7 @@ const response = await fetch(url, {
           );
         setSuggestions([...new Set(matchedSuggestions)]);
       } catch (error) {
-        console.error("Error fetching suggestions:", error);
+        //console.error("Error fetching suggestions:", error);
         setSuggestions([]);
       }
     } else {
@@ -1585,20 +2378,94 @@ const response = await fetch(url, {
     setPromoCode(e.target.value);
     const encoded = encodeBase64(e.target.value);
     setPromoCodeContext(encoded);
+    setPromoCodeChanged(true);
   };
   // Handle search
   const handleSearch = () => {
-    setShowDownDiv(false)
-    setShowDropDown(true)
-    //fetchPropertyImages(cmsPropertyId);
-    const userDetails = JSON.parse(localStorage?.getItem("userDetails"));
-    if (userDetails) {
-      //setHandleSearched(true);
+     if(isTimeOutContent.current == true){
+     fetchContentApi(parseInt(selectedPropertyId) || parseInt(selectedProperty)).catch(() => {});
+     isTimeOutContent.current = false;
+     }
+    rateDataRef.current = null;
+    bothReadyRef.current = false;
+    setTimeOutInventory(false);
+    //setTimeOutContent(false);
+  if(collectionProperties.includes(parseInt(selectedPropertyId) || parseInt(selectedProperty))){
+    //handleSearchTh(parseInt(selectedPropertyId) || parseInt(selectedProperty));
+    handleSearchTh();
+  }
+  else{
+  setNumberOfNights(getDateDifferenceInDays(fromDate, toDate));
+    setPromoError("");
+    sessionStorage.removeItem("bookingData");
+    setSelectedRoomDetails(null);
+    replaceAction("search");
+    setSelectedRoom((prev) =>
+      prev.map((room) => ({
+        id: room.id,
+        roomId: "",
+        roomName: "",
+        roomRate: "",
+        roomImage: {},
+        adults: room.adults,
+        children: room.children,
+      }))
+    );
 
+    setShowFinalCart(0);
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({
+      event: 'virtualPageview',
+      page_path: '/?search',
+      page_location: `${window.location.pathname}/?search`,
+      page_title: 'BE Steps - Search Page',
+    });
+  
+    if (!destination?.trim()) {
+      alert("Please enter a city/hotel.");
+      return;
+    } else if (selectedStartDate == "" || selectedEndDate == "") {
+      alert("Please choose check-in and check-out both date.");
+      return;
+    }
+    if(isTimeOutContent.current == true){
+     setTimeout(()=>{
+    //fetchRatePrices(propertyValueRef.current,defaultOffer);
+    fetchRatePrices(propertyValueRef.current,null);
+     },2000)
+     }else{
+    fetchRatePrices(propertyValueRef.current,null);
+     }
+          setIsDateChanged(false);
+          setPromoCodeChanged(false);
+          setIsEditClicked(false);
+      
+      if(!showDropDown){
+      setShowDropDown(true);
+    }
+    if(showDownDiv){
+      setShowDownDiv(false);
+    }
+    setIsClassAddedBook(true);
+    if (propertyList?.length > 0) {
+      setHandleSearched(true);
+      setTimeout(() => {
+        const element = document.getElementById(`property-div`);
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth" });
+        }
+      }, 100);
+    }
+    setTimeout(() => {
+       postBookingWidged(selectedPropertyId || selectedProperty || "0","","",false,"Search Click");
+        
+       
+    const userDetails = JSON.parse(localStorage?.getItem("userDetails"));
+
+    if (userDetails) {
       setIsLoggedin(true);
       setIsOpenLogin(false);
       setIsOpenSignUp(false);
-      // fetchRatePrices(selectedPropertyId, true);
       setUserDetails(userDetails);
 
       setLoggedUserDetails({
@@ -1613,37 +2480,8 @@ const response = await fetch(url, {
         isLogged: true,
       });
     }
-    // else {
-    //   fetchRatePrices(selectedPropertyId);
-    // }
-
-    fetchRatePrices(selectedPropertyId,defaultOffer);
-    // const searchTerm = propertyName?.toLowerCase();
-    // if (!searchTerm && !destination.trim()) {
-    if (!destination?.trim()) {
-      toast.error("Please enter a city/hotel.");
-      return;
-    } else if (selectedStartDate == "" || selectedEndDate == "") {
-      toast.error("Please choose check-in and check-out both date.");
-      return;
-    }
-    setIsClassAddedBook(true);
-    if (propertyList?.length > 0) {
-      setHandleSearched(true);
-      setTimeout(() => {
-        const element = document.getElementById(`property-div`);
-        if (element) {
-          element.scrollIntoView({ behavior: "smooth" });
-        }
-        //const data = postBookingWidged();
-       // console.log("data12",data);
       }, 100);
-      ///setHandleSearched(false);
     }
-    setTimeout(() => {
-        const data = postBookingWidged();
-        //console.log("data12",data);
-      }, 100);
   };
 
   function handleVisitHotel(url) {
@@ -1656,7 +2494,9 @@ const response = await fetch(url, {
   }
   const handleBookNow = (PropertyId, PropertyName, Phone) => {
     setHandleBookNow(!isHandleBookNow);
-    setNewClassRoom(!newClassRoom);
+   if(!newClassRoom) {
+      setNewClassRoom(newClassRoom);
+    }
     setSelectedPropertyPhone(Phone);
     //setSelectedPropertyId(propertyId);
     if (PropertyName != "") {
@@ -1702,13 +2542,17 @@ const response = await fetch(url, {
   const finalAmount = calculateTotalWithTax();
   // Handle suggestion click
   const handleSuggestionClick = (suggestion) => {
-    //setHasSearched(false);
+    contentProperties.current = null;
+    propertyValueRef.current =  suggestion.value;
+     if(process.env.NEXT_PUBLIC_STAAH_REDIRECT == "no"){
+      fetchContentApi(suggestion.value).catch(() => {});
+     }
     setSelectedPropertyId(suggestion.value);
-    setDefaultOffer(suggestion.offerCode); 
+   // setDefaultOffer(suggestion.offerCode);
     setCMSPropertyId(suggestion.property_Id);
     setDestination(suggestion.label);
-    setSelectedHotelName(suggestion.label); // Set the selected property ID
-    // fetchRatePrices(suggestion.value);
+    setSelectedHotelName(suggestion.label);
+    setSelectedPropertyBookingId(suggestion?.value);
     setSuggestions([]);
     fetchGalleryImages(suggestion.property_Id);
     const brandSlug = brandMap[suggestion.hotelBrandId] || "brand";
@@ -1717,24 +2561,26 @@ const response = await fetch(url, {
     setpropertyPageUrl(url);
   };
   const handleGetDetails = (rooms, propertyData) => {
-    console.log(rateResponse);
-    fetchAddOns();
-    postBookingWidged(rooms);
+
+    router.replace("?select-room");
+    setHandleBookNow(!isHandleBookNow);
+   // fetchAddOns();
+    postBookingWidged("0",rooms,"",false,"Select Room");
     const roomId = rooms?.RoomId;
     const data = removeHtmlTags(propertyData?.TermsAndConditions?.Description);
     setTermsAndConditions(data);
     setProperty(propertyData);
-    const roomCount = selectedRoom.filter(
+    const roomCount = selectedRoom?.filter(
       (room) => room?.roomId === roomId
     ).length;
 
     if (roomCount > rooms?.MinInventory) {
       if (rooms?.MinInventory == 0) {
         //alert(`This room is not available for selected date`);
-        toast.error("This room is not available for selected date.");
+        toast.error("This room is not available for selected date.", { position: "top-right", autoClose: 3000 });
       } else {
         toast.error(
-          `Only ${rooms?.MinInventory} room(s) allowed for ${rooms?.RoomName}`
+          `Only ${rooms?.MinInventory} room(s) allowed for ${rooms?.RoomName}`, { position: "top-right", autoClose: 3000 }
         );
       }
       return; // Block further selection
@@ -1764,7 +2610,7 @@ const response = await fetch(url, {
               };
             } else {
               toast.error(
-                `Only ${rooms?.MaxGuest} guests including adults and Children are allowed for this room`
+                `Only ${rooms?.MaxGuest} guests including adults and Children are allowed for this room`, { position: "top-right", autoClose: 3000 }
               );
             }
           }
@@ -1796,7 +2642,7 @@ const response = await fetch(url, {
             ];
           } else {
             toast.error(
-              `Only ${rooms?.MaxGuest} guests including adults and Children are allowed for this room`
+              `Only ${rooms?.MaxGuest} guests including adults and Children are allowed for this room`, { position: "top-right", autoClose: 3000 }
             );
             return [
               {
@@ -1847,7 +2693,7 @@ setTimeout(() => {
     const offset = elRect?.top - parentRect?.top;
 
     parent.scrollTo({
-      top: parent?.scrollTop + offset - 200, // adjust offset if needed
+      top: parent?.scrollTop + offset - 450, // adjust offset if needed
       behavior: "smooth",
     });
   }
@@ -1870,7 +2716,7 @@ setTimeout(() => {
         setIsMemberRate(true);
         SelectedRoomWithOffer(mapping);
         if (selectedRoomDetails?.id) {
-          const roomCount = selectedRoom.filter(
+          const roomCount = selectedRoom?.filter(
             (room) => room?.roomId === rooms?.RoomId
           ).length;
           if (roomCount <= rooms?.MinInventory) {
@@ -1947,7 +2793,7 @@ setTimeout(() => {
             });
 
             toast.error(
-              `Only ${rooms?.MinInventory} room(s) allowed for ${rooms?.RoomName}`
+              `Only ${rooms?.MinInventory} room(s) allowed for ${rooms?.RoomName}`, { position: "top-right", autoClose: 3000 }
             );
           }
         } else {
@@ -1992,135 +2838,389 @@ setTimeout(() => {
         toast.error(rooms?.RestrictionTitle);
       }
     }
-    // if (!rooms.RestrictionTitle && rooms.RestrictionTitle == "") {
-    //   handleMemberRatePlanSelect(mapping, rooms);
-    // }
   };
+const handleSelectRoom = (propertyData,mapping, rate, rooms ) => {
+  const toasts = [];
+   replaceAction("select-package");
+   window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({
+      event: 'virtualPageview',
+      page_path: '/?select-package',
+      page_location: `${window.location.pathname}/?select-package`,
+      page_title: 'BE Steps - select-package Page',
+    });
+  postBookingWidged(selectedPropertyId,rooms,mapping, false,"Select Package And Cart Open");
 
-  const handleSelectRoom = (mapping, rate, rooms, packageRate, adultRate) => {
-    if (!rooms?.RestrictionTitle && rooms?.RestrictionTitle == "") {
-      setIsMemberRate(false);
-      handleRatePlanSelect(mapping, rooms);
-      SelectedRoomWithOffer(mapping);
-      postBookingWidged(rooms,mapping, false);
-      if (selectedRoomDetails?.id) {
-        const roomCount = selectedRoom.filter(
-          (room) => room?.roomId === rooms?.RoomId
-        ).length;
-        if (roomCount <= rooms?.MinInventory) {
-          setSelectedRoom((prev) =>
-            prev.map((room, index) =>
-              room?.id === selectedRoomDetails?.id &&
-              room?.adults <= room?.maxAdult &&
-              parseInt(room?.adults) + parseInt(room?.children) <= room?.maxGuest
-                ? {
-                    ...room,
-                    roomPackage: rate.RateName,
-                    rateId: rate.RateId,
-                    applicableGuest: mapping.ApplicableGuest,
-                    applicableAdult: mapping.ApplicableAdult,
-                    applicableChild: mapping?.ApplicableChild
-                      ? mapping?.ApplicableChild
-                      : 0,
-                    roomRateWithTax: Math.round(
-                      rooms?.RatePlans?.find(
-                        (element) => element.RateId === mapping.RateId
-                      )?.Rates?.[
-                        Object.keys(rooms?.RatePlans?.[0]?.Rates || {})[0]
-                      ]?.OBP?.[prev[index]?.adults?.toString()]?.RateAfterTax ||
-                        "0"
-                    ),
-                    packageRate:
-                      rooms?.RatePlans?.find(
-                        (element) => element.RateId === mapping.RateId
-                      )?.Rates?.[
-                        Object.keys(rooms?.RatePlans?.[0]?.Rates || {})[0]
-                      ]?.OBP?.[prev[index]?.adults?.toString()]
-                        ?.RateBeforeTax || "0",
-                    roomAdultExtraCharge:
-                      Math.round(
-                        rooms?.RatePlans?.find(
-                          (element) => element.RateId === mapping.RateId
-                        )?.Rates?.[
-                          Object.keys(rooms?.RatePlans?.[0]?.Rates || {})[0]
-                        ]?.OBP?.[prev[index]?.adults?.toString()]
-                          ?.RateAfterTax || "0"
-                      ) -
-                      Math.round(
-                        rooms?.RatePlans?.find(
-                          (element) => element.RateId === mapping.RateId
-                        )?.Rates?.[
-                          Object.keys(rooms?.RatePlans?.[0]?.Rates || {})[0]
-                        ]?.OBP?.[prev["1"]]?.RateAfterTax || "0"
-                      ),
-                  }
-                : room
-            )
-          );
-        } else {
-          setSelectedRoom((prev) => {
-            if (prev.length === 0) return prev; // nothing to reset
+  const roomId = rooms?.RoomId;
+  const data = removeHtmlTags(propertyData?.TermsAndConditions?.Description);
+  setTermsAndConditions(data);
+  setProperty(propertyData);
+  setVisibleOfferRoomId((prev) => (prev === roomId ? null : roomId));
+  
+  const ratePlanList = rooms?.RatePlans?.find((el) => el.RateId === mapping.RateId);
+  const rateList = ratePlanList?.Rates;
 
-            const updated = [...prev];
-            const lastIndex = updated.length - 1;
-            const lastRoom = updated[lastIndex];
+  // Update selectedRoom
+  if (selectedRoomDetails?.id) {
+    setSelectedRoom((prev) =>
+      prev.map((room, index) => {
+        if (room?.id === selectedRoomDetails?.id) {
+          const isGuestLimitExceeded =  (room.adults + room.children) > rooms.MaxGuest;
+          const isAdultLimitExceeded =  room.adults > rooms.MaxAdult;
+          const isChildLimitExceeded = room.children > rooms.MaxChildren;
+          if (isGuestLimitExceeded) {
+              toasts.push(
+                `A maximum of ${rooms.MaxGuest} guests are allowed in ${rooms?.RoomName}`
+              );
+              return room;
+            }
+            if (isAdultLimitExceeded) {
+                toasts.push(
+                  `A maximum of ${rooms.MaxAdult} adults are allowed in ${rooms?.RoomName}`
+                );
+                return room;
+              }
+              if (isChildLimitExceeded) {
+                toasts.push(
+                  `A maximum of ${rooms.MaxChildren} children are allowed in ${rooms?.RoomName}`
+                );
+                return room;
+              }
+          // if(room.adults <= rooms.applicableAdult 
+          //   && room.children <= rooms.maxAdult
+          //   && (room.children + room.adults ) <= rooms>maxGuest
+          // )
+          // if (room?.adults + room?.children <= rooms?.MaxGuest) {
+            setSelectedRoomDetails(null);
+            const ratePlan = rooms?.RatePlans?.find((el) => el.RateId === mapping.RateId);
+            const rates = ratePlan?.Rates?.[Object.keys(ratePlan?.Rates || {})[0]]?.OBP;
 
-            updated[lastIndex] = {
-              id: lastRoom.id,
-              roomId: "",
-              roomName: "",
-              roomRate: "",
-              roomImage: {},
-              adults: 1,
-              children: 0,
-            };
+          const primary = rates?.[room?.adults?.toString()]?.RateAfterTax ?? undefined;
 
-            return updated;
-          });
-
-          toast.error(
-            `Only ${rooms?.MinInventory} room(s) allowed for ${rooms?.RoomName}`
-          );
-        }
-      } else {
-        // If no id, replace only the first record and keep the rest unchanged
-        setSelectedRoom((prev) => {
-          if (prev.length > 0) {
-            const pacRate = rooms?.RatePlans?.find(
-              (element) => element.RateId === mapping.RateId
-            )?.Rates?.[Object.keys(rooms?.RatePlans?.[0]?.Rates || {})[0]]?.OBP;
-            return [
-              {
-                ...prev[0],
-                roomPackage: rate.RateName,
-                rateId: rate.RateId,
-                applicableGuest: mapping.ApplicableGuest,
-                applicableAdult: mapping.ApplicableAdult,
-                applicableChild: mapping?.ApplicableChild
-                  ? mapping?.ApplicableChild
-                  : 0,
-                adultExRate:
-                  parseFloat(
-                    pacRate?.[prev[0]?.adults.toString()]?.RateAfterTax || "0"
-                  ) - parseFloat(pacRate?.[0]?.RateAfterTax || "0"),
-                packageRate: parseFloat(
-                  pacRate?.[prev[0]?.adults.toString()]?.RateBeforeTax || "0"
-                ),
-              },
-              ...prev.slice(1),
-            ];
+        // fallback = last rate in rates object/array
+        let fallback = 0;
+        if (rates) {
+          if (Array.isArray(rates)) {
+            // If rates is an array
+            const last = rates[rates.length - 1];
+            fallback = last?.RateAfterTax ?? 0;
           } else {
-            return [{ roomPackage: rate.RateName }];
+            // If rates is an object with numeric keys as strings
+            const keys = Object.keys(rates).sort((a, b) => Number(a) - Number(b));
+            const lastKey = keys[keys.length - 1];
+            fallback = rates[lastKey]?.RateAfterTax ?? 0;
           }
-        });
-      }
-      if (finalAmount !== 0 && finalAmount !== null && !isNaN(finalAmount)) {
-        setTotalPrice(finalAmount);
-      }
-    } else {
-      toast.error(rooms?.RestrictionTitle);
+        }
+        
+          const primaryBe = rates?.[room?.adults?.toString()]?.RateBeforeTax ?? undefined;
+
+        // fallback = last rate in rates object/array
+        let fallbackBe = 0;
+        if (rates) {
+          if (Array.isArray(rates)) {
+            // If rates is an array
+            const last = rates[rates.length - 1];
+            fallbackBe = last?.RateBeforeTax ?? 0;
+          } else {
+            // If rates is an object with numeric keys as strings
+            const keys = Object.keys(rates).sort((a, b) => Number(a) - Number(b));
+            const lastKey = keys[keys.length - 1];
+            fallbackBe = rates[lastKey]?.RateBeforeTax ?? 0;
+          }
+        }
+            return {
+              ...room,
+              roomId,
+              roomName: rooms?.RoomName,
+              roomRate: rooms?.RackRate,
+              roomImage: rooms?.Images?.[0],
+              maxGuest: rooms?.MaxGuest,
+              maxAdult: rooms?.MaxAdult,
+              maxChildren: rooms?.MaxChildren,
+              roomPackage: rate.RateName,
+              rateId: rate.RateId,
+              applicableGuest: mapping.ApplicableGuest,
+              applicableAdult: mapping.ApplicableAdult,
+              applicableChild: mapping?.ApplicableChild || 0,
+              roomRateWithTax: Math.round(
+                // rates?.[room?.adults?.toString()]?.RateAfterTax || 0
+                primary ?? fallback
+              ),
+              packageRate: parseFloat(
+                // rates?.[room?.adults?.toString()]?.RateBeforeTax || 0
+               primaryBe ?? fallbackBe
+              ),
+              roomAdultExtraCharge:
+                Math.round(rates?.[room?.adults?.toString()]?.RateAfterTax || 0) -
+                Math.round(rates?.["1"]?.RateAfterTax || 0),
+              minInventory:rooms?.MinInventory,
+              packageRateList: rateList
+            };
+          // } 
+          // else {
+          //   // toast.error(
+          //   //   `Only ${rooms?.MaxGuest} guests including adults and children are allowed for this room`
+          //   // );
+          //   showGuestLimitError = true;
+          // }
+        }
+        return room;
+      })
+    );
+//     if (showGuestLimitError) {
+//   toast.error(
+//     `Only ${rooms?.MaxGuest} guests including adults and children are allowed for this room`
+//   );
+// }
+
+  SelectedRoomWithOffer(mapping);
+ // calculateFinalCart();
+  } else {
+    // No id → update last room if exists, otherwise add new
+    setSelectedRoom((prev) => {
+  if (prev.length > 0 && !prev?.[0]?.roomId) {
+    const pacRate = rooms?.RatePlans?.find((el) => el.RateId === mapping.RateId)
+      ?.Rates?.[Object.keys(rooms?.RatePlans?.[0]?.Rates || {})[0]]?.OBP;
+
+    const firstRoom = prev[0];
+
+          const isGuestLimitExceeded =  (firstRoom.adults + firstRoom.children) > rooms.MaxGuest;
+          const isAdultLimitExceeded =  firstRoom.adults > rooms.MaxAdult;
+          const isChildLimitExceeded = firstRoom.children > rooms.MaxChildren;
+          if (isGuestLimitExceeded) {
+              toasts.push(
+                `A maximum of ${rooms.MaxGuest}  guests are allowed in ${rooms?.RoomName}`
+              );
+              return prev;
+            }
+            if (isAdultLimitExceeded) {
+                toasts.push(
+                  `A maximum of ${rooms.MaxAdult}  adults are allowed in ${rooms?.RoomName}`
+                );
+                return prev;
+              }
+              if (isChildLimitExceeded) {
+                toasts.push(
+                  `A maximum of ${rooms.MaxChildren} children are allowed in ${rooms?.RoomName}`
+                );
+                return prev;
+              }
+            const ratePlan = rooms?.RatePlans?.find((el) => el.RateId === mapping.RateId);
+            const rates = ratePlan?.Rates?.[Object.keys(ratePlan?.Rates || {})[0]]?.OBP;
+
+          const primary = rates?.[firstRoom?.adults?.toString()]?.RateAfterTax ?? undefined;
+
+        // fallback = last rate in rates object/array
+        let fallback = 0;
+        if (rates) {
+          if (Array.isArray(rates)) {
+            // If rates is an array
+            const last = rates[rates.length - 1];
+            fallback = last?.RateAfterTax ?? 0;
+          } else {
+            // If rates is an object with numeric keys as strings
+            const keys = Object.keys(rates).sort((a, b) => Number(a) - Number(b));
+            const lastKey = keys[keys.length - 1];
+            fallback = rates[lastKey]?.RateAfterTax ?? 0;
+          }
+        }
+        
+          const primaryBe = rates?.[firstRoom?.adults?.toString()]?.RateBeforeTax ?? undefined;
+
+        // fallback = last rate in rates object/array
+        let fallbackBe = 0;
+        if (rates) {
+          if (Array.isArray(rates)) {
+            // If rates is an array
+            const last = rates[rates.length - 1];
+            fallbackBe = last?.RateBeforeTax ?? 0;
+          } else {
+            // If rates is an object with numeric keys as strings
+            const keys = Object.keys(rates).sort((a, b) => Number(a) - Number(b));
+            const lastKey = keys[keys.length - 1];
+            fallbackBe = rates[lastKey]?.RateBeforeTax ?? 0;
+          }
+        }
+    return [
+      {
+        ...firstRoom,
+        roomId,
+        roomName: rooms?.RoomName,
+        roomRate: rooms?.RackRate,
+        roomImage: rooms?.Images?.[0],
+        maxGuest: rooms?.MaxGuest,
+        maxAdult: rooms?.MaxAdult,
+        maxChildren: rooms?.MaxChildren,
+        adults: firstRoom?.adults || 1,
+        children: firstRoom?.children || 0,
+        roomPackage: rate.RateName,
+        rateId: rate.RateId,
+        applicableGuest: mapping.ApplicableGuest,
+        applicableAdult: mapping.ApplicableAdult,
+        applicableChild: mapping?.ApplicableChild || 0,
+        adultExRate:
+          parseFloat(pacRate?.[firstRoom?.adults?.toString()]?.RateAfterTax || 0) -
+          parseFloat(pacRate?.["0"]?.RateAfterTax || 0),
+        packageRate: parseFloat(
+          // pacRate?.[firstRoom?.adults?.toString()]?.RateBeforeTax || 0
+          primaryBe ?? fallbackBe
+        ),
+        minInventory:rooms?.MinInventory,
+        packageRateList: rateList
+      },
+      ...prev.slice(1), // keep rest rooms unchanged
+    ];
+  // } else {
+  //   const pacRate = rooms?.RatePlans?.find((el) => el.RateId === mapping.RateId)
+  //       ?.Rates?.[Object.keys(rooms?.RatePlans?.[0]?.Rates || {})[0]]?.OBP;
+
+  //     //const lastIndex = prev.length - 1;
+  //     const lastIndex = prev?.findIndex(item => item.roomName === "");
+
+  //     const lastRoom = prev[lastIndex];
+
+  //     return [
+  //       ...prev.slice(0, lastIndex),
+  //       {
+  //         ...lastRoom,
+  //         roomId,
+  //         roomName: rooms?.RoomName,
+  //         roomRate: rooms?.RackRate,
+  //         roomImage: rooms?.Images?.[0],
+  //         maxGuest: rooms?.MaxGuest,
+  //         maxAdult: rooms?.MaxAdult,
+  //         adults: lastRoom?.adults || 1,
+  //         children: lastRoom?.children || 0,
+  //         roomPackage: rate.RateName,
+  //         rateId: rate.RateId,
+  //         applicableGuest: mapping.ApplicableGuest,
+  //         applicableAdult: mapping.ApplicableAdult,
+  //         applicableChild: mapping?.ApplicableChild || 0,
+  //         adultExRate:
+  //           parseFloat(pacRate?.[lastRoom?.adults?.toString()]?.RateAfterTax || 0) -
+  //           parseFloat(pacRate?.["0"]?.RateAfterTax || 0),
+  //         packageRate: parseFloat(
+  //           pacRate?.[lastRoom?.adults?.toString()]?.RateBeforeTax || 0
+  //         ),
+  //         minInventory:rooms?.MinInventory
+  //       },
+  //     ];
+  // }
+  } else {
+  const pacRate = rooms?.RatePlans?.find((el) => el.RateId === mapping.RateId)
+    ?.Rates?.[Object.keys(rooms?.RatePlans?.[0]?.Rates || {})[0]]?.OBP;
+
+  let updated = false;
+
+  return prev.map((room) => {
+    if (!updated && (room?.roomName === "" || room?.roomName === null)) {
+      updated = true; // mark as updated so no other rooms get changed
+      
+          const isGuestLimitExceeded =  (room.adults + room.children) > rooms.MaxGuest;
+          const isAdultLimitExceeded =  room.adults > rooms.MaxAdult;
+          const isChildLimitExceeded = room.children > rooms.MaxChildren;
+          if (isGuestLimitExceeded) {
+              toasts.push(
+                `A maximum of ${rooms.MaxGuest} guests are allowed in ${rooms?.RoomName}`
+              );
+              return room;
+            }
+            if (isAdultLimitExceeded) {
+                toasts.push(
+                  `A maximum of ${rooms.MaxAdult} adults are allowed in ${rooms?.RoomName}`
+                );
+                return room;
+              }
+              if (isChildLimitExceeded) {
+                toasts.push(
+                  `A maximum of ${rooms.MaxChildren} children are allowed in ${rooms?.RoomName}`
+                );
+                return room;
+              }
+            const ratePlan = rooms?.RatePlans?.find((el) => el.RateId === mapping.RateId);
+            const rates = ratePlan?.Rates?.[Object.keys(ratePlan?.Rates || {})[0]]?.OBP;
+
+          const primary = rates?.[room?.adults?.toString()]?.RateAfterTax ?? undefined;
+
+        // fallback = last rate in rates object/array
+        let fallback = 0;
+        if (rates) {
+          if (Array.isArray(rates)) {
+            // If rates is an array
+            const last = rates[rates.length - 1];
+            fallback = last?.RateAfterTax ?? 0;
+          } else {
+            // If rates is an object with numeric keys as strings
+            const keys = Object.keys(rates).sort((a, b) => Number(a) - Number(b));
+            const lastKey = keys[keys.length - 1];
+            fallback = rates[lastKey]?.RateAfterTax ?? 0;
+          }
+        }
+        
+          const primaryBe = rates?.[room?.adults?.toString()]?.RateBeforeTax ?? undefined;
+
+        // fallback = last rate in rates object/array
+        let fallbackBe = 0;
+        if (rates) {
+          if (Array.isArray(rates)) {
+            // If rates is an array
+            const last = rates[rates.length - 1];
+            fallbackBe = last?.RateBeforeTax ?? 0;
+          } else {
+            // If rates is an object with numeric keys as strings
+            const keys = Object.keys(rates).sort((a, b) => Number(a) - Number(b));
+            const lastKey = keys[keys.length - 1];
+            fallbackBe = rates[lastKey]?.RateBeforeTax ?? 0;
+          }
+        }
+      return {
+        ...room,
+        roomId,
+        roomName: rooms?.RoomName,
+        roomRate: rooms?.RackRate,
+        roomImage: rooms?.Images?.[0],
+        maxGuest: rooms?.MaxGuest,
+        maxAdult: rooms?.MaxAdult,
+        adults: room?.adults || 1,
+        children: room?.children || 0,
+        roomPackage: rate.RateName,
+        rateId: rate.RateId,
+        applicableGuest: mapping.ApplicableGuest,
+        applicableAdult: mapping.ApplicableAdult,
+        applicableChild: mapping?.ApplicableChild || 0,
+        adultExRate:
+          parseFloat(pacRate?.[room?.adults?.toString()]?.RateAfterTax || 0) -
+          parseFloat(pacRate?.["0"]?.RateAfterTax || 0),
+        packageRate: parseFloat(
+          // pacRate?.[room?.adults?.toString()]?.RateBeforeTax || 0
+          primaryBe ?? fallbackBe
+        ),
+        minInventory: rooms?.MinInventory,
+        packageRateList: rateList
+      };
     }
-  };
+    return room; // keep unchanged
+  });
+  
+}
+
+
+});
+//toasts.forEach((msg) => toast.error(msg, { position: "top-right", duration: 3000 }));
+setToastMessages(toasts);
+  SelectedRoomWithOffer(mapping);
+  //calculateFinalCart();
+  }
+
+  // Update selected room rate & total
+  setSelectedRoomRate({ roomId, roomRate: rooms?.RackRate });
+  if (finalAmount !== 0 && finalAmount !== null && !isNaN(finalAmount)) {
+    setTotalPrice(finalAmount);
+  }
+};
+
+
+
   const handleDateChange = (startDate, endDate, totalPrice) => {
     if (startDate != "" && endDate != "") {
       setFilters({
@@ -2139,12 +3239,7 @@ setTimeout(() => {
     }));
   };
 
-  const showBookingEngine = () => {
-    const cityData = JSON.parse(
-      sessionStorage?.getItem("cityDropDown") || "[]"
-    );
-    setCityDropDown(cityData);
-    
+  const showBookingEngine = async () => {
     const formatingDate = (date) => {
       const d = new Date(date); // ensure it's a Date object
       const year = d.getFullYear();
@@ -2152,8 +3247,6 @@ setTimeout(() => {
       const day = String(d.getDate()).padStart(2, "0");
       return `${year}-${month}-${day}`;
     };
-
-    // if (!rangeStart && !rangeEnd) {
     const today = new Date();
     const tomorrow = new Date(today);
     tomorrow.setDate(today.getDate() + 1);
@@ -2174,13 +3267,11 @@ setTimeout(() => {
 
   const hideBookingEngine = () => {
     setIsVisible(false);
-    onClose();
-    
-    postBookingWidged("","", true);
+    onClose(isTimeOutInventory);
   };
 
   const toggleBookNow = (id) => {
-    setActiveHotel((prev) => (prev === id ? null : id));
+    setActiveHotel(id);
   };
 
   const toggleAmenitiesPopup = () => {
@@ -2208,12 +3299,76 @@ setTimeout(() => {
 
   const [isWizardVisible, setIsWizardVisible] = useState(false);
 
-  const toggleWizard = () => {
-    setIsWizardVisible(!isWizardVisible);
-  };
+   useEffect(()=>{
 
+  const toggleWizard = () => {
+    isSetCallWizard(false);
+   // setIsStayStepOpen(false);
+    if(selectedRoom?.length > 0 && selectedRoom[selectedRoom?.length-1].roomName !== null 
+      && selectedRoom[selectedRoom?.length-1].roomName !== ""){
+    setIsWizardVisible(!isWizardVisible);
+    if (!isWizardVisible) {
+      // Add the CombinedWizard class to body for :before styling, but don't set inline styles
+      document.body.classList.add("CombinedWizard1");
+      // No need to set overflow here if you want to control it via CSS
+    } else {
+      document.body.classList.remove("CombinedWizard1");
+      setIsWizardVisible(!isWizardVisible);
+    }
+    }
+  };
+  if(isCallWizard){
+   
+    toggleWizard();
+    setTimeout(() => {
+      // setLoaderOverlay(false);
+       setSelectLoader(false);
+    }, 500);
+  }
+   }, [isCallWizard])
+
+  const resetRoomSelection = (id) => {
+    if(typeof id === "string"){
+    setSelectedRoom((prev) =>
+    prev.map((room, index) => {
+      if (room.id === id) {
+        return {
+          id: room.id,
+          roomId: "",
+          roomName: "",
+          roomRate: "",
+          roomImage: {},
+          adults: room.adults,
+          children: room.children,
+        };
+      }
+        return room; // keep others unchanged
+      })
+    );
+   }
+    else{
+      
+    setSelectedRoom((prev) =>
+    prev.map((room, index) => {
+    if (index === prev.length - 1) {
+      return {
+        id: room.id,
+        roomId: "",
+        roomName: "",
+        roomRate: "",
+        roomImage: {},
+        adults: room.adults,
+        children: room.children,
+      };
+    }
+    return room; 
+  })
+);
+    }
+  };
   const handleWizardClose = () => {
     setIsWizardVisible(false);
+    document.body.classList.remove("CombinedWizard1");
     if (tokenKey) {
       status();
     }
@@ -2224,13 +3379,17 @@ setTimeout(() => {
     window.location.href = "/";
   };
   const SelectedRoomWithOffer = (mapping) => {
+    //setLoaderOverlay(true)
+       setSelectLoader(true);
     if (!mapping || !mapping.CancellationPolicy) {
-      console.error("Mapping is undefined or missing CancellationPolicy");
+     // console.error("Mapping is undefined or missing CancellationPolicy");
       return;
     }
 
     setCancellationPolicyState(mapping.CancellationPolicy);
-    toggleWizard();
+    //toggleWizard();
+    setIsStayStepOpen(true);
+    isSetCallWizard(true);
     setIsVisible(true);
   };
 
@@ -2258,8 +3417,6 @@ setTimeout(() => {
       setIsLoggedin(true);
       setIsOpenLogin(false);
       setIsOpenSignUp(false);
-      //fetchRatePrices(selectedPropertyId, true);
-
       localStorage.setItem("userDetails", JSON.stringify(user));
     }
   };
@@ -2285,7 +3442,6 @@ setTimeout(() => {
       // setHandleSearched(true);
       setIsLoggedin(true);
       setIsOpenLogin(false);
-      // fetchRatePrices(selectedPropertyId, true);
       localStorage.setItem("userDetails", JSON.stringify(user));
     } else if (dataLogin.errorCode == "SignUp") {
       setIsOpenLogin(false);
@@ -2350,49 +3506,82 @@ setTimeout(() => {
       }
     }
   }, [showRoomsModal]);
-  
+  useEffect(() => {
+    if (filteredProperties?.length > 0 && !isLoaderOverlay) {
+
+    let t1 = performance.now();
+    const totalTimeTaken = ((t1 - initialTime) / 1000).toFixed(2); 
+    postBookingWidged(selectedPropertyId,"","", false,"rate fetched", 
+    "rate",`${process.env.NEXT_PUBLIC_STAAH_BASE_URL}/api/cin-api/rate`,"rate response",totalTimeTaken?.toString(),rateGuid);
+    }
+  }, [isLoaderOverlay]);
+
   return (
+    
     <>
       <section
         className={`booking-form-wrapper toggle-div ${
-          isVisible ? "visible" : "hidden"
-        } ${newClassRoom ? "booking-widget-set":""}`}
-        
-      >
-        {/* <section id="filter-bar-search" className={`booking-form-wrapper toggle-div ${isVisible ? "visible" : "hidden"}`}> */}
+         !tokenKey && isVisible ? "visible" : "hidden"
+        } ${newClassRoom ? "booking-widget-set" : ""}`}
 
+      >
         <div
           id="booking-bar"
           className={`booking-bar ${isClassAddedBook && !isSmallScreen ? "fullscreen" : ""}`}
         >
           {isVisible && (
-            <div className="hide-booking-engine">
-              {isSmallScreen && hasSearched && <button className="bg-black text-white w-50 ms-3 p-2 text-center mb-1" onClick={handleOnEdit}>
-                EDIT
-              </button>}
-              {isSmallScreen && <span className="mt-3 pt-1 ps-2" onClick={hideBookingEngine}>CLOSE &nbsp; </span>}
+            <div className="hide-booking-engine hide-on-desktop-close-btn">
+              
+              {isSmallScreen && (isRateFetched || hasSearched) &&  (
+                  <>
+                  {
+                    filteredProperties.map((item, index) => {
+                      return(
+                          <div className="d-flex aglin-items-center search-details-header"  key={index}  onClick={handleOnEdit}>
+                              <div className="top-detail-var">
+                                    <h4>{item.PropertyData.PropertyName}</h4>
+                                    <div className="top-head-roomdetails">
+                                      {selectedStartDate && selectedEndDate ? (
+                                        <span>
+                                          {new Date(selectedStartDate).toLocaleDateString('en-US', { day: '2-digit', month: 'short' })} -{' '}
+                                          {new Date(selectedEndDate).toLocaleDateString('en-US', { day: '2-digit', month: 'short' })}
+                                        </span>
+                                      ) : (
+                                        <span>Dates not selected</span>
+                                      )}
+                                      , <span>{`${totalRooms} Rooms, ${totalAdults + totalChildren} Guests`}</span>
+                                    </div>  
+                              </div>
+
+                              <button className="ms-3 p-2 text-center edit-engine">
+                                {/* <Edit size={20} color="#0090ff" /> */}
+                                <Pencil size={20} color="#0090ff"></Pencil>
+                              </button> 
+                           </div>
+                      )
+                       
+                    })
+                   
+                  }
+                 </>
+              )}
+
+              {isSmallScreen && <span className="mt-3 pt-1 ps-2 " onClick={hideBookingEngine}>CLOSE </span>}
               {/* <FontAwesomeIcon icon={faXmark} /> */}
-              {!isSmallScreen && <span onClick={hideBookingEngine}>CLOSE &nbsp;</span>}
+              {!isSmallScreen && 
+              <span onClick={hideBookingEngine} className="hide-on-desktop-close-btn">
+                <span className="closeSpanForCloseBookingEngine">CLOSE</span> <X size={12} className="closeXForCloseBookingEngine"></X> 
+                </span>
+              }
             </div>
           )}
           {(showDownDiv || !isSmallScreen) && (<div className="booking-bar-form">
-            {/* <div className="row">
-                <div className="col text-right">
-                    <button className="bg-black text-white w-25 p-2 mt-2 mr-2" onClick={handleOnEdit}>EDIT</button>
-                  </div>
-                </div> */}
-            
-          {/* </div> */}
-          
-            {/* {selectedProperty == 0 && (
-                <> */}
-
-
             <div className={`col-3 main-bx-field filter-item position-relative ${isSmallScreen? "m-7":""}`}>
               <Select
                 options={cityDropDown}
                 value={cityName}
-                onChange={(selected) => setCityName(selected)}
+                onChange={(selected) => {setCityName(selected),
+                setIsEditClicked(false)}}
                 placeholder="Select city..."
                 isClearable
                 className="form-control for-city-selectionn"
@@ -2430,7 +3619,9 @@ setTimeout(() => {
                     <li
                       key={index}
                       className="list-group-item"
-                      onMouseDown={() => handleSuggestionClick(suggestion)}
+                      onMouseDown={() => {
+                        handleSuggestionClick(suggestion),
+                      setIsEditClicked(false);}}
                       style={{ cursor: "pointer" }}
                     >
                       {suggestion.label}
@@ -2439,13 +3630,13 @@ setTimeout(() => {
                 </ul>
               )}
             </div>
-            <div className="col-2 main-bx-field mb-3 mb-md-0 bdr-booking-bottom">
+            <div className="col-2 main-bx-field mb-3 mb-md-0 bdr-booking-bottom position-relative">
               <DateRangePicker onDateChange={handleDateChange} />
             </div>
-            <div className="col-2 main-bx-field filter-item bdr-booking-bottom">
+            <div className="col-2 main-bx-field filter-item bdr-booking-bottom position-relative">
               <RoomManager onRoomChange={handleRoomChange} />
             </div>
-            <div className="col-2 main-bx-field">
+            <div className="col-1 main-bx-field">
               <input
                 type="text"
                 name="promoCode"
@@ -2455,634 +3646,437 @@ setTimeout(() => {
                 className="form-control"
                 placeholder="Promo Code"
               />
+              {/* {promoError && (
+                <div className="text-danger small mt-1">{promoError}</div>
+              )} */}
             </div>
             <div
-              id="search"
-              className="col-1 search-icon hotel-search-btn-wrapper"
+              id="search" 
+              className="col-2 search-icon hotel-search-btn-wrapper position-relative"
             >
-              <button onClick={handleSearch}>
-                <span className="this-search-for-mobile">Search</span>
-                <FontAwesomeIcon
-                  icon={faSearch}
-                  className="this-search-for-desk"
-                />
+              <button onClick={process.env.NEXT_PUBLIC_STAAH_REDIRECT == "redirect" ? handleSearchTh : handleSearch}> 
+               <span className="this-search-for-mobile">Search</span>
+                <span className="this-search-for-desk">BOOK NOW</span>
               </button>
             </div>
           </div>)}
+          {noProperty &&
+            ReactDOM.createPortal(
+              <>
+                <div className="modal-backdrop fade show"></div>
+          
+                <div
+                  className="modal fade show d-block"
+                  id="MessageForNoProperty"
+                  tabIndex="-1"
+                  aria-labelledby="MessageForNoPropertyLabel"
+                  aria-hidden="false"
+                >
+                  <div className="modal-dialog modal-dialog-centered text-start">
+                    <div className="modal-content no-property-modal-data">
+                      <div className="p-3">
+                        <h6 className="modal-title" id="MessageForNoPropertyLabel">
+                          For the best rates and reservations, please contact our Central Reservations team:
+                        </h6>
+                        <button
+                          type="button"
+                          className="btn-close"
+                          onClick={() => setNoProperty(false)}
+                          aria-label="Close"
+                        >x</button>
+                      </div>
+                      <div className="modal-body">
+                        <div className="offer-list">
+                          <p>
+                            <Link href="tel:9717170578">📞 +91 97171 70578</Link>
+                            <Link href="mailto:bookmystay@theclarkshotels.com">📧 bookmystay@theclarkshotels.com</Link>
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </>,
+              document.body
+            )
+          }
+         {hasSearched && filteredProperties?.length > 0 ? (
+  <>
+    <div className="container step-wizard-card-section position-relative">
+      <div className="d-flex justify-content-between align-items-center position-relative w-75 m-auto stepper-wizard">
 
-          {isLoaderOverlay ? (
-            <div className="loader-dots" aria-label="Loading" role="status">
-              <span></span>
-              <span></span>
-              <span></span>
+        {(() => {
+          // find first room where roomName is empty/null
+          const firstIncompleteIndex = selectedRoom?.findIndex(
+            (rm) => !rm?.roomName
+          );
+
+          const isMoreThanEight = selectedRoom?.length > 8;
+
+          return selectedRoom?.map((rm, indx) => {
+            let circleClass = "";
+            if (firstIncompleteIndex === -1 || indx < firstIncompleteIndex) {
+              circleClass = "completed"; // done already
+            } else if (indx === firstIncompleteIndex) {
+              circleClass = "active"; // first empty slot
+            }
+            const divClassName = `text-center position-relative flex-fill ${
+        isMoreThanEight ? "larger-div-box" : ""
+      }`;
+
+            return (
+              
+              <div className={divClassName} key={indx}>
+                <div className={`step-circle ${circleClass}`}>
+                  {circleClass === "completed" ? (
+                    <Check size={18} strokeWidth={3} />
+                  ) : (
+                    indx + 1
+                  )}
+                </div>
+                <div
+                  className={`mt-2 ${
+                    circleClass === "completed" ? "fw-bold" : "fw-normal"
+                  }`}
+                >
+                  Room {indx + 1}
+                </div>
+                <div className="step-line completed"></div>
+                
+              </div>
+            );
+          });
+        })()}
+
+        {/* Reservation step */}
+        <div className="text-center position-relative flex-fill">
+          <div className="step-circle">{selectedRoom?.length + 1}</div>
+          <div className="mt-2 fw-normal">Reservation</div>
+        </div>
+        <Toaster />
+      </div>
+
+    </div>
+  </>
+) : (
+  ""
+)}
+
+
+
+{/* 
+          {isLoaderOverlay || isSelectLoader || (isTimeOutContent.current == true && rateDataRef?.length ==0) ? ( */}
+          {isLoaderOverlay || isSelectLoader || (bothReadyRef.current && filteredProperties?.length === 0) ? (
+            <div className="d-flex w-100 align-items-center justify-content-center">
+              <div className="loader-dots" aria-label="Loading" role="status">
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
             </div>
+           
           ) : (
-            <div id="property-div" className="hotels-list hotels-rooms-list">
+            <>
+
+             <div id="property-div" className="hotels-list hotels-rooms-list">
               <div className="row m-0">
-                <div className="col-md-12 p-0">
-                  {hasSearched && filteredProperties?.length > 0 ? (
+
+               <div className="col-md-12 p-0">
+                  {hasSearched && filteredProperties?.length > 0 && bothReadyRef.current ? (
                     <div className="repeated-div-property">
-                      {filteredProperties?.map((property) => (
+                         
+           {filteredProperties?.map((property) => (
                         <div
                           key={property?.PropertyData?.PropertyId}
-                          className="card rounded-3 mb-3 p-3 mt-4"
+                          className="card rounded-3 mb-3 p-3 mt-1"
                         >
-                          {/* <div className="row g-0">
-                            <div className="col-md-10">
-                              <div className="row">
-                                <div className="col-md-4 col-sm-4">
-                                  <Image
-                                    src={
-                                      propertyImages?.[0]?.images &&
-                                      propertyImages?.[0]?.images.length > 0
-                                        ? propertyImages?.[0]?.images[0]
-                                            .propertyImage
-                                        : dummyImage
-                                    }
-                                    alt="alt"
-                                    width={500}
-                                    height={200}
-                                    className="img-fluid rounded-3 property-image"
-                                  />
-                                </div>
-                                <div className="col-md-8 col-sm-8">
-                                  <div className="card-body p-0">
-                                    <div className="property-main-content">
-                                      <p className="hotel-info mb-1">
-                                        <span>
-                                          {property?.PropertyData?.PropertyName}
-                                        </span>
-                                      </p>
-
-                                      <div className="property-reviewss">
-                                        <div className="d-flex">
-                                          {propertyImages?.[0]?.ratingReview &&
-                                            propertyImages?.[0]?.ratingReview
-                                              .length > 0 && (
-                                              <span className="ratingvalue font-swiss-721">
-                                                {
-                                                  propertyImages?.[0]
-                                                    ?.ratingReview?.[0]
-                                                    ?.googleRating
-                                                }
-                                                &nbsp; | &nbsp; &nbsp;
-                                              </span>
-                                            )}
-                                          {propertyImages?.[0]
-                                            ?.addressDetails &&
-                                            propertyImages?.[0]?.addressDetails
-                                              .length > 0 && (
-                                              <p className="review-font font-swiss-721">
-                                                <FontAwesomeIcon
-                                                  icon={faPlane}
-                                                />{" "}
-                                                &nbsp;
-                                                {
-                                                  propertyImages?.[0]
-                                                    ?.addressDetails?.[0]
-                                                    ?.airportDistance
-                                                }
-                                                &nbsp; | &nbsp; &nbsp;
-                                              </p>
-                                            )}
-                                          {propertyImages?.[0]
-                                            ?.addressDetails &&
-                                            propertyImages?.[0]?.addressDetails
-                                              .length > 0 && (
-                                              <p className="review-font font-swiss-721">
-                                                <FontAwesomeIcon
-                                                  icon={faTrain}
-                                                />
-                                                &nbsp;{" "}
-                                                {
-                                                  propertyImages?.[0]
-                                                    ?.addressDetails?.[0]
-                                                    ?.railWay
-                                                }
-                                              </p>
-                                            )}
-                                        </div>
-                                      </div>
-
-                                      <div className="hotel-dist mt-2">
-                                        <span className="highlight-Text">
-                                          <Map
-                                            size={12}
-                                            className="d-inline-block"
-                                          ></Map>{" "}
-                                          {property?.PropertyData?.Address?.City}
-                                        </span>
-                                        <span className="drive">
-                                          {`${property?.PropertyData?.Address?.AddressLine}, ${property?.PropertyData?.Address?.City}, ${property?.PropertyData?.Address?.State}, ${property?.PropertyData?.Address?.Country}, ${property?.PropertyData?.Address?.PostalCode}`}
-                                        </span>
-                                      </div>
-
-                                      <p className="hotel-info mt-2 pb-2 mb-0 text-justify mobile-hidden-text">
-                                        {stripHtml(
-                                          property?.PropertyData?.PropertyDescription || ""
-                                        ).slice(0, 90)}
-                                        ...
-                                        <Link
-                                          href="#"
-                                          className="read-more-btn-propery"
-                                          data-bs-toggle="modal"
-                                          data-bs-target="#PropertyPopupModal"
-                                        >
-                                           More info
-                                        </Link>
-                                      </p>
-
-                                      {ReactDOM.createPortal(
-                                        <div
-                                          className="modal fade"
-                                          id="PropertyPopupModal"
-                                          tabIndex="-1"
-                                          aria-labelledby="PropertyPopupModal"
-                                          aria-hidden="true"
-                                        >
-                                          <div className="modal-dialog modal-lg">
-                                            <div className="modal-content property-popup-modal-content">
-                                              <div className="modal-body position-relative">
-                                                <button
-                                                  type="button"
-                                                  className="btn-close position-absolute"
-                                                  style={{
-                                                    top: 10,
-                                                    right: 10,
-                                                  }}
-                                                  data-bs-dismiss="modal"
-                                                  aria-label="Close"
-                                                >
-                                                  x
-                                                </button>
-                                                <div
-                                                  id="categoryView"
-                                                  className="hotel-category-img-tabs"
-                                                >
-                                                  {activeView === "category" ? (
-                                                    <>
-                                                      <div className="border-0 mb-3 text-start">
-                                                        <h5 className="modal-title text-start">
-                                                          {
-                                                            property?.PropertyData?.PropertyName
-                                                          }
-                                                        </h5>
-                                                      </div>
-                                                      <div className="row">
-                                                        {categoryImages &&
-                                                          categoryImages.map(
-                                                            (galImage, idx) => (
-                                                              <div
-                                                                className="col-6"
-                                                                key={idx}
-                                                              >
-                                                                <div
-                                                                  className="category-card large-cardd"
-                                                                  onClick={() =>
-                                                                    openGallery(
-                                                                      idx,
-                                                                      galImage?.galleryCategory
-                                                                    )
-                                                                  }
-                                                                >
-                                                                  <Image
-                                                                    src={
-                                                                      galImage?.galleryImages &&
-                                                                      galImage
-                                                                        ?.galleryImages
-                                                                        .length >
-                                                                        0
-                                                                        ? galImage
-                                                                            ?.galleryImages[0]
-                                                                            .image
-                                                                        : dummyImage
-                                                                    }
-                                                                    alt="Hotel"
-                                                                    width={200}
-                                                                    height={150}
-                                                                    className="img-fluid"
-                                                                    style={{
-                                                                      objectFit:
-                                                                        "cover",
-                                                                      width:
-                                                                        "100%",
-                                                                      height:
-                                                                        "100%",
-                                                                    }}
-                                                                  />
-                                                                  <div className="card-body">
-                                                                    <h6>
-                                                                      {
-                                                                        galImage?.galleryCategory
-                                                                      }{" "}
-                                                                      →
-                                                                    </h6>
-                                                                  </div>
-                                                                </div>
-                                                              </div>
-                                                            )
-                                                          )}
-                                                      </div>
-                                                    </>
-                                                  ) : (
-                                                    <div>
-                                                      <button
-                                                        className="btn btn-link mb-2"
-                                                        onClick={() =>
-                                                          setActiveView(
-                                                            "category"
-                                                          )
-                                                        }
-                                                      >
-                                                        ← Back
-                                                      </button>
-                                                      <ul className="nav nav-tabs mb-3">
-                                                        {categoryImages.map(
-                                                          (cat, indx) => (
-                                                            <li
-                                                              className="nav-item"
-                                                              key={indx}
-                                                            >
-                                                              <button
-                                                                className={`nav-link ${
-                                                                  cat.galleryCategory ===
-                                                                  galleryCategory
-                                                                    ? "active"
-                                                                    : ""
-                                                                }`}
-                                                                onClick={() => {
-                                                                  setActiveCategory(
-                                                                    indx
-                                                                  );
-                                                                  setGalleryCategory(
-                                                                    cat.galleryCategory
-                                                                  );
-                                                                  setCurrentSlide(
-                                                                    1
-                                                                  );
-                                                                }}
-                                                              >
-                                                                {cat.galleryCategory
-                                                                  .charAt(0)
-                                                                  .toUpperCase() +
-                                                                  cat.galleryCategory.slice(
-                                                                    1
-                                                                  )}
-                                                              </button>
-                                                            </li>
-                                                          )
-                                                        )}
-                                                      </ul>
-
-                                                      <Swiper
-                                                        onSwiper={(swiper) =>
-                                                          (swiperRef.current =
-                                                            swiper)
-                                                        }
-                                                        onSlideChange={(
-                                                          swiper
-                                                        ) =>
-                                                          setCurrentSlide(
-                                                            swiper.activeIndex +
-                                                              1
-                                                          )
-                                                        }
-                                                        navigation
-                                                        modules={[Navigation]}
-                                                      >
-                                                        {(
-                                                          categoryImages[
-                                                            activeCategory
-                                                          ]?.galleryImages || []
-                                                        ).map((img, i) => (
-                                                          <SwiperSlide key={i}>
-                                                            <img
-                                                              src={img.image}
-                                                              alt={
-                                                                img.galleryCategory
-                                                              }
-                                                              className="w-100"
-                                                              style={{
-                                                                objectFit:
-                                                                  "cover",
-                                                                height: 400,
-                                                                cursor:
-                                                                  "pointer",
-                                                              }}
-                                                            />
-                                                            <div className="text-center mt-2">
-                                                              <p
-                                                                className="mb-0 text-muted"
-                                                                style={{
-                                                                  fontSize: 14,
-                                                                }}
-                                                              >
-                                                                {
-                                                                  categoryImages[
-                                                                    activeCategory
-                                                                  ]
-                                                                    .galleryCategory
-                                                                }
-                                                              </p>
-                                                            </div>
-                                                          </SwiperSlide>
-                                                        ))}
-                                                      </Swiper>
-
-                                                      <div
-                                                        className="image-counter text-center mt-2 text-muted"
-                                                        style={{
-                                                          fontSize: 14,
-                                                        }}
-                                                      >
-                                                        {currentSlide}/
-                                                        {categoryImages[
-                                                          activeCategory
-                                                        ]?.galleryImages
-                                                          ?.length || 0}
-                                                      </div>
-                                                    </div>
-                                                  )}
-                                                </div>
-                                                <div className="bottom-modal-content">
-                                                  <div className="property-description mt-3">
-                                                    <div className="property-amenitiess mt-4">
-                                                      <div className="row">
-                                                        {property?.PropertyData
-                                                          ?.Amenities &&
-                                                          Object?.entries(
-                                                            property?.PropertyData?.Amenities
-                                                          )?.map(
-                                                            (
-                                                              [category, items],
-                                                              catIndex
-                                                            ) => (
-                                                              <div
-                                                                className="col-lg-4 col-md-6 col-sm-6"
-                                                                key={`cat-${catIndex}`}
-                                                              >
-                                                                <h6 className="amenity-ttile">
-                                                                  {category}
-                                                                </h6>
-                                                                <ul className="ms-2 ps-0">
-                                                                  {Array.isArray(
-                                                                    items
-                                                                  ) &&
-                                                                    items.map(
-                                                                      (
-                                                                        item,
-                                                                        itemIndex
-                                                                      ) => (
-                                                                        <li
-                                                                          key={`item-${catIndex}-${itemIndex}`}
-                                                                          className="list-item"
-                                                                        >
-                                                                          {item}
-                                                                        </li>
-                                                                      )
-                                                                    )}
-                                                                </ul>
-                                                              </div>
-                                                            )
-                                                          )}
-                                                      </div>
-                                                    </div>
-                                                  </div>
-                                                </div>
-                                              </div>
-                                            </div>
-                                          </div>
-                                        </div>,
-                                        document.body
-                                      )}
-                                      <div className="hotels-amenities mt-3 mobile-hidden-text">
-                                        {property?.PropertyData?.Amenities &&
-                                          Object?.entries(
-                                            property?.PropertyData?.Amenities
-                                          )?.slice(0, 1)?.map(([category, items]) => (
-                                              <div key={category}>
-                                                <ul className="property-amenities">
-                                                  {Array.isArray(items) &&
-                                                    items
-                                                      .slice(0, 8)
-                                                      .map((item, index) => (
-                                                        <li key={index}>
-                                                          <FontAwesomeIcon
-                                                            icon={faDiamond}
-                                                          />{" "}
-                                                          {item}
-                                                        </li>
-                                                      ))}
-                                                </ul>
-                                                {Array.isArray(items) &&
-                                                  items.length > 0 && (
-                                                    <Link
-                                                      href="#"
-                                                      onClick={() =>
-                                                        toggleAmenitiesPopup(
-                                                          property?.PropertyData?.PropertyId
-                                                        )
-                                                      }
-                                                      className="amenities-read-more read-more-btn-propery"
-                                                      data-bs-toggle="modal"
-                                                      data-bs-target={`#amenitiesModal-${property?.PropertyData?.PropertyId}`}
-                                                    >
-                                                      View Amenities
-                                                    </Link>
-                                                  )}
-                                              </div>
-                                            ))}
-                                      </div>
-                                      {ReactDOM.createPortal(
-                                        <div
-                                          className="modal fade"
-                                          id={`amenitiesModal-${property?.PropertyData?.PropertyId}`}
-                                          tabIndex="-1"
-                                          aria-labelledby={`amenitiesModalLabel-${property?.PropertyData?.PropertyId}`}
-                                          aria-hidden="true"
-                                        >
-                                          <div className="modal-dialog modal-dialog-centered modal-lg text-start">
-                                            <div className="modal-content">
-                                              <div className="p-3">
-                                                <h5
-                                                  className="modal-title text-start"
-                                                  id={`amenitiesModalLabel-${property?.PropertyData?.PropertyId}`}
-                                                >
-                                                  {
-                                                    property?.PropertyData?.PropertyName
-                                                  }{" "}
-                                                  Amenities
-                                                </h5>
-                                                <button
-                                                  type="button"
-                                                  className="btn-close"
-                                                  data-bs-dismiss="modal"
-                                                  aria-label="Close"
-                                                >
-                                                  x
-                                                </button>
-                                              </div>
-                                              <div className="modal-body">
-                                                <div className="popup-box-contentrj">
-                                                  <div className="popup-amenity-items">
-                                                    {property?.PropertyData?.Amenities && Object?.entries(
-                                                      property?.PropertyData?.Amenities
-                                                    )?.map(
-                                                      ([category, items]) =>
-                                                        Array.isArray(items) &&
-                                                        items.map(
-                                                          (item, index) => (
-                                                            <span key={index}>
-                                                              {" "}
-                                                              <FontAwesomeIcon
-                                                                icon={faDiamond}
-                                                              />{" "}
-                                                              {item}
-                                                            </span>
-                                                          )
-                                                        )
-                                                    )}
-                                                  </div>
-                                                </div>
-                                              </div>
-                                            </div>
-                                          </div>
-                                        </div>,
-                                        document.body
-                                      )}
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                            <div className="col-md-2">
-                              <div className="price-detail-right">
-                                
-                                <div className="price-details">
-                                  <span>Starting Rate/Night</span>
-                                 <p className="priceText mb-3 property-price-text ">
-                                          {(() => {
-                                            const rates = property?.RoomData?.map((room) => room?.RackRate).filter(
-                                              (rate) => typeof rate === "number" && rate > 0
-                                            );
-
-                                            const minRate = rates.length > 0 ? Math.min(...rates) : 0;
-
-                                            if (minRate === 0) {
-                                              return (
-                                                <>
-                                                  Sold Out
-                                                  <span className="small-text-for-today"> (for today)</span>
-                                                </>
-                                              );
-                                            }
-
-                                            // format function for INR
-                                            const formatINR = (value) =>
-                                              new Intl.NumberFormat("en-IN", {
-                                                style: "currency",
-                                                currency: "INR",
-                                                maximumFractionDigits: 0,
-                                              }).format(value);
-
-                                            // increased price (20% higher)
-                                            const increasedPrice = minRate + minRate * 0.25;
-
-                                            return (
-                                              <>
-                                                <span className="line-through text-gray-500 mr-2 d-block-mobile">
-                                                  {formatINR(increasedPrice)}
-                                                </span>
-                                                <span className="text-green-600 font-bold">
-                                                  {formatINR(minRate)}
-                                                </span>
-                                                <span className="sm-text-price"> + Taxes</span>
-                                              </>
-                                            );
-                                          })()}
-                                        </p>
-
-                                </div>
-
-                                <div className="book-a-stay"
-                                     id={`hotel-${property?.PropertyData?.PropertyId}`}>
-                                  <Link
-                                    href="#"
-                                    className="property-read-more read-more-btn-propery"
-                                    onClick={(e) => {
-                                      e.preventDefault(); // prevent navigating to "#"
-                                      handleVisitHotel(propertyPageUrl); // call your function
-                                    }}
-                                  >
-                                    visit hotel
-                                  </Link>
-                                  <button
-                                    className={`btn btn-primary accordion-button ${
-                                      isHandleBookNow ? "handle-book-now" : ""
-                                    }`}
-                                    onClick={() => {
-                                      handleBookNow(
-                                        property?.PropertyData?.PropertyId,
-                                        property?.PropertyData?.PropertyName,
-                                        property?.PropertyData?.Address.Phone
-                                      );
-                                    }}
-                                  >
-                                    View Rooms
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                          </div> */}
-
-                          {activeHotel === property?.PropertyData.PropertyId && (
+                          {activeHotel === property?.PropertyData?.PropertyId && (
                             <div
                               className="book-now-content"
-                              // id={`hotel-${property.PropertyData.PropertyId}`}
                             >
-                              <div className="accordion-body mt-4">
-                                {Array.isArray(property?.RoomData) &&
-                                property?.RoomData.length > 0 ? (
-                                  property?.RoomData.map((rooms) =>{ 
-    
-                              const ratePlans = rooms?.RatePlans || [];
-                              let minRate = Infinity;
-                          
-                              ratePlans.forEach((plan) => {
-                                const firstRateKey = Object.keys(plan?.Rates || {})[0];
-                                const rate = parseFloat(
-                                  plan?.Rates?.[firstRateKey]?.OBP?.["1"]?.RateBeforeTax || "0"
-                                );
-                                if (!isNaN(rate) && rate < minRate) {
-                                  minRate = rate;
-                                }
-                              });
-                          
-                              // If no valid rate, skip rendering this room
-                              if (!isFinite(minRate) || minRate <= 0) {
-                                return null;
-                                    }
-                                if (!isFinite(minRate) || minRate <= 0) {
-                                return null;
-                                      }
-                                return (
-                                    
-                                    <div className="row g-0 mb-5" key={rooms?.RoomId}>
+                              <div className="accordion-body mt-3">
+                                 {Array.isArray(property?.RoomData) ?( property?.RoomData?.length > 0 ? (
+    (() => {
+      const excludeRoomNames = ["B2B","b2b","B2b","b2B","copy"];
+//       const maxAdultsInRoom = selectedRoom.reduce(
+//   (max, rm) => (rm.adults > max ? rm.adults : max),
+//   0
+// );
+// let isSoldOutProp = false;
+// let emptyRoom = selectedRoom.find(rm => rm.roomName === "");
+// const maxAdultsInRoom = emptyRoom 
+//   ? (emptyRoom.adults + emptyRoom.children) 
+//   : selectedRoom.reduce((max, rm) => (rm.adults > max ? (rm.adults + rm.children) : 0), 0);
+
+// let mappedRooms = property?.RoomData
+//   ?.filter(room => !excludeRoomNames.includes(room.RoomName) 
+//   && !room.RoomName.toLowerCase().includes("copy"))
+//   ?.map((rooms) => {
+//     const ratePlans = rooms?.RatePlans || [];
+
+//     // Calculate minimum available rate for this room
+//     let minRate = null;
+//     ratePlans.forEach((plan) => {
+//       const firstRateKey = Object.keys(plan?.Rates || {})[0];
+//       const rate = parseFloat(
+//         plan?.Rates?.[firstRateKey]?.OBP?.[0]?.RateBeforeTax || "0"
+//       );
+
+//       if (rate > 0) {
+//         if (minRate === null || rate < minRate) {
+//           minRate = rate;
+//         }
+//       }
+//     });
+
+//     // Exclude sold-out rooms
+//     if (!minRate) return null;
+
+//     return {
+//       ...rooms,
+//       minRate,
+//       exactMatch: rooms?.MaxGuest === maxAdultsInRoom,
+//     };
+//   })
+//   .filter(Boolean); // remove sold-out rooms
+
+// // Fallback: if no exact match AND maxAdultsInRoom > all room MaxGuest
+// if (!mappedRooms.some(r => r.exactMatch)) {
+//   const validRooms = mappedRooms.filter(r => r.MaxGuest < maxAdultsInRoom);
+//   if (validRooms.length > 0) {
+//     const highestGuest = Math.max(...validRooms.map(r => r.MaxGuest));
+//     mappedRooms = mappedRooms.map(r => ({
+//       ...r,
+//       exactMatch: r.MaxGuest === highestGuest
+//     }));
+//   }
+// }
+// let sortedRooms = [];
+// if(mappedRooms?.length > 0){ sortedRooms = mappedRooms.sort((a, b) => {
+//   // 1️⃣ Exact match (or fallback) first
+//   if (a.exactMatch !== b.exactMatch) return a.exactMatch ? -1 : 1;
+
+//   // 2️⃣ Then sort by descending MaxGuest
+//   if (a.MaxGuest !== b.MaxGuest) return b.MaxGuest - a.MaxGuest;
+
+//   // 3️⃣ Then sort by lowest rate
+//   if (a.minRate !== b.minRate) return a.minRate - b.minRate;
+
+//   // 4️⃣ Tie-breaker by room name
+//   return (a.RoomName || "").localeCompare(b.RoomName || "");
+// });
+// }
+// else{
+//   isSoldOutProp = true;
+//   let mappedRooms = property?.RoomData
+//   ?.filter(room => !excludeRoomNames.includes(room.RoomName) 
+//   && !room.RoomName.toLowerCase().includes("copy"));
+//  sortedRooms = mappedRooms
+// }
+
+let isSoldOutProp = false;
+let emptyRoom = selectedRoom.find(rm => rm.roomName === "");
+const maxAdultsInRoom = emptyRoom 
+  ? (emptyRoom.adults + emptyRoom.children) 
+  : selectedRoom.reduce(
+      (max, rm) => (rm.adults > max ? (rm.adults + rm.children) : max),
+      0
+    );
+
+let mappedRooms = property?.RoomData
+  ?.filter(
+    room =>
+      !excludeRoomNames.includes(room.RoomName) &&
+      !room.RoomName.toLowerCase().includes("copy")
+  )
+  ?.map(rooms => {
+    const ratePlans = rooms?.RatePlans || [];
+    let minRate = null;
+
+    ratePlans.forEach(plan => {
+      const firstRateKey = Object.keys(plan?.Rates || {})[0];
+      const rate = parseFloat(
+        plan?.Rates?.[firstRateKey]?.OBP?.[0]?.["1"]?.RateBeforeTax || "0"
+      );
+
+      if (rate > 0) {
+        if (minRate === null || rate < minRate) {
+          minRate = rate;
+        }
+      }
+    });
+
+    if (!minRate) return null;
+
+    return {
+      ...rooms,
+      minRate,
+    };
+  })
+  .filter(Boolean);
+
+if (mappedRooms?.length > 0) {
+  // Find all unique guest capacities
+  const guestCapacities = mappedRooms.map(r => r.MaxGuest);
+
+  // Find the next greater or equal MaxGuest
+  const exactOrGreater = guestCapacities
+    .filter(g => g >= maxAdultsInRoom)
+    .sort((a, b) => a - b)[0]; // smallest greater or equal
+
+  // Fallback to the highest if none is >= maxAdultsInRoom
+  const targetGuest =
+    exactOrGreater !== undefined
+      ? exactOrGreater
+      : Math.max(...guestCapacities);
+
+  // Assign exactMatch based on the closest rule
+  mappedRooms = mappedRooms.map(r => ({
+    ...r,
+    exactMatch: r.MaxGuest === targetGuest,
+  }));
+
+  // ✅ Sort rooms
+  // mappedRooms.sort((a, b) => {
+  //   // 1️⃣ Exact or closest match first
+  //   if (a.exactMatch !== b.exactMatch) return a.exactMatch ? -1 : 1;
+
+  //   // 2️⃣ Higher capacity next
+  //   if (a.MaxGuest !== b.MaxGuest) return b.MaxGuest - a.MaxGuest;
+
+  //   // 3️⃣ Then lower rate
+  //   if (a.minRate !== b.minRate) return a.minRate - b.minRate;
+
+  //   // 4️⃣ Finally by room name
+  //   return (a.RoomName || "").localeCompare(b.RoomName || "");
+  // });
+  mappedRooms.sort((a, b) => {
+  // 1️⃣ Exact or nearest match first
+  if (a.exactMatch !== b.exactMatch) return a.exactMatch ? -1 : 1;
+
+  // 2️⃣ Then by how close MaxGuest is to maxAdultsInRoom
+  const aDiff = a.MaxGuest - maxAdultsInRoom;
+  const bDiff = b.MaxGuest - maxAdultsInRoom;
+
+  // Sort ascending by positive difference (nearest greater first)
+  // If both are smaller (negative), sort descending (largest smaller first)
+  if (aDiff >= 0 && bDiff >= 0) return aDiff - bDiff; // both greater
+  if (aDiff < 0 && bDiff < 0) return bDiff - aDiff;   // both smaller
+  if (aDiff >= 0 && bDiff < 0) return -1;             // a is greater/equal, b is smaller → a first
+  if (aDiff < 0 && bDiff >= 0) return 1;              // a smaller, b greater/equal → b first
+
+  // 3️⃣ Then lower rate
+  if (a.minRate !== b.minRate) return a.minRate - b.minRate;
+
+  // 4️⃣ Finally by name
+  return (a.RoomName || "").localeCompare(b.RoomName || "");
+});
+
+} else {
+  // All rooms sold out
+  isSoldOutProp = true;
+  mappedRooms = property?.RoomData?.filter(
+    room =>
+      !excludeRoomNames.includes(room.RoomName) &&
+      !room.RoomName.toLowerCase().includes("copy")
+  );
+}
+
+const sortedRooms = mappedRooms;
+
+      // .sort((a, b) => a?.minRate - b?.minRate);
+      if (sortedRooms?.length === 0) {
+        return <p> No room data available for this property.</p>;
+      }
+      //const nonSoldOutRooms = sortedRooms?.filter(r => !r.soldOut) || [];
+       return sortedRooms?.map((rooms, index) => (
+        <div className="row g-0 mb-3" key={rooms?.RoomId}>
                                       <div className="col-md-10">
                                         <div className="row">
                                           <div className="col-md-4">
-                                            <div className="">
+                                            <div className="position-relative">
                                               {rooms?.Images &&
                                               rooms?.Images.length > 0 ? (
-                                                <img
-                                                  src={rooms?.Images[0]}
-                                                  alt={`Hotel Image`}
-                                                  width={500}
-                                                  height={200}
-                                                  data-bs-toggle="modal"
-                                                  data-bs-target={`#RoomPopupModal-${rooms?.RoomId}`}
-                                                  className="img-fluid rounded-3 room-image cursor-pointer"
-                                                />
+                                                <Swiper
+                                                              modules={[
+                                                                Navigation,
+                                                                Autoplay,
+                                                                Pagination
+                                                              ]}
+                                                              autoplay={
+                                                              //   {
+                                                              //   delay: 3000,
+                                                              //   disableOnInteraction: false,
+                                                              // }
+                                                              false
+                                                            }
+                                                              navigation={true}
+                                                              pagination={{
+                                                                clickable: "true"
+                                                              }}
+                                                              
+                                                              spaceBetween={10}
+                                                              slidesPerView={1}
+                                                              loop={true}
+                                                              
+                                                              className="images-slider filterbar-g-slider"
+                                                            >
+                                                              {rooms?.Images &&
+                                                              rooms?.Images
+                                                                .length > 0
+                                                                ? rooms?.Images.map(
+                                                                    (
+                                                                      src,
+                                                                      idx
+                                                                    ) => (
+                                                                      <SwiperSlide
+                                                                        key={
+                                                                          idx
+                                                                        }
+                                                                      >
+                                                                        <img
+                                                                          src={
+                                                                            src
+                                                                          }
+                                                                          alt={`Slide ${
+                                                                            idx +
+                                                                            1
+                                                                          }`}
+                                                                          width={500}
+                                                  height={150}
+                                                  className="img-fluid rounded-3 property-image"
+                                                                           data-bs-toggle="modal"
+                                                                           data-bs-target={`#RoomPopupModal-${rooms.RoomId}`}
+                                                                        />
+                                                                      </SwiperSlide>
+                                                                    )
+                                                                  )
+                                                                : images.map(
+                                                                    (
+                                                                      src,
+                                                                      idx
+                                                                    ) => (
+                                                                      <SwiperSlide
+                                                                        key={
+                                                                          idx
+                                                                        }
+                                                                      >
+                                                                        <img
+                                                                          src={
+                                                                            src
+                                                                          }
+                                                                          alt={`Slide ${
+                                                                            idx +
+                                                                            1
+                                                                          }`}
+                                                                         width={500}
+                                                  height={150}
+                                                  className="img-fluid rounded-3 property-image"
+                                                                        />
+                                                                      </SwiperSlide>
+                                                                    )
+                                                                  )}
+                                                            </Swiper>
                                               ) : (
                                                 <Image
                                                   src={dummyImage}
@@ -3095,17 +4089,38 @@ setTimeout(() => {
                                             </div>
                                           </div>
                                           <div className="col-md-8">
-                                            <div className="card-body p-0">
+                                            <div className="card-body p-0 roomname-leftroom">
                                               <div>
                                                 <p className="hotel-info mb-1">
                                                   <span data-bs-toggle="modal"
                                                     data-bs-target={`#RoomPopupModal-${rooms?.RoomId}`}>
-                                                    {rooms?.RoomName} 
-                                                  </span>  
+                                                    {rooms?.RoomName}
+                                                  </span>
+                                                 <span className="not-showing-mobile-txt">
+                                                    {(() => {
+                                                      const nonSoldOutRooms = sortedRooms?.filter(r => !r.soldOut) || [];
+                                                      const nonSoldOutIndex = nonSoldOutRooms.findIndex(r => r.RoomId === rooms.RoomId);
+
+                                                      return (
+                                                        <>
+                                                          {nonSoldOutIndex === offerTagIndex && !isSoldOutProp && (
+                                                            <span className="offer-tag">Only {number1} rooms left</span>
+                                                          )}
+                                                        </>
+                                                      );
+                                                    })()}
+                                                  </span>
                                                 </p>
-                                                <div className="room-type-single">
-                                                  <p className="bold-text1 mb-0">
+                                                <div className="align-mobile-set">
+                                                  <div className="room-type-single">
+                                                  {/* <p className="bold-text1 mb-0">
                                                     Up to {rooms?.MaxGuest}{" "}
+                                                    Guests &nbsp; | &nbsp;&nbsp;
+                                                  </p> */}
+
+                                                  <p className="bold-text1 mb-0">
+                                                   <FontAwesomeIcon icon={faUser} />
+                                                   {" "} {rooms?.MaxGuest}{" "}
                                                     Guests &nbsp; | &nbsp;&nbsp;
                                                   </p>
 
@@ -3115,9 +4130,12 @@ setTimeout(() => {
                                                 </div>
 
                                                 <div className="tile-placeholder text-justify py-2 pr-3 mobile-hidden-text1">
-                                                  {stripHtml(
-                                                    rooms?.RoomDescription || ""
-                                                  ).slice(0, 150)}
+                                                 <span className="d-none d-md-inline">
+                                                    {stripHtml(rooms?.RoomDescription || "").slice(0, 90)}
+                                                  </span>
+                                                  <span className="d-inline d-md-none">
+                                                    {stripHtml(rooms?.RoomDescription || "").slice(0, 0)}
+                                                  </span>
                                                   ...
                                                   <Link
                                                     href="#"
@@ -3127,6 +4145,10 @@ setTimeout(() => {
                                                   >
                                                    More info
                                                   </Link>
+                                                </div>
+                                                
+                                                </div>
+                                               
                                                   {ReactDOM.createPortal(
                                                     <div
                                                       className="modal fade"
@@ -3158,7 +4180,15 @@ setTimeout(() => {
                                                               modules={[
                                                                 Navigation,
                                                                 Pagination,
+                                                                Autoplay,
                                                               ]}
+                                                              autoplay={
+                                                              //   {
+                                                              //   delay: 3000,
+                                                              //   disableOnInteraction: false,
+                                                              // }
+                                                              false
+                                                            }
                                                               navigation
                                                               pagination={{
                                                                 clickable: true,
@@ -3219,7 +4249,6 @@ setTimeout(() => {
                                                                   )}
                                                             </Swiper>
 
-                                                            {/* Description & Amenities */}
                                                             <div className="bottom-modal-content">
                                                               <div className="property-description mt-3 px-3">
                                                                 <p>
@@ -3281,8 +4310,7 @@ setTimeout(() => {
                                                                           key={`room-cat-${roomAmenity}`}
                                                                         >
                                                                           <h6 className="amenity-ttile">
-                                                                            {/* <Image src="images/bellboy.png" className="amenity-title-img" height={20} width={20} alt="Bed icon" /> */}
-                                                                            {/* Beds and Bedding */}
+
                                                                             {
                                                                               category
                                                                             }
@@ -3328,165 +4356,47 @@ setTimeout(() => {
                                                     </div>,
                                                     document.body
                                                   )}
-                                                </div>
 
-                                                <div className="facilities-roomm pb-2 mobile-hidden-text1">
-                                                  <span className="s-room-amenitiess">
-                                                    {Object?.entries(
-                                                      rooms?.RoomAmenities
-                                                    )
-                                                      .slice(0, 1)
-                                                      .map(
-                                                        ([category, items]) => (
-                                                          <ul
-                                                            key={`${rooms?.RoomId}-${category}`}
-                                                            className="single-room-amenities amenities-hide-mobile"
-                                                          >
-                                                            {Array.isArray(
-                                                              items
-                                                            ) &&
-                                                              items.slice(0, 4).map(
-                                                                (
-                                                                  item,
-                                                                  index
-                                                                ) => (
-                                                                  <li
-                                                                    key={`${rooms?.RoomId}-${index}`}
-                                                                  >
-                                                                    {item}
-                                                                  </li>
-                                                                )
-                                                              )}
-                                                          </ul>
-                                                        )
-                                                      )}
-                                                    {/* <button
-                                                      className="view-amenities-btn room-view-more-amenities"
-                                                      data-bs-toggle="modal"
-                                                      data-bs-target={`#amenities-modal-${rooms?.RoomId}`}
-                                                    >
-                                                      view 
-                                                      <span className="show-desktop-more"> amenties</span>
-                                                      <span className="show-mobile-more"> amenties</span>
-                                                    </button> */}
-                                                  </span>
-
-                                                  {ReactDOM.createPortal(
-                                                    <div
-                                                      className="modal fade"
-                                                      id={`amenities-modal-${rooms?.RoomId}`}
-                                                      tabIndex="-1"
-                                                      aria-labelledby={`amenitiesModalLabel-${rooms?.RoomId}`}
-                                                      aria-hidden="true"
-                                                    >
-                                                      <div className="modal-dialog modal-dialog-centered modal-lg">
-                                                        <div className="modal-content">
-                                                          <div className="modal-header">
-                                                            <h5
-                                                              className="modal-title"
-                                                              id={`amenitiesModalLabel-${rooms?.RoomId}`}
-                                                            >
-                                                              {rooms?.RoomName}{" "}
-                                                              Amenities
-                                                            </h5>
-                                                            <button
-                                                              type="button"
-                                                              className="btn-close"
-                                                              data-bs-dismiss="modal"
-                                                              aria-label="Close"
-                                                            >
-                                                              {/* CLOSE{" "}
-                                                            <Image
-                                                              src="./booking-engine-imgs/images/white_close_icon.svg"
-                                                              alt="close icon"
-                                                              width={25}
-                                                              height={25}
-                                                              style={{
-                                                                width: "25px",
-                                                                height: "25px",
-                                                              }}
-                                                            /> */}
-                                                              x
-                                                            </button>
-                                                          </div>
-                                                          <div className="modal-body pt-0">
-                                                            <div className="popup-amenity-items">
-                                                              {Object?.entries(
-                                                                rooms?.RoomAmenities
-                                                              ).map(
-                                                                ([
-                                                                  category,
-                                                                  items,
-                                                                ]) => (
-                                                                  <div
-                                                                    key={`category-${rooms?.RoomId}-${category}`}
-                                                                  >
-                                                                    <h6 className="amenity-category mt-4">
-                                                                      {category}
-                                                                    </h6>
-                                                                    {Array.isArray(
-                                                                      items
-                                                                    ) &&
-                                                                      items.map(
-                                                                        (
-                                                                          item,
-                                                                          index
-                                                                        ) => (
-                                                                          <span
-                                                                            key={`amenity-${rooms?.RoomId}-${category}-${index}`}
-                                                                          >
-                                                                            <FontAwesomeIcon
-                                                                              icon={
-                                                                                faDiamond
-                                                                              }
-                                                                              className="me-2"
-                                                                            />{" "}
-                                                                            {
-                                                                              item
-                                                                            }
-                                                                          </span>
-                                                                        )
-                                                                      )}
-                                                                  </div>
-                                                                )
-                                                              )}
-                                                            </div>
-                                                          </div>
-                                                        </div>
-                                                      </div>
-                                                    </div>,
-                                                    document.body
-                                                  )}
-                                                </div>
                                               </div>
                                             </div>
                                           </div>
                                         </div>
                                       </div>
                                       <div className="col-md-2">
-                                        <div className="price-detail-right">
+                                        <div className="price-detail-right room-price-hide">
                                           <div className="price-details mt-0">
                                             <div className="make-flex">
 
-                                             <p className="priceText mb-0 mt-1 property-price-text">
+                                             <div className="priceText mb-0 mt-1 property-price-text">
                                                     {(() => {
                                                       const ratePlans = rooms?.RatePlans || [];
                                                       let minRate = Infinity;
-
+                                                      let saveings = Infinity;
+                                                         
                                                       ratePlans.forEach((plan) => {
                                                         const firstRateKey = Object.keys(plan?.Rates || {})[0];
                                                         const rate = parseFloat(
-                                                          plan?.Rates?.[firstRateKey]?.OBP?.["1"]?.RateBeforeTax || "0"
+                                                          plan?.Rates?.[firstRateKey]?.OBP?.[0]?.["1"]?.RateBeforeTax || "0"
+                                                        );
+                                                        const rateSavings = parseFloat(
+                                                          plan?.Rates?.[firstRateKey]?.OBP?.[0]?.["1"]?.Savings || "0"
                                                         );
                                                         if (!isNaN(rate) && rate < minRate) {
                                                           minRate = rate;
+                                                          saveings = rateSavings;
                                                         }
                                                       });
-
                                                       if (!isFinite(minRate)) {
-                                                        return "Sold Out";
-                                                      }
-
+                                                      return (
+                                                        <>
+                                                        <span className="sold-out-txt">
+                                                          Sold Out
+                                                          <span className="small-text-for-today"> (for today)</span>
+                                                        </span>
+                                                          
+                                                        </>
+                                                      );
+                                                    }
                                                       // Format INR
                                                       const formatINR = (value) =>
                                                         new Intl.NumberFormat("en-IN", {
@@ -3496,34 +4406,29 @@ setTimeout(() => {
                                                         }).format(value);
 
                                                       // 25% higher original price
-                                                      const increasedPrice = minRate + minRate * 0.25;
+                                                      const increasedPrice = saveings + minRate;
 
                                                       return (
-                                                        <>
-                                                        <span className="line-through text-gray-500">
-                                                            {formatINR(increasedPrice)}
-                                                          </span>
-                                                        <span className="flex items-center gap-2">
-                                                          {/* Original Price (strikethrough) */}
-                                                          
+                                                        <div className="roomprice-hide-mobile">
+                                                          <span className="line-through text-gray-500">
+                                                              {/* {formatINR(increasedPrice)} */}
+                                                              INR{" "}{increasedPrice.toLocaleString()}
+                                                            </span>
+                                                          <span className="flex items-center gap-2">
+                                                            <span className="text-green-600 font-bold">
+                                                              {/* {formatINR(minRate)} */}
+                                                              INR{" "}{minRate.toLocaleString()}
+                                                            </span>
 
-                                                          {/* Discounted Price */}
-                                                          <span className="text-green-600 font-bold">
-                                                            {formatINR(minRate)}
+                                                            <span className="sm-text-price">/Night</span>
                                                           </span>
+                                                        </div>
 
-                                                          <span className="sm-text-price">/Night</span>
-                                                        </span>
-                                                        </>
-                                                        
                                                       );
                                                     })()}
-                                                  </p>
-
-
-                                              <p className="price-details">
-                                                <span>
-                                                  {/* Plus ₹1,043.10 in taxes */}
+                                                  </div>
+                                              { !rooms.soldOut && !isSoldOutProp && <p className="price-details">
+                                                <span className="txes-hide-mobile">
                                                   Plus INR &nbsp;
                                                   {(() => {
                                                     const ratePlans =
@@ -3540,14 +4445,14 @@ setTimeout(() => {
                                                           parseFloat(
                                                             plan?.Rates?.[
                                                               firstRateKey
-                                                            ]?.OBP?.["1"]
+                                                            ]?.OBP?.[0]?.["1"]
                                                               ?.RateAfterTax ||
                                                               "0"
                                                           ) -
                                                           parseFloat(
                                                             plan?.Rates?.[
                                                               firstRateKey
-                                                            ]?.OBP?.["1"]
+                                                            ]?.OBP?.[0]?.["1"]
                                                               ?.RateBeforeTax ||
                                                               "0"
                                                           );
@@ -3566,11 +4471,26 @@ setTimeout(() => {
                                                   })()}{" "}
                                                   in taxes
                                                 </span>
-                                              </p>
+                                                {(() => {
+                                                  const nonSoldOutRooms = sortedRooms?.filter(r => !r.soldOut) || [];
+                                                  const nonSoldOutIndex = nonSoldOutRooms.findIndex(r => r.RoomId === rooms.RoomId);
+                                                  return (
+                                                    <>
+                                                    <span className="txes-hide-mobile">
+                                                      {nonSoldOutIndex === offerTagIndex && !isSoldOutProp && (
+                                                        <span className="offer-tag">Only {number1} rooms left</span>
+                                                      )}
+                                                    </span>
+                                                     
+                                                    </>
+                                                  );
+                                                })()}
+
+                                              </p>}
                                             </div>
                                           </div>
                                           <div className="book-a-stay book-stay-room-btn style-for-mob-price">
-                                            {/* this below item hidden by PDB */}
+
                                             <div className="price-details mt-0 no-need-this-price">
                                               <div className="make-flex mb-1">
                                                 <p className="priceText mb-0 mt-1 property-price-text">
@@ -3594,7 +4514,7 @@ setTimeout(() => {
                                                         const rate = parseFloat(
                                                           plan?.Rates?.[
                                                             firstRateKey
-                                                          ]?.OBP?.["1"]
+                                                          ]?.OBP?.[0]?.["1"]
                                                             ?.RateAfterTax ||
                                                             "0"
                                                         );
@@ -3619,40 +4539,13 @@ setTimeout(() => {
                                                 <p className="price-details"></p>
                                               </div>
                                             </div>
-
-                                            {rooms?.MinInventory == 0 ? (
-                                              <button
-                                                className="btn btn-primary btnprimary-2"
-                                                onClick={() =>
-                                                  handleGetDetails(
-                                                    rooms,
-                                                    property?.PropertyData
-                                                  )
-                                                }
-                                                disabled
-                                              >
-                                                Not available
-                                              </button>
-                                            ) : (
-                                              <button
-                                                className="btn btn-primary btnprimary-2"
-                                                onClick={() =>
-                                                  handleGetDetails(
-                                                    rooms,
-                                                    property?.PropertyData
-                                                  )
-                                                }
-                                              >
-                                                Select This Room
-                                              </button>
-                                            )}
                                           </div>
                                         </div>
                                       </div>
-                                      {visibleOfferRoomId === rooms?.RoomId && (
+                                      {rooms?.MinInventory > 0 && rooms?.RoomId && (
                                         <div
                                           id={`offer-${rooms?.RoomId}`}
-                                          className="offers-container mt-4"
+                                          className="offers-container mt-1"
                                         >
                                           <div className="accordion-body swiper-slider-package">
                                             <Swiper
@@ -3664,15 +4557,15 @@ setTimeout(() => {
                                                 prevEl: ".swiper-button-prev",
                                               }}
                                               pagination={false}
-                                              autoplay={{
-                                                delay: 3000,
-                                                disableOnInteraction: false,
-                                              }}
+                                              autoplay={
+                                              false
+                                            }
                                               breakpoints={{
-                                                576: { slidesPerView: 1 },
-                                                768: { slidesPerView: 2 },
-                                                992: { slidesPerView: 4 },
-                                                1200: { slidesPerView: 4 },
+                                                  0: { slidesPerView: 1.1 },
+                                                576: { slidesPerView: 1.1 },
+                                                768: { slidesPerView: 2.1 },
+                                                992: { slidesPerView: 3 },
+                                                1200: { slidesPerView: 3 },
                                               }}
                                               className="swiper-container-with-navigation"
                                             >
@@ -3692,21 +4585,80 @@ setTimeout(() => {
                                                         rooms?.RoomId &&
                                                       map?.RateId === rate?.RateId
                                                   );
+                                                      const ratePlan = rooms?.RatePlans?.find(
+                                                                  (element) => element.RateId === mapping.RateId
+                                                                );
+                                                                const firstRateKey = Object.keys(ratePlan?.Rates || {})[0];
+                                                                const minRate = parseFloat(
+                                                                  ratePlan?.Rates?.[firstRateKey]?.OBP?.[0]?.["1"]?.RateBeforeTax || "0"
+                                                                );
+                                                                const memberMinRate = parseFloat(
+                                                                  (ratePlan?.Rates?.[firstRateKey]?.OBP?.[0]?.["1"]?.RateBeforeTax * 0.20) || "0"
+                                                                );
+                                                                const saveingsPerPackage = parseFloat(
+                                                                  ratePlan?.Rates?.[firstRateKey]?.OBP?.[0]?.["1"]?.Savings || "0"
+                                                                );
+                                                               const increasedPricePerRoom = saveingsPerPackage + minRate;
+                                                              
+                                                              const { totalCartValue, totalSavings, cartValueWithTax , increasedPrice2} = selectedRoom?.reduce(
+                                                                (acc, sel,selInd) => {
+                                                                  const matchedRatePlan = rooms?.RatePlans?.find(
+                                                                    (ratePlan) =>
+                                                                      ratePlan?.RateId === sel?.rateId ||
+                                                                      ratePlan?.RateId === mapping?.RateId
+                                                                  );
+                                                                
+                                                                  if (!matchedRatePlan?.Rates) return acc;
+                                                                
+                                                                  const adultKey = String(sel?.adults || 1);
+                                                                
+                                                                  Object.values(matchedRatePlan.Rates).forEach((dateData) => {
+                                                                    let obp = dateData?.OBP?.[adultKey];
+                                                                  if (!obp && dateData?.OBP) {
+                                                                      const numericKeys = Object.keys(dateData.OBP)
+                                                                        .map(Number)
+                                                                        .filter((n) => !isNaN(n))
+                                                                        .sort((a, b) => a - b);
+                                                                      const lastKey = numericKeys[numericKeys.length - 1];
+                                                                      obp = dateData.OBP[String(lastKey)];
+                                                                    }
+                                                                  
+                                                                    if (obp) {
+                                                                      acc.totalCartValue += parseFloat(obp?.[parseInt(adultKey)]?.RateBeforeTax || "0");
+                                                                      acc.totalSavings += parseFloat(dateData?.OBP?.[selInd]?.[adultKey]?.Savings || "0");
+                                                                      acc.cartValueWithTax += parseFloat(obp.TotalRate || "0");
+                                                                      acc.increasedPrice2 = (acc.totalCartValue + acc.totalSavings);
+                                                                    }
+                                                                  });
+                                                                
+                                                                  return acc;
+                                                                },
+                                                                { totalCartValue: 0, totalSavings: 0 ,cartValueWithTax: 0, increasedPrice2: 0}
+                                                              );
+                                                              // const increasedPricePerRoom = totalSavings + minRate;
+                                                              //const finalTotal = totalCartValue + (Number(totalTax) || 0);
+                                                             // const increasedPrice = totalCartValue + totalSavings; 
+                                                             console.log(increasedPrice2);
+                                                              const finalCartValue = cartValueWithTax +  + (Number(totalTax) || 0);
+                                                              
+                                                            
                                                 return (
                                                   <SwiperSlide key={idx}>
-                                                    <div className="mt-3 package-main-box">
+                                                    <div className="mt-1 package-main-box">
                                                       <div className="winter-box-content carddd"
-                                                      
+
                                                       >
                                                         <p className="hotel-info mb-1">
-                                                          <span className="d-flex align-content-center">
-                                                            {rate.RateName} 
-                                                            <span className="offer-tag">  
-                                                              <Tags className="mr-2" />  25% Off
-                                                            </span>
+                                                          <span className="d-flex align-content-center w-100">
+                                                            <span className="room-card-txt">{rate.RateName}</span> 
+                                                            {selectedRoom.length == 1 ? (<span className="offer-tag">
+                                                            <Tags size={24} /> Save INR {Math.round(totalSavings)?.toLocaleString()}/-
+                                                            </span>) :(<span className="offer-tag">
+                                                            <Tags size={24} /> Save INR {Math.round(saveingsPerPackage)?.toLocaleString()}/-
+                                                            </span>)}
                                                           </span>
                                                         </p>
-                                                        <p className="package-desc-content">
+                                                        {/* <p className="package-desc-content">
                                                           {stripHtml(
                                                             rate.RateDescription ||
                                                               ""
@@ -3724,7 +4676,22 @@ setTimeout(() => {
                                                           >
                                                             more info
                                                           </a>
-                                                        </p>
+                                                        </p> */}
+                                                        <div className="package-desc-content">
+                                                          {/* <div
+                                                            dangerouslySetInnerHTML={{
+                                                              __html: rate.RateDescription || "",
+                                                            }}
+                                                          /> */}
+                                                          <a
+                                                            className="view-package-detail-btn"
+                                                            onClick={() => setSelectedRoomOffers([rate])}
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#rateDetailsModal"
+                                                          >
+                                                          Inclusions & Policies
+                                                          </a>
+                                                        </div>
 
                                                         <div className="winter-box-btn offer-footer-part">
                                                           <div className="package-select-left">
@@ -3735,45 +4702,48 @@ setTimeout(() => {
                                                             </p>
                                                             <p className="priceText">
                                                               {(() => {
-                                                                const ratePlan = rooms?.RatePlans?.find(
-                                                                  (element) => element.RateId === mapping.RateId
-                                                                );
-
-                                                                const firstRateKey = Object.keys(ratePlan?.Rates || {})[0];
-                                                                const minRate = parseFloat(
-                                                                  ratePlan?.Rates?.[firstRateKey]?.OBP?.["1"]?.RateBeforeTax || "0"
-                                                                );
-
-                                                                if (!minRate || isNaN(minRate)) {
-                                                                  return "Sold Out";
-                                                                }
-
-                                                                // Format INR
-                                                                const formatINR = (value) =>
-                                                                  new Intl.NumberFormat("en-IN", {
-                                                                    style: "currency",
-                                                                    currency: "INR",
-                                                                    maximumFractionDigits: 0,
-                                                                  }).format(value);
-
-                                                                // 25% higher original price
-                                                                const increasedPrice = minRate + minRate * 0.25;
-
                                                                 return (
-                                                                  <span className="flex items-center gap-2">
-                                                                    {/* Original Price (strikethrough) */}
-                                                                    <span className="line-through text-gray-500 d-block">
-                                                                      {formatINR(increasedPrice)}
-                                                                    </span>
-
-                                                                    {/* Discounted Price */}
-                                                                    <span className="text-green-600 font-bold">
-                                                                      {formatINR(minRate)}
-                                                                    </span>
-
-                                                                    <small className="text-gray-500">/Night</small>
-
+                                                            <span className="items-center gap-2">
+                                                            {(() => {
+                                                              return (
+                                                                <>
+                                                                 {selectedRoom?.length > 1 ?
+                                                                 (<> <span className="line-through text-gray-500">
+                                                                    INR {increasedPricePerRoom.toLocaleString()}
                                                                   </span>
+                                                                  <span className="text-green-600 font-bold ps-2">
+                                                                    INR {minRate.toLocaleString() } 
+                                                                   </span>
+                                                                   {/* <span className="text-green-600 font-bold ps-2">
+                                                                    INR12 {minRate23.toLocaleString() } 
+                                                                   </span> */}
+                                                                   
+                                                                    <small className="text-gray-500">/Room/Night</small>
+                                                                    </>):(<>
+                                                                     <span className="line-through text-gray-500">
+                                                                    INR {increasedPrice2.toLocaleString()}
+                                                                  </span>
+                                                                  {/* <span className="text-green-600 font-bold ps-2">
+                                                                    INR {totalRoomsBasePrice > 0 ? totalRoomsBasePrice?.toLocaleString() : finalTotal.toLocaleString() } 
+                                                                     {numberOfNights > 1 ?(<small className="text-muted">{" "}(for{" "}{numberOfNights}{" "} nights)</small>)
+                                                                     :(<small className="text-muted">{" "}(for{" "}{numberOfNights}{" "} night)</small>)}
+                                                                    <small className="d-block text-muted"><FontAwesomeIcon icon={faPlus} /> taxes & fees</small>
+                                                                   </span> */}
+                                                                   <span className="text-green-600 font-bold ps-2">
+                                                                    INR {parseInt(totalRoomsBasePrice) > 0 ? totalRoomsBasePrice?.toLocaleString() : finalCartValue.toLocaleString() } 
+                                                                     {numberOfNights > 1 ?(<small className="text-muted">{" "}(for{" "}{numberOfNights}{" "} nights)</small>)
+                                                                     :(<small className="text-muted">{" "}(for{" "}{numberOfNights}{" "} night)</small>)}
+                                                                    <small className="d-block text-muted"> incl. of taxes & fees</small>
+                                                                   </span>
+                                                                   </>
+                                                                   )
+
+                                                                 }
+                                                                </>
+                                                              );
+                                                            })()}
+                                                          </span>
+
                                                                 );
                                                               })()}
                                                             </p>
@@ -3788,12 +4758,13 @@ setTimeout(() => {
                                                                   ?.RatePlans?.[0]
                                                                   ?.Rates || {}
                                                               )[0]
-                                                            ]?.OBP?.["1"]
+                                                            ]?.OBP?.[0]?.["1"]
                                                               ?.RateBeforeTax ? (
                                                               <button
                                                                 className="btn offer-select-btnn rounded-0"
                                                                 onClick={() => {
                                                                   handleSelectRoom(
+                                                                    property?.PropertyData,
                                                                     mapping,
                                                                     rate,
                                                                     rooms,
@@ -3838,20 +4809,22 @@ setTimeout(() => {
                                                                       ]
                                                                         ?.RateAfterTax ||
                                                                         "0"
-                                                                    )
+                                                                    ),index
                                                                   );
                                                                   selectedSetRateDataList(
                                                                     rate
                                                                   );
+                                                                  setTotalRoomsBasePrice(finalCartValue);
                                                                 }}
                                                               >
-                                                                Select Package{" "}
+                                                                Book Now{" "}
                                                               </button>
                                                             ) : (
                                                               <button
                                                                 className="btn btn-primary offer-select-btnn"
                                                                 onClick={() => {
                                                                   handleSelectRoom(
+                                                                    property?.PropertyData,
                                                                     mapping,
                                                                     rate,
                                                                     rooms,
@@ -3896,7 +4869,7 @@ setTimeout(() => {
                                                                       ]
                                                                         ?.RateAfterTax ||
                                                                         "0"
-                                                                    )
+                                                                    ),index
                                                                   );
                                                                   selectedSetRateDataList(
                                                                     rate
@@ -3908,6 +4881,123 @@ setTimeout(() => {
                                                               </button>
                                                             )}
                                                           </div>
+                                                          {/* <div className="package-select-right">
+                                                            <p className="priceText">
+                                                              <small>
+                                                                Member Rate
+                                                              </small>
+                                                            </p>
+                                                            <p className="priceText">
+                                                              {(() => {
+                                                                return (
+                                                            <span className="items-center gap-2">
+                                                            {(() => {
+                                                              return (
+                                                                <>
+                                                                 {selectedRoom?.length > 1 ?
+                                                                 (<> <span className="line-through text-gray-500">
+                                                                    INR {increasedPricePerRoom.toLocaleString()}
+                                                                  </span>
+                                                                  <span className="text-green-600 font-bold ps-2">
+                                                                    INR {minRate.toLocaleString() } 
+                                                                   </span>
+                                                                    <small className="text-gray-500">/Room/Night</small>
+                                                                    </>):(<>
+                                                                     <span className="line-through text-gray-500">
+                                                                    INR {increasedPrice2.toLocaleString()}
+                                                                  </span>
+                                                                   <span className="text-green-600 font-bold ps-2">
+                                                                    INR {parseInt(totalRoomsBasePrice) > 0 ? totalRoomsBasePrice?.toLocaleString() : finalCartValue.toLocaleString() } 
+                                                                     {numberOfNights > 1 ?(<small className="text-muted">{" "}(for{" "}{numberOfNights}{" "} nights)</small>)
+                                                                     :(<small className="text-muted">{" "}(for{" "}{numberOfNights}{" "} night)</small>)}
+                                                                    <small className="d-block text-muted"> incl. of taxes & fees</small>
+                                                                   </span>
+                                                                   </>
+                                                                   )
+
+                                                                 }
+                                                                </>
+                                                              );
+                                                            })()}
+                                                          </span>
+
+                                                                );
+                                                              })()}
+                                                            </p>
+
+                                                            {rooms?.RatePlans?.find(
+                                                              (element) =>
+                                                                element.RateId ===
+                                                                mapping.RateId
+                                                            )?.Rates?.[
+                                                              Object.keys(
+                                                                rooms
+                                                                  ?.RatePlans?.[0]
+                                                                  ?.Rates || {}
+                                                              )[0]
+                                                            ]?.OBP?.[0]?.["1"]
+                                                              ?.RateBeforeTax && (
+                                                              <button
+                                                                className="btn offer-select-btnn rounded-0"
+                                                                onClick={() => {
+                                                                  handleSelectMemberRate(
+                                                                    property?.PropertyData,
+                                                                    mapping,
+                                                                    rate,
+                                                                    rooms,
+                                                                    Math.round(
+                                                                      rooms?.RatePlans?.find(
+                                                                        (
+                                                                          element
+                                                                        ) =>
+                                                                          element.RateId ===
+                                                                          mapping.RateId
+                                                                      )
+                                                                        ?.Rates?.[
+                                                                        Object.keys(
+                                                                          rooms
+                                                                            ?.RatePlans?.[0]
+                                                                            ?.Rates ||
+                                                                            {}
+                                                                        )[0]
+                                                                      ]?.OBP?.[
+                                                                        "1"
+                                                                      ]
+                                                                        ?.RateBeforeTax ||
+                                                                        "0"
+                                                                    ),
+                                                                    Math.round(
+                                                                      rooms?.RatePlans?.find(
+                                                                        (
+                                                                          element
+                                                                        ) =>
+                                                                          element.RateId ===
+                                                                          mapping.RateId
+                                                                      )
+                                                                        ?.Rates?.[
+                                                                        Object.keys(
+                                                                          rooms
+                                                                            ?.RatePlans?.[0]
+                                                                            ?.Rates ||
+                                                                            {}
+                                                                        )[0]
+                                                                      ]?.OBP?.[
+                                                                        "1"
+                                                                      ]
+                                                                        ?.RateAfterTax ||
+                                                                        "0"
+                                                                    ),index
+                                                                  );
+                                                                  selectedSetRateDataList(
+                                                                    rate
+                                                                  );
+                                                                  setTotalRoomsBasePrice(finalCartValue);
+                                                                }}
+                                                              >
+                                                                Book Now{" "}
+                                                              </button>
+                                                            )}
+                                                          </div> */}
                                                         </div>
                                                       </div>
                                                     </div>
@@ -3963,26 +5053,23 @@ setTimeout(() => {
                                                         <h6>{rate.RateName}</h6>
                                                         <h6>{rate.Meal}</h6>
                                                         <div className="popup-amenity-items py-3">
-                                                          <p className="f-12-new">
+                                                          {/* <p className="f-12-new">
                                                             {stripHtml(
                                                               rate.RateDescription ||
                                                                 ""
                                                             )}
-                                                          </p>
+                                                          </p> */}
+                                                          <div
+                                                            dangerouslySetInnerHTML={{
+                                                              __html: rate.RateDescription || "",
+                                                            }}
+                                                          />
                                                         </div>
                                                         <div className="cancellation-div">
                                                           <h6>
                                                             Cancellation Policy
                                                           </h6>
                                                           <p>
-                                                          {/*  {
-                                                              ratePlans.map(
-                                                                map =>
-                                                                  map?.RateId ===
-                                                                  rate?.RateId
-                                                              )
-                                                                ?.CancellationPolicy
-                                                            }*/}
                                                             {
                                                               cancellationPolicyPackage.find(rp => rp?.RateId === rate?.RateId)?.CancellationPolicy?.Description
                                                             }
@@ -3999,28 +5086,52 @@ setTimeout(() => {
                                         document.body
                                       )}
                                     </div>
-                                    );
-                            }
-                                )
-                                ) : (
-                                  <p>
-                                    No room data available for this property.
-                                  </p>
-                                )}
-                              </div>
+                                      ));
+                                      })()
+                                  ) : (
+                                    <p>
+                                      No room data available for this property.
+                                    </p>
+                                  )) : (
+                                     <p>No room data available for this property</p>
+                                   )}
+                                </div>
+
+
                             </div>
                           )}
                         </div>
                       ))}
                     </div>
-                  ) :(
-                    <div className="no-property">
-                      {(isSmallScreen && showDropDown) ? <><div className="repeated-div-property"><p>Apologies, we couldn’t find any properties matching your search.</p></div></>:''}
-                    </div>
-                  ) }
+                  ) 
+                   :(
+                     <div className="no-property">
+                       {isSmallScreen && isRateFetched && showDropDown && !isTimeOutInventory && promoError == ""  && !isTimeOutContent.current ? (
+                        <><div className="repeated-div-property text-center">
+                          <p>Apologies, we couldn’t find any properties matching your search.</p>
+                          </div></>)
+                          :(<>{!isSmallScreen && isRateFetched && !isTimeOutInventory  && promoError == ""  && !isTimeOutContent.current ? (<div className="repeated-div-property  text-center">
+                          <p className="no-property-desktop text-center">Apologies, we couldn’t find any properties matching your search.</p>
+                          </div>): (<>{isRateFetched && isTimeOutInventory && promoError == "" || isTimeOutContent.current ? (<div className="repeated-div-property  text-center pb-4">
+                          <p className="no-property-desktop  text-center">
+                          Property details could not be loaded due to a temporary network issue. Please click below to try again.
+                          </p>
+                          <button onClick={process.env.NEXT_PUBLIC_STAAH_REDIRECT == "redirect" ? handleSearchTh : handleSearch}> 
+                            <span className="this-search-for-desk mt-3 d-inline-block">Try Again</span>
+                          </button>
+                          </div>) :(<>{isSmallScreen && isRateFetched && showDropDown && !isTimeOutInventory && promoError != "" && !isTimeOutContent.current ? (<div className="repeated-div-property text-center">
+                          <p  className="no-property-desktop text-center">{promoError}</p>
+                          </div>):(<>{!isSmallScreen && isRateFetched && !isTimeOutInventory  && promoError != "" && !isTimeOutContent.current && <div className="repeated-div-property text-center">
+                          <p  className="no-property-desktop text-center">{promoError}</p>
+                          </div>}</>)}</>)}</>)}</>)}
+                     </div>
+                   ) 
+                  }
                 </div>
               </div>
             </div>
+            </>
+           
           )}
 
           {isOpenLogin && (
@@ -4057,11 +5168,23 @@ setTimeout(() => {
           )}
         </div>
       </section>
-      <WizardSidebar
+      {/* <WizardSidebar
         isVisible={isWizardVisible}
         onClose={() => handleWizardClose()}
         status={status}
-      />
+      /> */}
+      {tokenKey ? (<WizardSidebar
+        isVisible={isWizardVisible}
+        onClose={() => handleWizardClose()}
+        status={status}
+      />): (
+      <CombinedWizardSidebar
+        isVisible={isWizardVisible}
+        onClose={(id) => {handleWizardClose(), resetRoomSelection(id)}}
+        status={status}
+        destination={destination}
+        
+      ></CombinedWizardSidebar>)}
     </>
   );
 };

@@ -17,6 +17,7 @@ const StayStepRoomManager = (
     setSelectedRoom,
     setRoomsChange,
     isRoomsChange,
+    isStayStepOpen, setIsStayStepOpen
   } = useBookingEngineContext();
   const [isToggled, setIsToggled] = useState(false);
   const [isRoomsClose, setIsRoomsClose] = useState(true);
@@ -28,32 +29,53 @@ const StayStepRoomManager = (
   // Ensure default room with 1 adult
   useEffect(() => {
     if (rooms.length === 0) {
-      setSelectedRooms([{ id: uuidv4(), adults: 1, children: 0 }]);
+      setSelectedRooms([{ id: uuidv4(), adults: 2, children: 0 }]);
     }
   }, [rooms, setSelectedRooms]);
 
-  const addRoom = () => {
-    if (rooms.length < 10) {
-      onRoomChange();
-      const id = uuidv4();
-      setRoomsChange(!isRoomsChange);
-      setSelectedRooms((prev) => [...prev, { id: id, adults: 1, children: 0 }]);
-      setSelectedRoom((prev) => [
+  // const addRoom = () => {
+  //   if (rooms.length < 10) {
+  //     onRoomChange();
+  //     const id = uuidv4();
+  //     setRoomsChange(!isRoomsChange);
+  //     setSelectedRooms((prev) => [...prev, { id: id, adults: 1, children: 0 }]);
+  //     setSelectedRoom((prev) => [
+  //       ...prev,
+  //       {
+  //         id: id,
+  //         ...lastRoom,
+  //       },
+  //     ]);
+  //   } else {
+  //     toast.error("Maximum of 10 rooms can be added.");
+  //   }
+  // };
+const addRoom = () => {
+  if (rooms.length < 10) {
+    onRoomChange();
+    const id = uuidv4();
+    setRoomsChange(!isRoomsChange);
+    setIsStayStepOpen(true);
+
+    setSelectedRooms((prev) => [
+      ...prev,
+      { id: id, adults: 2, children: 0 },
+    ]);
+
+    setSelectedRoom((prev) => {
+      const lastRoom = prev[prev.length - 1]; // get last room data
+      return [
         ...prev,
         {
-          id: id,
-          roomId: "",
-          roomName: "",
-          roomRate: "",
-          roomImage: {},
-          adults: 1,
-          children: 0,
+          ...lastRoom,  // copy all values
+          id: id,       // only replace id
         },
-      ]);
-    } else {
-      toast.error("Maximum of 10 rooms can be added.");
-    }
-  };
+      ];
+    });
+  } else {
+    toast.error("Maximum of 10 rooms can be added.");
+  }
+};
 
   const updateRoom = (roomId, type, value) => {
     if (type !== "adults" && type !== "children") {
@@ -86,12 +108,14 @@ const StayStepRoomManager = (
     );
 
     setRoomsChange(!isRoomsChange);
+    setIsStayStepOpen(true);
   };
 
   const removeRoom = (roomId) => {
     setSelectedRooms((prev) => prev.filter((rooms) => rooms.id !== roomId));
     setSelectedRoom((prev) => prev.filter((room) => room.id !== roomId));
     setRoomsChange(!isRoomsChange);
+    setIsStayStepOpen(true);
   };
 
   const totalAdults = rooms.reduce((sum, room) => sum + room.adults, 0);
@@ -182,7 +206,7 @@ const StayStepRoomManager = (
                               onClick={() =>
                                 updateRoom(room.id, "adults", room.adults + 1)
                               }
-                              disabled={room.adults >= 5}
+                              disabled={room.adults >= 7}
                             >
                               {/* <Image
                                 src="/images/plus-icon.svg"

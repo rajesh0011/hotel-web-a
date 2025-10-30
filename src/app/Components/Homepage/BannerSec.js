@@ -46,17 +46,17 @@ const BannerSec = ({onClick}) => {
          isCartClick: "N",
          isClose: isClose ? "Y" : "N",
         }
-           const response = await fetch(
-             `${process.env.NEXT_PUBLIC_CMS_BASE_URL}/Api/tracker/BookingWidged`,
-             {
-               method: "POST",
-               headers: {
-                 "Content-Type": "application/json",
-               },
-               body: JSON.stringify( payload ),
-             }
-           );
-           const res = await response?.json();
+          //  const response = await fetch(
+          //    `${process.env.NEXT_PUBLIC_CMS_BASE_URL}/Api/tracker/BookingWidged`,
+          //    {
+          //      method: "POST",
+          //      headers: {
+          //        "Content-Type": "application/json",
+          //      },
+          //      body: JSON.stringify( payload ),
+          //    }
+          //  );
+          //  const res = await response?.json();
      
          //console.log("res BookingWidged",res);
        }
@@ -106,7 +106,7 @@ const handleBookNowClick2 = async () => {
     setShowFilterBar(false);
   };
   return (
-    <section className="hero-section position-relative vh-100 overflow-hidden h-full flex items-center justify-center">
+    <section className="hero-section position-relative vh-100 overflow-hidden h-full items-center justify-center">
       {/* <div className="video-background position-absolute w-100 h-100">
         <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0 }}>
           

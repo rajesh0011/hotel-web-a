@@ -209,9 +209,9 @@ export default function DineHotelClient({ propertySlug }) {
           <div className="global-heading-sec text-center">
             <div className="row justify-content-center mb-0 mt-5">
               <div className="col-md-9 md-offset-1">
-                <h2 className="global-heading">
+                <h1 className="global-heading">
                   {banner?.dineBannerTitle || "Dining"}
-                </h2>
+                </h1>
               </div>
             </div>
           </div>
